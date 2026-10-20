@@ -7,12 +7,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 
 const INITIAL_MOCKUPS = [
-  { id: "1", category: "Packaging", client: "San Dobi Coffee Packaging Collection", imageUrl: "/images/branding/packaging_collection.png" },
-  { id: "2", category: "Signage", client: "San Dobi Outlet Signage & Wayfinding", imageUrl: "/images/branding/signage_papan.png" },
-  { id: "3", category: "Print", client: "San Dobi Corporate Stationery Collection", imageUrl: "/images/branding/stationery_kantor.png" },
+  { id: "1", category: "Packaging", client: "San Dobi Coffee Packaging Collection", imageUrl: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop" },
+  { id: "2", category: "Signage", client: "San Dobi Outlet Signage & Wayfinding", imageUrl: "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop" },
+  { id: "3", category: "Print", client: "San Dobi Corporate Stationery Collection", imageUrl: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop" },
   { id: "4", category: "Banners", client: "Culinary Festival Sumbar 2024", imageUrl: "https://images.unsplash.com/photo-1542385151-efd9000785a0?q=80&w=800&auto=format&fit=crop" },
-  { id: "5", category: "Packaging", client: "San Dobi Dragon Cup Series", imageUrl: "/images/branding/dragon_cup.png" },
-  { id: "6", category: "Signage", client: "San Dobi Neon Box & Interior", imageUrl: "/images/branding/outlet_showcase.png" },
+  { id: "5", category: "Packaging", client: "San Dobi Dragon Cup Series", imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop" },
+  { id: "6", category: "Signage", client: "San Dobi Neon Box & Interior", imageUrl: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop" },
 ];
 
 export default function Mockup() {
@@ -90,7 +90,7 @@ export default function Mockup() {
                 className="group relative rounded-2xl overflow-hidden aspect-square bg-gray-100 cursor-pointer"
               >
                 <Image 
-                  src={item.imageUrl || item.img || "/images/branding/dragon_cup.png"} 
+                  src={item.imageUrl || item.img || "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop"} 
                   alt={item.title || item.client || "Portofolio"} 
                   fill 
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"

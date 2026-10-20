@@ -78,7 +78,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "8.4RB+",
     isBestSeller: true,
-    img: "/images/banner_printed.jpg",
+    img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan Visual: Albatros 210gr + Laminasi Doff/Glossy", "Rangka: X-Banner Fiber Black / Y-Banner Aluminium", "Ukuran: 60 x 160 cm (Termasuk sarung tas)"]
   },
   {
@@ -134,7 +134,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "950+",
     isBestSeller: false,
-    img: "/images/branding/signage_papan.png",
+    img: "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Akrilik / PVC Board 5mm / Plat Aluminium", "Model: Gantung plafon atau tempel dinding", "Desain: Icon universal + tipografi custom"]
   },
   {
@@ -148,7 +148,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "640+",
     isBestSeller: false,
-    img: "/images/branding/signage_papan.png",
+    img: "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Double Acrylic 2mm/3mm bening", "Ukuran: A4 (21x30cm) / A3 (30x42cm)", "Kelengkapan: 4 Pen Baut Stainless Steel + Fischer"]
   },
 
@@ -166,7 +166,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "6.2RB+",
     isBestSeller: true,
-    img: "/images/branding/branding_meja.png",
+    img: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Akrilik 3mm (Hitam/Putih/Bening) atau Kayu Jati Belanda", "Finishing: Laser Cutting & UV Direct Print", "Ukuran: 6 x 10 cm / 8 x 12 cm"]
   },
   {
@@ -180,7 +180,7 @@ export const products: Product[] = [
     rating: "4.8",
     sold: "3.5RB+",
     isBestSeller: false,
-    img: "/images/branding/branding_meja.png",
+    img: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Akrilik Bening 2mm Tekuk T-Shape / L-Shape", "Ukuran: A5 (15x21cm) atau A6 (10x15cm)", "Termasuk: Bisa order holder saja atau plus print insert Art Carton"]
   },
   {
@@ -236,7 +236,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "5.4RB+",
     isBestSeller: true,
-    img: "/images/branding/branding_meja.png",
+    img: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Akrilik 2mm / PVC Card Tebal", "Cetak: UV Print HD tahan gores & tidak luntur", "Model: L-Stand Meja atau Stiker Meja"]
   },
   {
@@ -268,7 +268,7 @@ export const products: Product[] = [
     rating: "5.0",
     sold: "45RB+",
     isBestSeller: true,
-    img: "/images/branding/dragon_cup.png",
+    img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop",
     specs: ["Ukuran: 8 oz (240ml) & 12 oz (360ml)", "Bahan: Food Grade Paper PE Coated Leak-Proof", "Cetak: Sablon 1-2 warna atau Full Color Offset", "Minimal Order: 500 pcs"]
   },
   {
@@ -338,7 +338,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "22RB+",
     isBestSeller: true,
-    img: "/images/branding/packaging_collection.png",
+    img: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Kraft Coklat 150gr (Rustic) atau Art Carton 210gr (Laminasi Mewah)", "Tali: Tali Kur, Tali Pita Satin, atau Tali Kertas Twisted", "Ukuran: Custom S, M, L, XL"]
   },
   {
@@ -366,7 +366,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "29RB+",
     isBestSeller: true,
-    img: "/images/branding/food_packaging.png",
+    img: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Ivory 260gr / 300gr Food Grade PE Laminated", "Karakter: Tahan bocor kuah & minyak panas", "Model: Lunch Box S, M, L atau Rice Box Window"]
   },
   {
@@ -380,7 +380,7 @@ export const products: Product[] = [
     rating: "4.8",
     sold: "8.7RB+",
     isBestSeller: false,
-    img: "/images/branding/pizza_box.png",
+    img: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Duplex / Ivory 350gr Tebal + Window Mika Bening", "Finishing: Foil Emas / Hotprint & Emboss", "Bentuk: Kotak Handle Jinjing atau Tutup Lepas"]
   },
   {
@@ -422,7 +422,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "19RB+",
     isBestSeller: true,
-    img: "/images/branding/coffee_packaging.png",
+    img: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=1200&auto=format&fit=crop",
     specs: ["Kapasitas: 200gr, 250gr, 500gr, 1000gr", "Fitur: One-Way Degassing Valve + Resealable Zip Lock", "Lapisan Dalam: Aluminium Foil Foil Barrier Kedap Oksigen"]
   },
   {
@@ -450,7 +450,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "17RB+",
     isBestSeller: false,
-    img: "/images/branding/stationery_kantor.png",
+    img: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Art Carton 260gr / Fancy Paper Jasmine Glitter", "Ukuran: 9 x 6 cm / 10 x 7 cm", "Cetak: 1 Sisi atau Bolak-Balik Full Color"]
   },
 
@@ -468,7 +468,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "12RB+",
     isBestSeller: true,
-    img: "/images/tshirt_printed.jpg",
+    img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: 100% Cotton Combed 24s/30s Reactive", "Sablon: DTF Premium High Elasticity (Anti-Retak)", "Ukuran: S hingga 5XL", "Pilihan Warna: Hitam, Putih, Charcoal, Navy, Hijau Botol"]
   },
   {
@@ -570,7 +570,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "9.2RB+",
     isBestSeller: true,
-    img: "/images/brosur.jpg",
+    img: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Art Paper 150gr / Art Carton 210gr", "Lipatan: Lipat 2 (Bifold) atau Lipat 3 (Trifold / Z-fold)", "Finishing: Plus garis rel lipatan rapi tidak pecah"]
   },
   {
@@ -626,7 +626,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "11RB+",
     isBestSeller: true,
-    img: "/images/branding/stationery_kantor.png",
+    img: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Blues White (BW) 250gr / Linen Jepang 230gr", "Karakter: Tinta stempel langsung kering dalam 1 detik", "Ukuran: 9 x 5.5 cm (Muat di dompet)"]
   },
   {
@@ -728,7 +728,7 @@ export const products: Product[] = [
     rating: "4.8",
     sold: "7.1RB+",
     isBestSeller: false,
-    img: "/images/branding/stationery_kantor.png",
+    img: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: HVS 80gr atau 100gr Putih Bersih", "Ukuran: A4 (21 x 29.7 cm)", "Cetak: Offset Full Color (Aman printer kantor)"]
   },
   {
@@ -742,7 +742,7 @@ export const products: Product[] = [
     rating: "4.8",
     sold: "5.6RB+",
     isBestSeller: false,
-    img: "/images/branding/stationery_kantor.png",
+    img: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: HVS 100gr / Kraft Cokelat / Samson", "Fitur: Peel & Seal (Sudah ada perekat lem tinggal lepas strip)", "Ukuran: DL Standar (11 x 23 cm) atau Folio"]
   },
   {
@@ -756,7 +756,7 @@ export const products: Product[] = [
     rating: "5.0",
     sold: "35RB+",
     isBestSeller: true,
-    img: "/images/branding/stationery_kantor.png",
+    img: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Art Carton 310gr Super Tebal", "Finishing: Laminasi Doff 2 Sisi + Spot UV Timbul", "Kemasan: Box Plastik Bening Tebal"]
   },
   {
@@ -830,7 +830,7 @@ export const products: Product[] = [
     rating: "5.0",
     sold: "16RB+",
     isBestSeller: true,
-    img: "/images/branding/merch_catalog.png",
+    img: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: 100% Cotton Heavyweight 16s / Combed 24s", "Sablon: Plastisol High-Density atau DTF Premium", "Finishing: Woven label leher + hangtag + packaging ziplock tebal"]
   },
   {
@@ -858,7 +858,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "21RB+",
     isBestSeller: true,
-    img: "/images/totebag.png",
+    img: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Baby Canvas Super Lembut / Canvas Twill Tebal", "Ukuran: 35 x 40 cm (Muat Laptop 14-15 inch)", "Fitur: Resleting YKK + Saku furing dalam"]
   },
   {
@@ -886,7 +886,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "13RB+",
     isBestSeller: false,
-    img: "/images/branding/gelas_perak.png",
+    img: "https://images.unsplash.com/photo-1517256064527-09c73fc73e38?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Keramik Putih Super SNI (11 oz)", "Cetak: Sublimasi Full Color 360 Derajat", "Sudah Termasuk: Kotak box kardus satuan"]
   },
   {
@@ -900,7 +900,7 @@ export const products: Product[] = [
     rating: "5.0",
     sold: "11RB+",
     isBestSeller: true,
-    img: "/images/branding/tumbler_logam.png",
+    img: "https://images.unsplash.com/photo-1517256064527-09c73fc73e38?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Food Grade Stainless Steel SUS 304", "Kapasitas: 500 ml", "Metode Branding: Grafir Laser Presisi atau UV Print Rotary"]
   },
   {
@@ -914,7 +914,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "6.4RB+",
     isBestSeller: true,
-    img: "/images/branding/gelas_kopi.png",
+    img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Borosilicate Glass Tebal Bening", "Bentuk: Soda Can Glass 470ml / Rock Glass 300ml", "Cetak: Sablon Satu Warna Putih/Hitam Bakar Awet"]
   },
   {
@@ -984,7 +984,7 @@ export const products: Product[] = [
     rating: "5.0",
     sold: "8.6RB+",
     isBestSeller: true,
-    img: "/images/branding/coffee_packaging.png",
+    img: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=1200&auto=format&fit=crop",
     specs: ["Berat Bersih: 250 gram", "Profile Roasting: Medium / Medium Dark Roast", "Bentuk: Biji utuh (Whole Bean) atau Bubuk Halus/Kasar (Custom)"]
   },
 
@@ -1258,7 +1258,7 @@ export const products: Product[] = [
     rating: "4.7",
     sold: "3.2RB+",
     isBestSeller: false,
-    img: "/images/baliho_printed.jpg",
+    img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Flexi 340gr / 440gr", "Cocok untuk: Papan Reklame, Billboard, Proyek", "Sambungan: Sangat rapi presisi"]
   },
   {
@@ -1272,7 +1272,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "2.5RB+",
     isBestSeller: true,
-    img: "/images/branding/outlet_showcase.png",
+    img: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop",
     specs: ["Bahan: Akrilik Susu 3mm + Stiker Transparan / Cutting Sticker", "Lampu: LED Modul Samsung (Terang Merata)", "Rangka: Galvanis Anti Karat / Aluminium Profile"]
   },
   {
@@ -1286,7 +1286,7 @@ export const products: Product[] = [
     rating: "5.0",
     sold: "4.3RB+",
     isBestSeller: false,
-    img: "/images/huruf_timbul.jpg",
+    img: "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop",
     specs: ["Pilihan Bahan: Akrilik, Galvanis, Stainless Steel, Kuningan", "Lampu: LED Backlight / Frontlight (Sesuai request)", "Pemasangan: Termasuk jasa pasang (area tertentu)"]
   },
   {
@@ -1300,7 +1300,7 @@ export const products: Product[] = [
     rating: "4.9",
     sold: "8.5RB+",
     isBestSeller: false,
-    img: "/images/sablon_dtf.jpg",
+    img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1200&auto=format&fit=crop",
     specs: ["Lebar Area: 58 cm x 100 cm (per meter)", "Tinta: Tinta Pigment DTF Vator berkualitas", "Karakter: Lentur, tidak retak saat ditarik"]
   }
 ];

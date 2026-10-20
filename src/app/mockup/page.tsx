@@ -25,12 +25,9 @@ export default function MockupGenerator() {
 
   const getImageUrl = () => {
     if (productType === "totebag") {
-      return "/images/totebag.png";
+      return "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop";
     }
-    if (view === "depan") {
-      return "/images/tshirt_depan.png";
-    }
-    return "/images/tshirt_belakang.png";
+    return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop";
   };
 
   const imageUrl = getImageUrl();

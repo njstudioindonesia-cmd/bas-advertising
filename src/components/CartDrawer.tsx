@@ -228,7 +228,7 @@ export default function CartDrawer() {
                         {cart.map((item) => {
                           const unitPrice = parsePriceToNumber(item.product.price);
                           const itemTotal = unitPrice * item.quantity;
-                          const img = item.product.imageUrl || item.product.img || "/images/branding/dragon_cup.png";
+                          const img = item.product.imageUrl || item.product.img || "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop";
 
                           return (
                             <motion.div
