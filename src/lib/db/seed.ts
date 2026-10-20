@@ -112,7 +112,7 @@ export function seedDatabase(): { categoriesCount: number; productsCount: number
     bannerStmt.run(
       "ban-1",
       "Branding Cafe & Resto",
-      "Diskon Spesial 25% untuk Paket Lengkap San Dobi",
+      "Diskon Spesial 25% untuk Paket Lengkap Branding",
       "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=1600&auto=format&fit=crop",
       "Pesan Sekarang",
       "/produk?category=Packaging",
@@ -150,11 +150,11 @@ export function seedDatabase(): { categoriesCount: number; productsCount: number
     `);
 
     const defaultPort = [
-      { id: "port-1", title: "Packaging Kopi Eksklusif", client: "San Dobi Coffee Packaging Collection", category: "Packaging", img: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop" },
-      { id: "port-2", title: "Signage & Wayfinding Outlet", client: "San Dobi Outlet Signage & Wayfinding", category: "Signage", img: "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop" },
-      { id: "port-3", title: "Corporate Stationery & Map", client: "San Dobi Corporate Stationery", category: "Print", img: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop" },
-      { id: "port-4", title: "Dragon Cup Series Hot & Cold", client: "San Dobi Dragon Cup Series", category: "Packaging", img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop" },
-      { id: "port-5", title: "Neon Box & Interior Cafe", client: "San Dobi Neon Box & Interior", category: "Signage", img: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop" }
+      { id: "port-1", title: "Packaging Kopi Eksklusif", client: "Coffee & Cafe Packaging Collection", category: "Packaging", img: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop" },
+      { id: "port-2", title: "Signage & Wayfinding Outlet", client: "Outlet Signage & Wayfinding Display", category: "Signage", img: "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop" },
+      { id: "port-3", title: "Corporate Stationery & Map", client: "Corporate Stationery & Map Collection", category: "Print", img: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop" },
+      { id: "port-4", title: "Dragon Cup Series Hot & Cold", client: "Dragon Cup Series Hot & Cold", category: "Packaging", img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop" },
+      { id: "port-5", title: "Neon Box & Interior Cafe", client: "Neon Box & Interior Cafe Display", category: "Signage", img: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop" }
     ];
 
     let pCount = 0;

@@ -455,12 +455,12 @@ export const products: Product[] = [
   },
 
   // ==========================================
-  // D. CREW (SAN DOBI)
+  // D. CREW UNIFORM
   // ==========================================
   {
     id: "crew-tshirt",
     category: "Crew",
-    title: "Seragam Kaos Crew San Dobi Cotton Combed Sablon DTF",
+    title: "Seragam Kaos Crew Cotton Combed Sablon DTF",
     desc: "Seragam kaos harian crew, barista, dan kitchen. Nyaman dipakai kerja seharian di suhu panas, tidak kaku, menyerap keringat, dan warna sablon awet dicuci berkali-kali.",
     price: "Rp 65.000",
     normalPrice: "Rp 85.000",
@@ -837,7 +837,7 @@ export const products: Product[] = [
     id: "merch-hoodie",
     category: "Merchandise",
     title: "Hoodie Merchandise Premium Cotton Fleece Bordir/DTF",
-    desc: "Hoodie rilisan merchandise resmi San Dobi & partner. Desain eksklusif dengan gramasi kain 330 GSM tebal, tali hoodie berujung metalik, dan saku kanguru kokoh.",
+    desc: "Hoodie rilisan merchandise resmi eksklusif & partner. Desain eksklusif dengan gramasi kain 330 GSM tebal, tali hoodie berujung metalik, dan saku kanguru kokoh.",
     price: "Rp 165.000",
     normalPrice: "Rp 210.000",
     unit: "/ pcs",
@@ -976,8 +976,8 @@ export const products: Product[] = [
   {
     id: "merch-coffee-bean",
     category: "Merchandise",
-    title: "Biji Kopi Spesialti Kemasan Merchandise San Dobi",
-    desc: "Kopi sangrai (roasted beans) biji pilihan single origin dan house blend San Dobi. Kemasan zipper valve berdesain branding modern siap seduh di rumah.",
+    title: "Biji Kopi Spesialti Kemasan Merchandise Custom",
+    desc: "Kopi sangrai (roasted beans) biji pilihan single origin dan house blend. Kemasan zipper valve berdesain branding modern siap seduh di rumah.",
     price: "Rp 75.000",
     normalPrice: "Rp 95.000",
     unit: "/ pack (250 gr)",

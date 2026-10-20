@@ -7,12 +7,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 
 const INITIAL_MOCKUPS = [
-  { id: "1", category: "Packaging", client: "San Dobi Coffee Packaging Collection", imageUrl: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop" },
-  { id: "2", category: "Signage", client: "San Dobi Outlet Signage & Wayfinding", imageUrl: "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop" },
-  { id: "3", category: "Print", client: "San Dobi Corporate Stationery Collection", imageUrl: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop" },
+  { id: "1", category: "Packaging", client: "Coffee & Cafe Packaging Collection", imageUrl: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop" },
+  { id: "2", category: "Signage", client: "Outlet Signage & Wayfinding Display", imageUrl: "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop" },
+  { id: "3", category: "Print", client: "Corporate Stationery & Map Collection", imageUrl: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop" },
   { id: "4", category: "Banners", client: "Culinary Festival Sumbar 2024", imageUrl: "https://images.unsplash.com/photo-1542385151-efd9000785a0?q=80&w=800&auto=format&fit=crop" },
-  { id: "5", category: "Packaging", client: "San Dobi Dragon Cup Series", imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop" },
-  { id: "6", category: "Signage", client: "San Dobi Neon Box & Interior", imageUrl: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop" },
+  { id: "5", category: "Packaging", client: "Dragon Cup Series Hot & Cold", imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop" },
+  { id: "6", category: "Signage", client: "Neon Box & Interior Cafe Display", imageUrl: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=1200&auto=format&fit=crop" },
 ];
 
 export default function Mockup() {
@@ -52,7 +52,7 @@ export default function Mockup() {
             Selected Works
           </h1>
           <p className="text-xs sm:text-base font-light text-gray-500 max-w-2xl mx-auto">
-            Koleksi hasil cetak nyata, instalasi signage, dan merchandise San Dobi serta brand terkemuka.
+            Koleksi hasil cetak nyata, instalasi signage, dan merchandise custom untuk berbagai brand terkemuka.
           </p>
         </motion.div>
       </section>

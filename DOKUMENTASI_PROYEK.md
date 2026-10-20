@@ -8,7 +8,7 @@
 | Informasi | Detail |
 | :--- | :--- |
 | **Nama Aplikasi** | Pusat Cetak Padang by BAS Advertising |
-| **Studi Kasus Branding** | San Dobi (Kafe, Resto, Apparel & Merchandise) |
+| **Fokus Layanan** | Percetakan, Digital Printing, Apparel, Signage & Merchandise Usaha |
 | **Teknologi Utama** | Next.js 16.3.1 (Turbopack, App Router), React 19, Tailwind CSS v4, TypeScript |
 | **Animasi & Ikon** | Framer Motion, Lucide Icons |
 | **Penyimpanan Data** | Local JSON File Engine (`src/data/products.json` & `src/lib/products-store.ts`) |
@@ -24,7 +24,7 @@
 d:\AI DEV\BAS ADVERTISING\
 ├── public/
 │   └── images/
-│       ├── branding/              # Mockup eksklusif San Dobi (Cup, Meja, Packaging, dll)
+│       ├── branding/              # Mockup eksklusif (Cup, Meja, Packaging, dll)
 │       └── ...                    # Aset grafis pendukung
 ├── src/
 │   ├── app/
@@ -71,7 +71,7 @@ d:\AI DEV\BAS ADVERTISING\
 
 ## 📦 3. Katalog Produk Lengkap (89 Produk Aktif)
 
-Semua produk telah dipetakan rapi ke dalam 8 kategori checklist branding San Dobi:
+Semua produk telah dipetakan rapi ke dalam 8 kategori checklist kebutuhan cetak & branding bisnis:
 
 ### A. Branding Outlet (9 Produk)
 1. Sticker Kaca / Window Sticker (One Way & Sandblast)
@@ -236,7 +236,7 @@ Akses admin telah **dipisahkan secara mandiri** agar tidak tercampur dengan anta
 * **Kredensial Default**: Password `admin123` atau `bas2026`.
 * **Fitur Lengkap Portal Urang Dalam**:
   * Ringkasan metrik statistik produk, kategori, dan produk terlaris.
-  * Tambah produk baru dengan pilihan preset gambar San Dobi atau URL custom.
+  * Tambah produk baru dengan pilihan preset gambar produk atau URL custom.
   * Edit judul, kategori, harga jual, harga normal (coret), satuan, deskripsi, dan poin spesifikasi secara langsung.
   * Hapus produk dengan konfirmasi keamanan.
   * Toggle badge status *Best Seller / Terlaris*.

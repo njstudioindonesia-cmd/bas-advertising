@@ -106,7 +106,7 @@ export default function Home() {
           <div className="min-w-[88%] snap-center rounded-2xl bg-gradient-to-r from-[#1E1B4B] via-[#0B1E36] to-orange-950 p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between h-36">
             <div className="relative z-10">
               <span className="bg-[#F97316] text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mb-1.5 shadow-2xs">
-                🔥 San Dobi Exclusive
+                🔥 Promo Spesial BAS ADV
               </span>
               <h2 className="font-extrabold text-base leading-tight">
                 Branding Cafe & Resto <br />

@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: Record<string, any> = {
   ],
   "checkout.waTemplate": "*HALO PUSAT CETAK PADANG, SAYA INGIN PESAN:*\n----------------------------------------\n*No. Pesanan:* {code}\n*Nama:* {nama}\n*WhatsApp:* {phone}\n*Metode:* {metode}\n*Alamat:* {alamat}\n*Pembayaran:* {pembayaran}\n*Catatan:* {catatan}\n----------------------------------------\n*RINCIAN PESANAN:*\n{items}\n----------------------------------------\n*TOTAL:* *{total}*\n----------------------------------------\nMohon diproses, terima kasih!",
   "home.promoTitle": "Diskon 25% Hari Ini",
-  "home.promoSubtitle": "Spesial Branding Cafe & Resto San Dobi",
+  "home.promoSubtitle": "Spesial Branding Cafe, Resto & Bisnis",
 };
 
 export function getSettings(): Record<string, any> {

@@ -315,7 +315,7 @@ export default function KeranjangPage() {
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: Rian Pratama (San Dobi Cafe)"
+                    placeholder="Contoh: Rian Pratama (Cafe & Resto Padang)"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="w-full text-xs sm:text-sm px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#F97316] transition-all"

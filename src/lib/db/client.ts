@@ -309,7 +309,7 @@ function autoSeedIfEmpty(db: DatabaseSync) {
       ],
       "checkout.waTemplate": "*HALO PUSAT CETAK PADANG, SAYA INGIN PESAN:*\n----------------------------------------\n*No. Pesanan:* {code}\n*Nama:* {nama}\n*WhatsApp:* {phone}\n*Metode:* {metode}\n*Alamat:* {alamat}\n*Pembayaran:* {pembayaran}\n*Catatan:* {catatan}\n----------------------------------------\n*RINCIAN PESANAN:*\n{items}\n----------------------------------------\n*TOTAL:* *{total}*\n----------------------------------------\nMohon diproses, terima kasih!",
       "home.promoTitle": "Diskon 25% Hari Ini",
-      "home.promoSubtitle": "Spesial Branding Cafe & Resto San Dobi",
+      "home.promoSubtitle": "Spesial Branding Cafe, Resto & Bisnis",
     };
 
     const settingStmt = db.prepare(`
@@ -327,9 +327,9 @@ function autoSeedIfEmpty(db: DatabaseSync) {
       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
       ON CONFLICT(id) DO NOTHING
     `);
-    bannerStmt.run("ban-1", "Branding Cafe & Resto", "Diskon Spesial 25% untuk Paket Lengkap San Dobi", "/images/hero_printing.jpg", "Pesan Sekarang", "/produk?category=Packaging", 1, now);
-    bannerStmt.run("ban-2", "Cetak Spanduk & Banner Kilat", "Bahan Flexi Korea High Resolution Anti Pudar - Selesai 24 Jam", "/images/branding/dragon_cup.png", "Cetak Kilat", "/produk?q=Banner", 2, now);
-    bannerStmt.run("ban-3", "Studio Mockup Visualisasi 3D", "Lihat Hasil Desain Nyata Cup, Totebag & Kaos Sebelum Dicetak", "/images/branding/packaging_collection.png", "Buka Studio 3D", "/mockup", 3, now);
+    bannerStmt.run("ban-1", "Branding Cafe & Resto", "Diskon Spesial 25% untuk Paket Lengkap Branding", "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=1600&auto=format&fit=crop", "Pesan Sekarang", "/produk?category=Packaging", 1, now);
+    bannerStmt.run("ban-2", "Cetak Spanduk & Banner Kilat", "Bahan Flexi Korea High Resolution Anti Pudar - Selesai 24 Jam", "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=1200&auto=format&fit=crop", "Cetak Kilat", "/produk?q=Banner", 2, now);
+    bannerStmt.run("ban-3", "Studio Mockup Visualisasi 3D", "Lihat Hasil Desain Nyata Cup, Totebag & Kaos Sebelum Dicetak", "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop", "Buka Studio 3D", "/mockup", 3, now);
 
     // 6. Seed Portfolio
     const portStmt = db.prepare(`
@@ -337,9 +337,9 @@ function autoSeedIfEmpty(db: DatabaseSync) {
       VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
       ON CONFLICT(id) DO NOTHING
     `);
-    portStmt.run("port-1", "Packaging Kopi Eksklusif", "San Dobi Coffee Packaging Collection", "Packaging", "/images/branding/packaging_collection.png", "San Dobi Collection", 1, now);
-    portStmt.run("port-2", "Signage & Wayfinding Outlet", "San Dobi Outlet Signage & Wayfinding", "Signage", "/images/branding/signage_papan.png", "San Dobi Signage", 2, now);
-    portStmt.run("port-3", "Corporate Stationery & Map", "San Dobi Corporate Stationery", "Print", "/images/branding/stationery_kantor.png", "Stationery", 3, now);
+    portStmt.run("port-1", "Packaging Kopi Eksklusif", "Coffee & Cafe Packaging Collection", "Packaging", "https://images.unsplash.com/photo-1530587191325-3db32d826c18?q=80&w=1200&auto=format&fit=crop", "Coffee Packaging Collection", 1, now);
+    portStmt.run("port-2", "Signage & Wayfinding Outlet", "Outlet Signage & Wayfinding Display", "Signage", "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=1200&auto=format&fit=crop", "Outlet Signage", 2, now);
+    portStmt.run("port-3", "Corporate Stationery & Map", "Corporate Stationery & Map Collection", "Print", "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop", "Stationery", 3, now);
 
     // 7. Seed Pages
     const pageStmt = db.prepare(`
