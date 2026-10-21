@@ -13,8 +13,6 @@ import {
   Truck, 
   Award, 
   Search, 
-  Star, 
-  TrendingUp, 
   Zap, 
   Plus, 
   Check,
@@ -28,18 +26,48 @@ import {
   Palette,
   Sparkles,
   Flame,
-  Clock
+  Clock,
+  MessageCircle
 } from "lucide-react";
 
-import { products } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 import QuickProductCard from "@/components/QuickProductCard";
 import ProductBottomSheet from "@/components/ProductBottomSheet";
 
+function getCategoryIconConfig(categoryName: string) {
+  const norm = (categoryName || "").toLowerCase().trim();
+  if (norm.includes("kemasan") || norm.includes("package") || norm.includes("box") || norm.includes("cup")) {
+    return { icon: Package, bg: "bg-emerald-500", text: "text-white" };
+  }
+  if (norm.includes("spanduk") || norm.includes("banner") || norm.includes("outdoor") || norm.includes("sign")) {
+    return { icon: Sparkles, bg: "bg-amber-500", text: "text-white" };
+  }
+  if (norm.includes("stiker") || norm.includes("sticker") || norm.includes("label")) {
+    return { icon: Megaphone, bg: "bg-rose-500", text: "text-white" };
+  }
+  if (norm.includes("crew") || norm.includes("kaos") || norm.includes("seragam") || norm.includes("baju") || norm.includes("jersey")) {
+    return { icon: Shirt, bg: "bg-purple-500", text: "text-white" };
+  }
+  if (norm.includes("outlet") || norm.includes("toko")) {
+    return { icon: Store, bg: "bg-blue-500", text: "text-white" };
+  }
+  if (norm.includes("meja") || norm.includes("menu")) {
+    return { icon: Utensils, bg: "bg-amber-600", text: "text-white" };
+  }
+  if (norm.includes("merchandise") || norm.includes("gift") || norm.includes("souvenir") || norm.includes("tumbler")) {
+    return { icon: Gift, bg: "bg-orange-500", text: "text-white" };
+  }
+  if (norm.includes("kantor") || norm.includes("dokumen") || norm.includes("nota") || norm.includes("cetak")) {
+    return { icon: FileText, bg: "bg-slate-700", text: "text-white" };
+  }
+  return { icon: Package, bg: "bg-orange-500", text: "text-white" };
+}
+
 export default function Home() {
-  const [productList, setProductList] = useState<any[]>(products);
+  const [productList, setProductList] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [addedId, setAddedId] = useState<string | null>(null);
   const [sheetProduct, setSheetProduct] = useState<any | null>(null);
@@ -50,32 +78,22 @@ export default function Home() {
   useEffect(() => {
     const loadData = () => {
       const t = Date.now();
-      fetch(`/api/products?t=${t}`, { cache: "no-store" })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && Array.isArray(data.data)) {
-            setProductList(data.data);
-          }
-        })
-        .catch(() => {});
-
-      fetch(`/api/categories?t=${t}`, { cache: "no-store" })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && Array.isArray(data.data)) {
-            setCategories(data.data);
-          }
-        })
-        .catch(() => {});
-
-      fetch(`/api/banners?t=${t}`, { cache: "no-store" })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && Array.isArray(data.data)) {
-            setBanners(data.data);
-          }
-        })
-        .catch(() => {});
+      Promise.all([
+        fetch(`/api/products?t=${t}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch(`/api/categories?t=${t}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch(`/api/banners?t=${t}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
+      ]).then(([prodRes, catRes, banRes]) => {
+        if (prodRes?.success && Array.isArray(prodRes.data)) {
+          setProductList(prodRes.data);
+        }
+        if (catRes?.success && Array.isArray(catRes.data)) {
+          setCategories(catRes.data);
+        }
+        if (banRes?.success && Array.isArray(banRes.data)) {
+          setBanners(banRes.data);
+        }
+        setLoading(false);
+      });
     };
 
     loadData();
@@ -122,80 +140,55 @@ export default function Home() {
     setTimeout(() => setAddedId(null), 1500);
   };
 
-  const topSellingProducts = productList.filter(p => p.isBestSeller).slice(0, 10);
+  const bestSellers = productList.filter(p => p.isBestSeller);
+  const recommendedList = bestSellers.length > 0 ? bestSellers : productList;
   const flashSaleProducts = productList.slice(0, 6);
 
-  // Quick 8 App Icons for Mobile
-  const mobileAppCategories = [
-    { name: "Outlet", icon: Store, bg: "bg-blue-500", text: "text-white", link: "/produk?category=Branding+Outlet" },
-    { name: "Meja", icon: Utensils, bg: "bg-amber-500", text: "text-white", link: "/produk?category=Branding+Meja" },
-    { name: "Kemasan", icon: Package, bg: "bg-emerald-500", text: "text-white", link: "/produk?category=Packaging" },
-    { name: "Crew", icon: Shirt, bg: "bg-purple-500", text: "text-white", link: "/produk?category=Crew" },
-    { name: "Promosi", icon: Megaphone, bg: "bg-rose-500", text: "text-white", link: "/produk?category=Marketing" },
-    { name: "Kantor", icon: FileText, bg: "bg-slate-700", text: "text-white", link: "/produk?category=Barang+Cetak+Pendukung" },
-    { name: "Merchandise", icon: Gift, bg: "bg-orange-500", text: "text-white", link: "/produk?category=Merchandise" },
-    { name: "Studio 3D", icon: Palette, bg: "bg-indigo-600", text: "text-white", link: "/mockup" }
-  ];
-
-  const categoryIconMap: Record<string, any> = {
-    "Branding Outlet": { icon: Store, bg: "bg-blue-500" },
-    "Branding Meja": { icon: Utensils, bg: "bg-amber-500" },
-    "Packaging": { icon: Package, bg: "bg-emerald-500" },
-    "Crew": { icon: Shirt, bg: "bg-purple-500" },
-    "Marketing": { icon: Megaphone, bg: "bg-rose-500" },
-    "Barang Cetak Pendukung": { icon: FileText, bg: "bg-slate-700" },
-    "Merchandise": { icon: Gift, bg: "bg-orange-500" },
-    "Outdoor & Signage": { icon: Sparkles, bg: "bg-cyan-600" },
-  };
-
+  // Dynamic Categories for Mobile App Grid
   const dynamicMobileCategories = categories.length > 0
     ? [
         ...categories.slice(0, 7).map((c) => {
-          const conf = categoryIconMap[c.name] || { icon: Package, bg: "bg-orange-500" };
+          const conf = getCategoryIconConfig(c.name);
           return {
+            id: c.id,
             name: c.name.length > 10 ? c.name.slice(0, 9) + "…" : c.name,
             icon: conf.icon,
             bg: conf.bg,
-            text: "text-white",
+            text: conf.text,
             link: `/produk?category=${encodeURIComponent(c.name)}`,
           };
         }),
-        { name: "Studio 3D", icon: Palette, bg: "bg-indigo-600", text: "text-white", link: "/mockup" }
+        { id: "mockup-3d", name: "Studio 3D", icon: Palette, bg: "bg-indigo-600", text: "text-white", link: "/mockup" }
       ]
-    : mobileAppCategories;
+    : [
+        { id: "mockup-3d", name: "Studio 3D", icon: Palette, bg: "bg-indigo-600", text: "text-white", link: "/mockup" },
+        { id: "semua-produk", name: "Katalog", icon: Package, bg: "bg-orange-500", text: "text-white", link: "/produk" }
+      ];
 
   const CATEGORY_DESCS: Record<string, string> = {
     "Branding Outlet": "Sticker kaca, wall graphic, X-banner, signage toko",
     "Branding Meja": "Table number, table tent, buku menu, coaster",
     "Packaging": "Paper cup, plastic cup, food box, paper bag kustom",
+    "PACKAGING": "Paper cup, plastic cup, food box, paper bag kustom",
     "Crew": "Kaos seragam, apron barista, polo shirt, name tag",
     "Marketing": "Flyer, brosur promosi, voucher diskon, kartu nama",
     "Barang Cetak Pendukung": "Nota NCR, kop surat resmi, amplop, map invoice",
     "Merchandise": "Tote bag kanvas, tumbler grafir, topi bordir, gantungan kunci",
     "Outdoor & Signage": "Spanduk flexi Korea, neon box, huruf timbul akrilik",
+    "SPANDUK": "Spanduk flexi Korea, baliho, X-banner, banner roll kilat",
+    "STIKER": "Stiker vinyl, stiker chromo, stiker transparan label botol",
   };
 
-  const displayCategories = categories.length > 0 
-    ? categories.map((c) => {
-        const prodCount = productList.filter((p) => p.categoryId === c.id || p.category === c.name).length;
-        return {
-          id: c.id,
-          title: c.name,
-          count: `${prodCount || c.productCount || 0} Produk`,
-          link: `/produk?category=${encodeURIComponent(c.name)}`,
-          desc: CATEGORY_DESCS[c.name] || `Koleksi produk cetak kategori ${c.name}`,
-        };
-      })
-    : [
-        { id: "cat-outlet", title: "Branding Outlet", count: `${productList.filter(p => p.category === "Branding Outlet").length || 9} Produk`, link: "/produk?category=Branding+Outlet", desc: "Sticker kaca, wall graphic, X-banner, signage" },
-        { id: "cat-meja", title: "Branding Meja", count: `${productList.filter(p => p.category === "Branding Meja").length || 7} Produk`, link: "/produk?category=Branding+Meja", desc: "Table number, table tent, menu cetak, coaster" },
-        { id: "cat-packaging", title: "Packaging", count: `${productList.filter(p => p.category === "Packaging").length || 14} Produk`, link: "/produk?category=Packaging", desc: "Paper cup, plastic cup, food box, paper bag" },
-        { id: "cat-crew", title: "Crew", count: `${productList.filter(p => p.category === "Crew").length || 6} Produk`, link: "/produk?category=Crew", desc: "Kaos crew, hoodie, apron barista, name tag" },
-        { id: "cat-marketing", title: "Marketing", count: `${productList.filter(p => p.category === "Marketing").length || 11} Produk`, link: "/produk?category=Marketing", desc: "Flyer, brosur, voucher, member card, tiket" },
-        { id: "cat-pendukung", title: "Barang Cetak Pendukung", count: `${productList.filter(p => p.category === "Barang Cetak Pendukung").length || 8} Produk`, link: "/produk?category=Barang+Cetak+Pendukung", desc: "Nota NCR, kop surat, amplop, kartu nama" },
-        { id: "cat-merchandise", title: "Merchandise", count: `${productList.filter(p => p.category === "Merchandise").length || 29} Produk`, link: "/produk?category=Merchandise", desc: "Tote bag, tumbler, topi, mug, cardholder" },
-        { id: "cat-outdoor", title: "Outdoor & Signage", count: `${productList.filter(p => p.category === "Outdoor & Signage").length || 5} Produk`, link: "/produk?category=Outdoor+%26+Signage", desc: "Spanduk flexi Korea, neon box, huruf timbul" }
-      ];
+  const displayCategories = categories.map((c) => {
+    const prodCount = productList.filter((p) => p.categoryId === c.id || p.category === c.name).length;
+    return {
+      id: c.id,
+      title: c.name,
+      count: `${prodCount} Produk`,
+      link: `/produk?category=${encodeURIComponent(c.name)}`,
+      desc: CATEGORY_DESCS[c.name] || `Koleksi produk cetak kategori ${c.name}`,
+    };
+  });
 
   return (
     <div className="bg-[#F8F9FA] min-h-screen pt-20 md:pt-36 pb-20 md:pb-24">
@@ -207,7 +200,9 @@ export default function Home() {
         
         {/* Mobile App Promo Banners (Horizontal Touch Swipe) */}
         <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pt-1 pb-1">
-          {banners.length > 0 ? (
+          {loading ? (
+            <div className="min-w-[88%] h-36 rounded-2xl bg-gray-200 animate-pulse" />
+          ) : banners.length > 0 ? (
             banners
               .filter((b) => b.isActive !== false)
               .map((b, idx) => {
@@ -265,22 +260,22 @@ export default function Home() {
             <div className="min-w-[88%] snap-center rounded-2xl bg-gradient-to-r from-[#1E1B4B] via-[#0B1E36] to-orange-950 p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between h-36">
               <div className="relative z-10">
                 <span className="bg-[#F97316] text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mb-1.5 shadow-2xs">
-                  🔥 Promo Spesial Cetak.inc
+                  🔥 Solusi Cetak Cepat
                 </span>
                 <h2 className="font-extrabold text-base leading-tight">
-                  Branding Cafe & Resto <br />
-                  <span className="text-amber-400">Diskon Spesial 25%</span>
+                  Cetak Kilat & Kualitas Juara <br />
+                  <span className="text-amber-400">Garansi Tepat Waktu</span>
                 </h2>
                 <p className="text-[10px] text-gray-300 mt-1 line-clamp-1">
-                  Cup, kemasan makanan, seragam crew & merchandise.
+                  Spanduk, packaging, stiker, seragam crew & merchandise.
                 </p>
               </div>
               <div className="relative z-10 flex items-center justify-between">
                 <Link 
-                  href="/produk?category=Packaging" 
+                  href="/produk" 
                   className="bg-white text-[#1E1B4B] text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
                 >
-                  Pesan Sekarang <ArrowRight size={12} />
+                  Buka Katalog <ArrowRight size={12} />
                 </Link>
                 <span className="text-[9px] text-gray-400">Kirim Seluruh Padang</span>
               </div>
@@ -291,25 +286,36 @@ export default function Home() {
 
         {/* 8 Mobile App Category Icons Grid */}
         <div className="bg-white rounded-2xl p-3.5 border border-gray-100/90 shadow-2xs">
-          <div className="grid grid-cols-4 gap-3 text-center">
-            {dynamicMobileCategories.map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <Link 
-                  key={idx} 
-                  href={item.link}
-                  className="flex flex-col items-center group active:scale-90 transition-transform"
-                >
-                  <div className={`w-12 h-12 rounded-2xl ${item.bg} ${item.text} flex items-center justify-center shadow-xs mb-1.5 transition-shadow`}>
-                    <Icon size={22} strokeWidth={2.2} />
-                  </div>
-                  <span className="text-[11px] font-bold text-gray-700 leading-tight">
-                    {item.name}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-4 gap-3 text-center">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="flex flex-col items-center animate-pulse">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-200 mb-1.5" />
+                  <div className="w-12 h-2.5 bg-gray-200 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-3 text-center">
+              {dynamicMobileCategories.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <Link 
+                    key={item.id || idx} 
+                    href={item.link}
+                    className="flex flex-col items-center group active:scale-90 transition-transform"
+                  >
+                    <div className={`w-12 h-12 rounded-2xl ${item.bg} ${item.text} flex items-center justify-center shadow-xs mb-1.5 transition-shadow`}>
+                      <Icon size={22} strokeWidth={2.2} />
+                    </div>
+                    <span className="text-[11px] font-bold text-gray-700 leading-tight">
+                      {item.name}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Mobile Value Chips Row */}
@@ -331,97 +337,162 @@ export default function Home() {
         </div>
 
         {/* Flash Sale / Paling Laris Horizontal Touch Rail */}
-        <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-2xs">
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
-                <Flame size={13} />
-              </span>
-              <h3 className="font-extrabold text-xs text-[#1E1B4B]">
-                Paling Laris di Padang
-              </h3>
+        {loading ? (
+          <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-2xs">
+            <div className="w-32 h-4 bg-gray-200 rounded animate-pulse mb-3" />
+            <div className="flex gap-2.5 overflow-hidden">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="min-w-[130px] w-[130px] bg-slate-50 rounded-xl p-2 border border-gray-100 animate-pulse space-y-2">
+                  <div className="aspect-square bg-gray-200 rounded-lg" />
+                  <div className="h-2.5 bg-gray-200 rounded w-3/4" />
+                  <div className="h-3 bg-gray-200 rounded w-1/2" />
+                </div>
+              ))}
             </div>
-            <Link href="/produk" className="text-[10px] font-bold text-[#F97316] flex items-center gap-0.5">
-              Lihat Semua <ArrowRight size={10} />
-            </Link>
           </div>
-
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar scroll-smooth snap-x pb-1">
-            {flashSaleProducts.map((prod) => (
-              <div 
-                key={prod.id} 
-                className="min-w-[130px] w-[130px] snap-start bg-slate-50/80 rounded-xl p-2 border border-gray-100 flex flex-col justify-between shrink-0"
-              >
-                <Link href={`/produk/${prod.id}`} className="block">
-                  <div className="relative aspect-square rounded-lg bg-gray-200 overflow-hidden mb-1.5">
-                    <Image
-                      src={prod.img}
-                      alt={prod.title}
-                      fill
-                      sizes="130px"
-                      className="object-cover"
-                    />
-                    <span className="absolute top-1 left-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.2 rounded">
-                      -25%
-                    </span>
-                  </div>
-                  <h4 className="text-[11px] font-medium text-gray-800 line-clamp-1 leading-tight mb-1">
-                    {prod.title}
-                  </h4>
-                  <div className="font-bold text-xs text-[#F97316]">
-                    {prod.price}
-                  </div>
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={(e) => handleQuickAdd(prod, e)}
-                  className={`mt-1.5 w-full py-1 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 ${
-                    addedId === prod.id 
-                      ? "bg-green-600 text-white" 
-                      : "bg-orange-100 text-[#F97316] hover:bg-[#F97316] hover:text-white"
-                  }`}
-                >
-                  {addedId === prod.id ? <Check size={11} /> : <Plus size={11} />}
-                  <span>{addedId === prod.id ? "Masuk" : "+ Keranjang"}</span>
-                </button>
+        ) : flashSaleProducts.length > 0 ? (
+          <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-2xs">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                  <Flame size={13} />
+                </span>
+                <h3 className="font-extrabold text-xs text-[#1E1B4B]">
+                  Paling Laris di Padang
+                </h3>
               </div>
-            ))}
+              <Link href="/produk" className="text-[10px] font-bold text-[#F97316] flex items-center gap-0.5">
+                Lihat Semua <ArrowRight size={10} />
+              </Link>
+            </div>
+
+            <div className="flex gap-2.5 overflow-x-auto no-scrollbar scroll-smooth snap-x pb-1">
+              {flashSaleProducts.map((prod) => {
+                const hasDiscount = prod.compareAtPrice && prod.priceNumber && prod.compareAtPrice > prod.priceNumber;
+                const discountPercent = hasDiscount
+                  ? Math.round(((prod.compareAtPrice - prod.priceNumber) / prod.compareAtPrice) * 100)
+                  : null;
+
+                return (
+                  <div 
+                    key={prod.id} 
+                    className="min-w-[130px] w-[130px] snap-start bg-slate-50/80 rounded-xl p-2 border border-gray-100 flex flex-col justify-between shrink-0"
+                  >
+                    <Link href={`/produk/${prod.id}`} className="block">
+                      <div className="relative aspect-square rounded-lg bg-gray-200 overflow-hidden mb-1.5">
+                        <Image
+                          src={prod.imageUrl || prod.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop"}
+                          alt={prod.title || prod.name || "Produk"}
+                          fill
+                          sizes="130px"
+                          unoptimized={Boolean((prod.imageUrl || prod.img)?.startsWith("data:"))}
+                          className="object-cover"
+                        />
+                        {discountPercent && discountPercent > 0 && (
+                          <span className="absolute top-1 left-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-2xs">
+                            -{discountPercent}%
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-[11px] font-medium text-gray-800 line-clamp-1 leading-tight mb-1">
+                        {prod.title || prod.name}
+                      </h4>
+                      <div className="font-bold text-xs text-[#F97316]">
+                        {prod.price || `Rp ${(prod.priceNumber || 0).toLocaleString("id-ID")}`}
+                      </div>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleQuickAdd(prod, e)}
+                      className={`mt-1.5 w-full py-1 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 ${
+                        addedId === prod.id 
+                          ? "bg-green-600 text-white" 
+                          : "bg-orange-100 text-[#F97316] hover:bg-[#F97316] hover:text-white"
+                      }`}
+                    >
+                      {addedId === prod.id ? <Check size={11} /> : <Plus size={11} />}
+                      <span>{addedId === prod.id ? "Masuk" : "Keranjang"}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {/* Feed Rekomendasi Produk (2-Column Mobile Grid) */}
         <div>
-          <div className="flex items-center justify-between mb-3 px-1">
-            <h3 className="font-extrabold text-sm text-[#1E1B4B]">
-              Rekomendasi Pilihan
-            </h3>
-            <span className="text-[10px] text-gray-400">
-              {topSellingProducts.length} Produk Populer
-            </span>
-          </div>
+          {loading ? (
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <div className="w-32 h-4 bg-gray-200 rounded animate-pulse" />
+                <div className="w-16 h-3 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {[1, 2, 3, 4].map((n) => (
+                  <div key={n} className="bg-white rounded-2xl p-2.5 border border-gray-100 animate-pulse space-y-2">
+                    <div className="aspect-square bg-gray-200 rounded-xl" />
+                    <div className="h-3 bg-gray-200 rounded w-2/3" />
+                    <div className="h-4 bg-gray-200 rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : recommendedList.length === 0 ? (
+            <div className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-2xs space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F97316] flex items-center justify-center mx-auto">
+                <Package size={24} />
+              </div>
+              <h4 className="font-extrabold text-sm text-[#1E1B4B]">Katalog Belum Memiliki Produk</h4>
+              <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
+                Produk sedang disusun oleh tim kami. Silakan hubungi CS kami via WhatsApp untuk konsultasi dan pemesanan custom.
+              </p>
+              <a
+                href="https://wa.me/6281234567890?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20cetak"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 mt-2 px-4 py-2 bg-[#25D366] text-white rounded-xl text-xs font-bold active:scale-95 transition-transform"
+              >
+                <MessageCircle size={14} /> Hubungi WhatsApp
+              </a>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="font-extrabold text-sm text-[#1E1B4B]">
+                  Rekomendasi Pilihan
+                </h3>
+                <span className="text-[10px] text-gray-400">
+                  {recommendedList.length} Produk Populer
+                </span>
+              </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            {topSellingProducts.map((item) => (
-              <QuickProductCard
-                key={item.id}
-                product={item}
-                onOpenDetail={(p) => {
-                  setSheetProduct(p);
-                  setIsSheetOpen(true);
-                }}
-              />
-            ))}
-          </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {recommendedList.map((item) => (
+                  <QuickProductCard
+                    key={item.id}
+                    product={item}
+                    onOpenDetail={(p) => {
+                      setSheetProduct(p);
+                      setIsSheetOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
 
-          <div className="pt-4 text-center">
-            <Link
-              href="/produk"
-              className="inline-flex items-center justify-center gap-1.5 w-full py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold text-[#1E1B4B] shadow-2xs active:scale-98 transition-transform"
-            >
-              Lihat Seluruh 89+ Produk Katalog <ArrowRight size={14} />
-            </Link>
-          </div>
+              <div className="pt-4 text-center">
+                <Link
+                  href="/produk"
+                  className="inline-flex items-center justify-center gap-1.5 w-full py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold text-[#1E1B4B] shadow-2xs active:scale-98 transition-transform"
+                >
+                  {productList.length > 0 
+                    ? `Lihat Seluruh ${productList.length} Produk Katalog` 
+                    : "Kunjungi Seluruh Katalog"} <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
@@ -584,49 +655,51 @@ export default function Home() {
         )}
 
         {/* CATEGORIES GRID SHOWCASE */}
-        <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-            <div>
-              <div className="inline-block bg-orange-100 text-[#F97316] font-bold text-[10px] tracking-widest uppercase px-3 py-1 rounded-full mb-2">
-                CHECKLIST CETAK & MERCHANDISE
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#1E1B4B]">
-                Solusi Branding Cafe, Resto & Bisnis
-              </h2>
-              <p className="text-gray-500 text-sm mt-1">
-                Pilihan lengkap dari branding outlet, packaging, crew uniform hingga merchandise kustom.
-              </p>
-            </div>
-            <Link href="/produk" className="text-[#F97316] font-semibold text-sm hover:underline flex items-center gap-1">
-              Buka Katalog Lengkap ({productList.length} Produk) <ArrowRight size={16} />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {displayCategories.map((cat, idx) => (
-              <Link
-                key={cat.id || idx}
-                href={cat.link}
-                className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-orange-300 hover:shadow-lg transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{cat.count}</span>
-                    <div className="w-6 h-6 rounded-full bg-orange-50 text-[#F97316] group-hover:bg-[#F97316] group-hover:text-white flex items-center justify-center transition-colors">
-                      <ArrowUpRight size={14} />
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-[#1E1B4B] text-base mb-1 group-hover:text-[#F97316] transition-colors">
-                    {cat.title}
-                  </h3>
-                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                    {cat.desc}
-                  </p>
+        {displayCategories.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+              <div>
+                <div className="inline-block bg-orange-100 text-[#F97316] font-bold text-[10px] tracking-widest uppercase px-3 py-1 rounded-full mb-2">
+                  CHECKLIST CETAK & MERCHANDISE
                 </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#1E1B4B]">
+                  Solusi Branding Cafe, Resto & Bisnis
+                </h2>
+                <p className="text-gray-500 text-sm mt-1">
+                  Pilihan lengkap dari branding outlet, packaging, crew uniform hingga merchandise kustom.
+                </p>
+              </div>
+              <Link href="/produk" className="text-[#F97316] font-semibold text-sm hover:underline flex items-center gap-1">
+                Buka Katalog Lengkap ({productList.length} Produk) <ArrowRight size={16} />
               </Link>
-            ))}
-          </div>
-        </section>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {displayCategories.map((cat, idx) => (
+                <Link
+                  key={cat.id || idx}
+                  href={cat.link}
+                  className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-orange-300 hover:shadow-lg transition-all flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{cat.count}</span>
+                      <div className="w-6 h-6 rounded-full bg-orange-50 text-[#F97316] group-hover:bg-[#F97316] group-hover:text-white flex items-center justify-center transition-colors">
+                        <ArrowUpRight size={14} />
+                      </div>
+                    </div>
+                    <h3 className="font-bold text-[#1E1B4B] text-base mb-1 group-hover:text-[#F97316] transition-colors">
+                      {cat.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                      {cat.desc}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* TOP SELLING PRODUCTS */}
         <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16">
@@ -642,18 +715,48 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {topSellingProducts.slice(0, 8).map((item) => (
-              <QuickProductCard
-                key={item.id}
-                product={item}
-                onOpenDetail={(p) => {
-                  setSheetProduct(p);
-                  setIsSheetOpen(true);
-                }}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="bg-white rounded-3xl p-4 border border-gray-100 animate-pulse space-y-3">
+                  <div className="aspect-square bg-gray-100 rounded-2xl" />
+                  <div className="h-4 bg-gray-100 rounded w-2/3" />
+                  <div className="h-4 bg-gray-100 rounded w-1/3" />
+                </div>
+              ))}
+            </div>
+          ) : recommendedList.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              {recommendedList.slice(0, 8).map((item) => (
+                <QuickProductCard
+                  key={item.id}
+                  product={item}
+                  onOpenDetail={(p) => {
+                    setSheetProduct(p);
+                    setIsSheetOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl p-10 text-center border border-gray-100 max-w-lg mx-auto">
+              <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-[#F97316] mx-auto mb-3">
+                <Package size={28} />
+              </div>
+              <h3 className="font-extrabold text-[#1E1B4B] text-base mb-1">Katalog Sedang Disusun</h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Produk cetak sedang dalam proses penataan oleh admin Cetak.inc. Hubungi kami langsung jika Anda membutuhkan cetakan kilat.
+              </p>
+              <a
+                href="https://wa.me/6281234567890?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20cetak"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#25D366] text-white font-bold rounded-xl text-xs hover:bg-green-600 transition-colors"
+              >
+                <MessageCircle size={16} /> Konsultasi via WhatsApp
+              </a>
+            </div>
+          )}
         </section>
 
         {/* B2B PARTNERSHIP */}

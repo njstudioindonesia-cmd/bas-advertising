@@ -5,22 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, Check, X, Star, TrendingUp, Sparkles, Filter, Zap } from "lucide-react";
+import { Search, Plus, Check, X, Star, TrendingUp, Sparkles, Filter, Zap, MessageCircle } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import QuickProductCard from "@/components/QuickProductCard";
 import ProductBottomSheet from "@/components/ProductBottomSheet";
 
-const DEFAULT_CATEGORIES = [
-  "Semua",
-  "Branding Outlet",
-  "Branding Meja",
-  "Packaging",
-  "Crew",
-  "Marketing",
-  "Barang Cetak Pendukung",
-  "Merchandise",
-  "Outdoor & Signage"
-];
+const DEFAULT_CATEGORIES = ["Semua"];
 
 function CatalogContent() {
   const searchParams = useSearchParams();
@@ -96,29 +86,37 @@ function CatalogContent() {
 
         {/* 📱 HORIZONTAL TOUCH SWIPEABLE CATEGORY CHIPS */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3.5 px-3.5">
-          {categories.map((cat) => {
-            const count = cat === "Semua" ? productList.length : productList.filter(p => p.category === cat).length;
-            const isSelected = activeCategory === cat;
+          {loading ? (
+            <div className="flex items-center gap-2">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="h-8 w-20 bg-gray-200 rounded-full animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            categories.map((cat) => {
+              const count = cat === "Semua" ? productList.length : productList.filter(p => p.category === cat).length;
+              const isSelected = activeCategory === cat;
 
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shrink-0 active:scale-95 ${
-                  isSelected 
-                    ? "bg-[#1E1B4B] text-white shadow-xs" 
-                    : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200 shadow-2xs"
-                }`}
-              >
-                <span>{cat}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                  isSelected ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"
-                }`}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shrink-0 active:scale-95 ${
+                    isSelected 
+                      ? "bg-[#1E1B4B] text-white shadow-xs" 
+                      : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200 shadow-2xs"
+                  }`}
+                >
+                  <span>{cat}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    isSelected ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -142,7 +140,7 @@ function CatalogContent() {
             <h3 className="font-extrabold text-gray-900 text-base">Katalog Belum Ada Produk</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
               {productList.length === 0
-                ? "Database produk saat ini dalam keadaan bersih. Anda dapat mulai menambahkan produk baru melalui panel admin."
+                ? "Produk sedang dalam proses penataan oleh admin Cetak.inc. Silakan hubungi kami via WhatsApp untuk pemesanan kustom."
                 : "Tidak ada produk yang cocok dengan kata kunci atau filter kategori yang dipilih."}
             </p>
             {productList.length > 0 ? (
@@ -153,12 +151,14 @@ function CatalogContent() {
                 Tampilkan Semua Produk
               </button>
             ) : (
-              <Link
-                href="/urang-dalam-bas-adv"
-                className="btn-primary inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-xl"
+              <a
+                href="https://wa.me/6281234567890?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20pemesanan%20cetak"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-green-600 text-white transition-colors"
               >
-                <Plus size={15} /> Buka Panel Admin Urang Dalam
-              </Link>
+                <MessageCircle size={15} /> Hubungi CS WhatsApp
+              </a>
             )}
           </div>
         ) : (
