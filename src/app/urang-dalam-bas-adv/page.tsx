@@ -43,7 +43,8 @@ import {
   MapPin,
   Navigation,
   Sparkles,
-  Building2
+  Building2,
+  Truck
 } from "lucide-react";
 
 export default function UrangDalamAdminPortal() {
@@ -56,7 +57,7 @@ export default function UrangDalamAdminPortal() {
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "products" | "categories" | "banners" | "portfolio" | "settings" | "orders" | "hubs" | "backup" | "account"
+    "dashboard" | "products" | "categories" | "banners" | "portfolio" | "settings" | "orders" | "hubs" | "tariffs" | "backup" | "account"
   >("dashboard");
 
   // Hubs Management (Fase 2 Blueprint V2)
@@ -78,6 +79,21 @@ export default function UrangDalamAdminPortal() {
     isOpen: true,
     notes: "",
   });
+
+  // Shipping Tariffs Management (Fase 3 Blueprint V2)
+  const [tariffsList, setTariffsList] = useState<any[]>([]);
+  const [editingTariffHubId, setEditingTariffHubId] = useState<string | null>(null);
+  const [tariffForm, setTariffForm] = useState({
+    baseFee: 8000,
+    perKm: 2500,
+    minFee: 8000,
+    maxKm: 25,
+    freeOver: 300000,
+    isActive: true,
+  });
+  const [savingTariff, setSavingTariff] = useState(false);
+  const [simKm, setSimKm] = useState(4.5);
+  const [simSubtotal, setSimSubtotal] = useState(150000);
 
   // Notifications
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -236,13 +252,14 @@ export default function UrangDalamAdminPortal() {
   const refreshAllData = async () => {
     setLoading(true);
     try {
-      const [pRes, cRes, bRes, sRes, oRes, hRes] = await Promise.all([
+      const [pRes, cRes, bRes, sRes, oRes, hRes, tarRes] = await Promise.all([
         adminFetch("/api/products?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/categories?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/banners?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/settings", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/orders", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/admin/hubs", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ success: false })),
+        adminFetch("/api/admin/tariffs", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ success: false })),
       ]);
 
       if (pRes.success) setProducts(pRes.data);
@@ -256,6 +273,7 @@ export default function UrangDalamAdminPortal() {
       if (sRes.success) setSettings(sRes.data);
       if (oRes.success) setOrders(oRes.data);
       if (hRes && hRes.success) setHubsList(hRes.data);
+      if (tarRes && tarRes.success) setTariffsList(tarRes.data);
     } catch (err: any) {
       showToast("Gagal memuat beberapa data dari server", "error");
     } finally {
@@ -366,6 +384,61 @@ export default function UrangDalamAdminPortal() {
       }
     } catch {
       showToast("Gagal menghubungi server", "error");
+    }
+  };
+
+  // Tariff Actions (Fase 3 Blueprint V2)
+  const handleStartEditTariff = (hubId: string, currentTariff?: any) => {
+    setEditingTariffHubId(hubId);
+    if (currentTariff) {
+      setTariffForm({
+        baseFee: currentTariff.baseFee ?? 8000,
+        perKm: currentTariff.perKm ?? 2500,
+        minFee: currentTariff.minFee ?? 8000,
+        maxKm: currentTariff.maxKm ?? 25,
+        freeOver: currentTariff.freeOver ?? 300000,
+        isActive: currentTariff.isActive ?? true,
+      });
+    } else {
+      setTariffForm({
+        baseFee: 8000,
+        perKm: 2500,
+        minFee: 8000,
+        maxKm: 25,
+        freeOver: 300000,
+        isActive: true,
+      });
+    }
+  };
+
+  const handleSaveTariff = async (hubId: string) => {
+    setSavingTariff(true);
+    try {
+      const res = await adminFetch("/api/admin/tariffs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hubId,
+          baseFee: Number(tariffForm.baseFee),
+          perKm: Number(tariffForm.perKm),
+          minFee: Number(tariffForm.minFee),
+          maxKm: Number(tariffForm.maxKm),
+          freeOver: tariffForm.freeOver ? Number(tariffForm.freeOver) : null,
+          isActive: Boolean(tariffForm.isActive),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("Pengaturan tarif ongkir workshop berhasil disimpan!", "success");
+        setEditingTariffHubId(null);
+        refreshAllData();
+      } else {
+        showToast(data.error || "Gagal menyimpan tarif", "error");
+      }
+    } catch {
+      showToast("Terjadi kesalahan jaringan saat menyimpan tarif", "error");
+    } finally {
+      setSavingTariff(false);
     }
   };
 
@@ -1354,6 +1427,7 @@ export default function UrangDalamAdminPortal() {
           { id: "categories", label: `Kategori (${categories.length})`, icon: Layers },
           { id: "orders", label: `Pesanan (${orders.length})`, icon: ShoppingCart },
           { id: "hubs", label: `Titik Workshop (${hubsList.length || 2})`, icon: Building2 },
+          { id: "tariffs", label: "Tarif & Ongkir", icon: Truck },
           { id: "banners", label: "Banner Promo", icon: ImageIcon },
           { id: "settings", label: "Pengaturan & WA", icon: Settings },
           { id: "backup", label: "Backup & Reset", icon: Database },
@@ -2558,6 +2632,359 @@ export default function UrangDalamAdminPortal() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB: MANAJEMEN TARIF ONGKIR WORKSHOP (FASE 3 BLUEPRINT V2) */}
+        {/* ========================================================= */}
+        {activeTab === "tariffs" && (
+          <div className="space-y-5">
+            {/* Header Banner */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-5 rounded-3xl border border-gray-100 shadow-2xs">
+              <div>
+                <h2 className="font-extrabold text-base text-gray-900 flex items-center gap-2">
+                  <Truck className="text-[#F97316]" size={18} /> Tarif Pengiriman & Ongkos Kirim Workshop
+                </h2>
+                <p className="text-xs text-gray-500 mt-1">
+                  Atur struktur ongkir internal per titik workshop percetakan Kota Padang. Berlaku kalkulasi otomatis jarak jalan (OSRM / Haversine fallback) dengan pembulatan kelipatan Rp 500 ala Gojek/Astro.
+                </p>
+              </div>
+              <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shrink-0">
+                <CheckCircle2 size={14} /> Engine Routing Aktif
+              </div>
+            </div>
+
+            {/* Live Ongkir Simulator Widget */}
+            <div className="bg-gradient-to-br from-[#0B1E36] to-[#122b4c] text-white p-5 rounded-3xl shadow-md border border-white/10 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#F97316]/20 text-[#F97316] flex items-center justify-center font-bold">
+                    <SlidersHorizontal size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm">Simulator Kalkulasi Ongkir Cepat</h3>
+                    <p className="text-[11px] text-gray-300">Uji coba perhitungan ongkir pelanggan secara langsung berdasarkan jarak & nilai belanja</p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-mono bg-white/10 px-2.5 py-1 rounded-lg text-orange-300">
+                  Formula: Base + (Jarak × PerKm)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <div>
+                  <label className="text-[11px] text-gray-300 block mb-1">Simulasi Jarak Antar (km):</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    max="40"
+                    value={simKm}
+                    onChange={(e) => setSimKm(parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:border-[#F97316]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-gray-300 block mb-1">Nilai Belanja Cetak (Rp):</label>
+                  <input
+                    type="number"
+                    step="10000"
+                    min="0"
+                    value={simSubtotal}
+                    onChange={(e) => setSimSubtotal(parseInt(e.target.value) || 0)}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:border-[#F97316]"
+                  />
+                </div>
+
+                {/* Hasil Kalkulasi Hub Pusat */}
+                {(() => {
+                  const tPusat = tariffsList.find(t => t.hubId === "00000000-0000-0000-0000-000000000001") || {
+                    baseFee: 8000, perKm: 2500, minFee: 8000, maxKm: 25, freeOver: 300000, isActive: true
+                  };
+                  const isFree = tPusat.freeOver && simSubtotal >= tPusat.freeOver;
+                  let raw = tPusat.baseFee + (simKm * tPusat.perKm);
+                  let rounded = Math.ceil(raw / 500) * 500;
+                  let finalFee = isFree ? 0 : Math.max(tPusat.minFee, rounded);
+
+                  return (
+                    <div className="bg-white/10 rounded-2xl p-3 border border-white/10">
+                      <div className="text-[10px] text-gray-300 uppercase font-bold tracking-wider">Hub Padang Pusat</div>
+                      <div className="text-lg font-extrabold text-[#F97316] mt-0.5">
+                        {simKm > tPusat.maxKm ? (
+                          <span className="text-red-400 text-xs">Di luar radius ({tPusat.maxKm}km)</span>
+                        ) : isFree ? (
+                          <span>GRATIS <span className="line-through text-gray-400 text-xs">Rp {rounded.toLocaleString("id-ID")}</span></span>
+                        ) : (
+                          `Rp ${finalFee.toLocaleString("id-ID")}`
+                        )}
+                      </div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">
+                        {isFree ? "Promo free shipping terpenuhi" : `Rp ${tPusat.baseFee} + (${simKm}km × ${tPusat.perKm})`}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Hasil Kalkulasi Hub Lubuk Buaya */}
+                {(() => {
+                  const tLb = tariffsList.find(t => t.hubId === "00000000-0000-0000-0000-000000000002") || {
+                    baseFee: 8000, perKm: 2500, minFee: 8000, maxKm: 20, freeOver: 300000, isActive: true
+                  };
+                  const isFree = tLb.freeOver && simSubtotal >= tLb.freeOver;
+                  let raw = tLb.baseFee + (simKm * tLb.perKm);
+                  let rounded = Math.ceil(raw / 500) * 500;
+                  let finalFee = isFree ? 0 : Math.max(tLb.minFee, rounded);
+
+                  return (
+                    <div className="bg-white/10 rounded-2xl p-3 border border-white/10">
+                      <div className="text-[10px] text-gray-300 uppercase font-bold tracking-wider">Hub Lubuk Buaya</div>
+                      <div className="text-lg font-extrabold text-[#F97316] mt-0.5">
+                        {simKm > tLb.maxKm ? (
+                          <span className="text-red-400 text-xs">Di luar radius ({tLb.maxKm}km)</span>
+                        ) : isFree ? (
+                          <span>GRATIS <span className="line-through text-gray-400 text-xs">Rp {rounded.toLocaleString("id-ID")}</span></span>
+                        ) : (
+                          `Rp ${finalFee.toLocaleString("id-ID")}`
+                        )}
+                      </div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">
+                        {isFree ? "Promo free shipping terpenuhi" : `Rp ${tLb.baseFee} + (${simKm}km × ${tLb.perKm})`}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* List of Hub Tariffs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(hubsList.length > 0 ? hubsList : [
+                {
+                  id: "00000000-0000-0000-0000-000000000001",
+                  name: "Hub Pusat BAS Advertising Padang",
+                  slug: "hub-padang-pusat",
+                  address: "Jl. Belanti Baru No. 17, Lolong Belanti, Padang Utara",
+                },
+                {
+                  id: "00000000-0000-0000-0000-000000000002",
+                  name: "Hub Lubuk Buaya (Workshop Cabang)",
+                  slug: "hub-lubuk-buaya",
+                  address: "Jl. Adinegoro No. 88, Lubuk Buaya, Koto Tangah",
+                },
+              ]).map((hub) => {
+                const tariff = tariffsList.find((t) => t.hubId === hub.id) || {
+                  hubId: hub.id,
+                  baseFee: 8000,
+                  perKm: 2500,
+                  minFee: 8000,
+                  maxKm: hub.slug?.includes("lubuk") ? 20 : 25,
+                  freeOver: 300000,
+                  isActive: true,
+                };
+                const isEditing = editingTariffHubId === hub.id;
+
+                return (
+                  <div
+                    key={hub.id}
+                    className="bg-white rounded-3xl p-5 border border-gray-100 shadow-2xs flex flex-col justify-between gap-4"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-10 h-10 rounded-2xl bg-orange-50 text-[#F97316] flex items-center justify-center font-bold">
+                            <Truck size={20} />
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-sm text-gray-900">{hub.name}</h3>
+                            <p className="text-[11px] text-gray-400">{hub.address}</p>
+                          </div>
+                        </div>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                            tariff.isActive
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                              : "bg-gray-100 text-gray-500 border-gray-200"
+                          }`}
+                        >
+                          {tariff.isActive ? "TARIF AKTIF" : "NONAKTIF"}
+                        </span>
+                      </div>
+
+                      {isEditing ? (
+                        <div className="pt-4 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                                Tarif Dasar (Base Fee):
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-2 text-xs text-gray-400">Rp</span>
+                                <input
+                                  type="number"
+                                  value={tariffForm.baseFee}
+                                  onChange={(e) => setTariffForm({ ...tariffForm, baseFee: parseInt(e.target.value) || 0 })}
+                                  className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#F97316]"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                                Biaya Tambahan Per Km:
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-2 text-xs text-gray-400">Rp</span>
+                                <input
+                                  type="number"
+                                  value={tariffForm.perKm}
+                                  onChange={(e) => setTariffForm({ ...tariffForm, perKm: parseInt(e.target.value) || 0 })}
+                                  className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#F97316]"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                                Tarif Minimum (Min Fee):
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-2 text-xs text-gray-400">Rp</span>
+                                <input
+                                  type="number"
+                                  value={tariffForm.minFee}
+                                  onChange={(e) => setTariffForm({ ...tariffForm, minFee: parseInt(e.target.value) || 0 })}
+                                  className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#F97316]"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                                Radius Maksimal (km):
+                              </label>
+                              <input
+                                type="number"
+                                value={tariffForm.maxKm}
+                                onChange={(e) => setTariffForm({ ...tariffForm, maxKm: parseInt(e.target.value) || 0 })}
+                                className="w-full px-3 py-1.5 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#F97316]"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                              Minimal Belanja Gratis Ongkir (Rp):
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-2 text-xs text-gray-400">Rp</span>
+                              <input
+                                type="number"
+                                value={tariffForm.freeOver ?? 0}
+                                onChange={(e) => setTariffForm({ ...tariffForm, freeOver: parseInt(e.target.value) || 0 })}
+                                placeholder="Kosongkan jika tidak ada promo"
+                                className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#F97316]"
+                              />
+                            </div>
+                            <span className="text-[10px] text-gray-400 mt-0.5 block">
+                              Pesanan di atas nilai ini mendapat ongkir Rp 0.
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-1">
+                            <input
+                              type="checkbox"
+                              id={`active-${hub.id}`}
+                              checked={tariffForm.isActive}
+                              onChange={(e) => setTariffForm({ ...tariffForm, isActive: e.target.checked })}
+                              className="rounded text-[#F97316] focus:ring-[#F97316]"
+                            />
+                            <label htmlFor={`active-${hub.id}`} className="text-xs text-gray-700 font-medium">
+                              Aktifkan tarif pengiriman untuk workshop ini
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-3 space-y-2">
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
+                              <span className="text-[10px] text-gray-400 block font-semibold">TARIF DASAR</span>
+                              <span className="font-extrabold text-gray-900 text-sm">
+                                Rp {tariff.baseFee.toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                            <div className="bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
+                              <span className="text-[10px] text-gray-400 block font-semibold">PER KILOMETER</span>
+                              <span className="font-extrabold text-[#F97316] text-sm">
+                                Rp {tariff.perKm.toLocaleString("id-ID")}/km
+                              </span>
+                            </div>
+                            <div className="bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
+                              <span className="text-[10px] text-gray-400 block font-semibold">TARIF MINIMUM</span>
+                              <span className="font-extrabold text-gray-900 text-sm">
+                                Rp {tariff.minFee.toLocaleString("id-ID")}
+                              </span>
+                            </div>
+                            <div className="bg-gray-50 p-2.5 rounded-2xl border border-gray-100">
+                              <span className="text-[10px] text-gray-400 block font-semibold">MAX RADIUS</span>
+                              <span className="font-extrabold text-gray-900 text-sm">
+                                {tariff.maxKm} km
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="bg-orange-50/70 p-3 rounded-2xl border border-orange-100 flex items-center justify-between text-xs">
+                            <div>
+                              <span className="text-[10px] text-orange-600 font-bold block uppercase tracking-wider">
+                                Promo Gratis Ongkir
+                              </span>
+                              <span className="font-extrabold text-gray-900">
+                                {tariff.freeOver
+                                  ? `Belanja ≥ Rp ${Number(tariff.freeOver).toLocaleString("id-ID")}`
+                                  : "Tidak Ada Promo"}
+                              </span>
+                            </div>
+                            <Sparkles size={16} className="text-[#F97316]" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-100">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveTariff(hub.id)}
+                            disabled={savingTariff}
+                            className="flex-1 py-2 px-3 bg-[#F97316] hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center justify-center gap-1.5"
+                          >
+                            {savingTariff ? <RefreshCw size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                            Simpan Perubahan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingTariffHubId(null)}
+                            disabled={savingTariff}
+                            className="py-2 px-3 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-xs font-bold transition-colors"
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditTariff(hub.id, tariff)}
+                          className="w-full py-2 px-3 border border-gray-200 hover:border-[#F97316] text-gray-700 hover:text-[#F97316] rounded-xl text-xs font-bold transition-colors inline-flex items-center justify-center gap-1.5"
+                        >
+                          <SlidersHorizontal size={13} /> Ubah Pengaturan Tarif
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
