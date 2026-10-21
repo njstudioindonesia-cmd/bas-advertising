@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   Trash2, 
   Plus, 
@@ -42,6 +43,7 @@ export default function KeranjangPage() {
   const [orderNotes, setOrderNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const router = useRouter();
 
   // Settings from backend
   const [settings, setSettings] = useState<Record<string, any>>({
@@ -132,8 +134,9 @@ export default function KeranjangPage() {
       }).join("\n");
 
       // 4. Susun pesan dari template
+      const trackingUrl = `https://bas-advertising-nj-studio1.vercel.app/lacak?code=${encodeURIComponent(orderCode)}`;
       const template = settings["checkout.waTemplate"] || "";
-      const message = template
+      const baseMessage = template
         .replace("{code}", orderCode)
         .replace("{nama}", customerName.trim())
         .replace("{phone}", customerPhone.trim())
@@ -144,6 +147,8 @@ export default function KeranjangPage() {
         .replace("{items}", itemsText)
         .replace("{total}", finalTotal);
 
+      const message = `${baseMessage}\n\n📍 *Lacak Status Pengerjaan (Peta Live):*\n${trackingUrl}`;
+
       // Dapatkan nomor WA dari database settings
       let targetWa = String(settings["contact.whatsapp"] || "6281234567890").replace(/[^0-9]/g, "");
       if (targetWa.startsWith("0")) targetWa = "62" + targetWa.slice(1);
@@ -153,6 +158,7 @@ export default function KeranjangPage() {
 
       clearCart();
       window.open(waUrl, "_blank");
+      router.push(`/lacak?code=${encodeURIComponent(orderCode)}`);
     } catch (err: any) {
       setErrorMessage(err.message || "Gagal memproses pesanan. Silakan coba kembali.");
     } finally {

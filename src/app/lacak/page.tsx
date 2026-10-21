@@ -20,6 +20,7 @@ import {
   Sparkles,
   Bike
 } from "lucide-react";
+import LiveOrderTrackingMap from "@/components/LiveOrderTrackingMap";
 
 function TrackOrderContent() {
   const searchParams = useSearchParams();
@@ -218,6 +219,9 @@ function TrackOrderContent() {
                   <span>{order.statusDesc}</span>
                 </div>
               </div>
+
+              {/* 🗺️ LIVE GOOGLE MAPS TRACKING ALA GOJEK / ASTRO */}
+              <LiveOrderTrackingMap order={order} />
 
               {/* RINCIAN PRODUK YANG DIPESAN */}
               <div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, Check, Link2, FileText, Sparkles, ShieldCheck, Zap } from "lucide-react";
+import { X, Plus, Minus, Check, Link2, FileText, Sparkles, ShieldCheck, Zap, Calculator, Ruler } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
 interface ProductBottomSheetProps {
@@ -21,24 +21,58 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
   const [notes, setNotes] = useState("");
   const [added, setAdded] = useState(false);
 
+  // State Kalkulator Ukuran Kustom (Panjang x Lebar) untuk Spanduk & Banner
+  const isMeterProduct = Boolean(
+    product &&
+    (
+      (product.unit && product.unit.toLowerCase().includes("meter")) ||
+      (product.category && /spanduk|banner|baliho|outdoor|backdrop/i.test(product.category)) ||
+      (product.name && /spanduk|banner|baliho|backdrop/i.test(product.name))
+    )
+  );
+
+  const [panjang, setPanjang] = useState<number>(2);
+  const [lebar, setLebar] = useState<number>(1);
+  const [selectedPreset, setSelectedPreset] = useState<string>("2x1");
+
   useEffect(() => {
     if (product) {
       setQuantity(1);
       setSelectedBahan("Standar");
-      setSelectedFinishing("Standar");
+      setSelectedFinishing(isMeterProduct ? "Mata Ayam Tiap Sudut" : "Standar");
       setFileUrl("");
       setNotes("");
       setAdded(false);
+      setPanjang(2);
+      setLebar(1);
+      setSelectedPreset("2x1");
     }
-  }, [product]);
+  }, [product, isMeterProduct]);
 
   if (!isOpen || !product) return null;
 
+  // Hitung Luas & Harga
   const basePrice = Number(product.priceNumber) || 0;
-  const totalPrice = basePrice * quantity;
+  
+  // Aturan percetakan: luas dihitung P x L, minimal dihitung 1 m²
+  const rawLuas = isMeterProduct ? panjang * lebar : 1;
+  const luas = isMeterProduct ? Math.max(1, Math.round(rawLuas * 100) / 100) : 1;
+  const unitPrice = isMeterProduct ? Math.round(basePrice * luas) : basePrice;
+  const totalPrice = unitPrice * quantity;
+
+  const handlePresetClick = (p: number, l: number, label: string) => {
+    setPanjang(p);
+    setLebar(l);
+    setSelectedPreset(label);
+  };
 
   const handleAdd = () => {
+    const dimensionNote = isMeterProduct 
+      ? `Ukuran: ${panjang}m x ${lebar}m (${luas} m²)` 
+      : null;
+
     const fullNotes = [
+      dimensionNote,
       selectedBahan !== "Standar" ? `Bahan: ${selectedBahan}` : null,
       selectedFinishing !== "Standar" ? `Finishing: ${selectedFinishing}` : null,
       fileUrl ? `File Cetak: ${fileUrl}` : null,
@@ -47,13 +81,50 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
       .filter(Boolean)
       .join(" | ");
 
-    addToCart(product, quantity, fullNotes, false);
+    // Custom product payload dengan harga per unit yang sudah dikalikan luas m²
+    const customizedProduct = isMeterProduct
+      ? {
+          ...product,
+          price: formatRupiah(unitPrice),
+          priceNumber: unitPrice,
+          unit: `/ ${panjang}x${lebar}m`,
+        }
+      : product;
+
+    addToCart(customizedProduct, quantity, fullNotes, false);
     setAdded(true);
     setTimeout(() => {
       setAdded(false);
       onClose();
     }, 600);
   };
+
+  const FINISHING_OPTIONS = isMeterProduct
+    ? [
+        "Mata Ayam Tiap Sudut",
+        "Mata Ayam Keliling",
+        "Selongsong Atas-Bawah",
+        "Lipat Lem Rapi",
+        "Potong Pas Gambar",
+      ]
+    : [
+        "Standar",
+        "Die-Cut (Putus)",
+        "Laminasi Doff",
+        "Laminasi Glossy",
+      ];
+
+  const BAHAN_OPTIONS = isMeterProduct
+    ? [
+        "Flexi China 280g (Standar)",
+        "Flexi Korea 380g (Tebal)",
+        "Flexi Jerman 440g (Super Awet)",
+      ]
+    : [
+        "Standar",
+        "Premium Vinyl",
+        "Waterproof Extra",
+      ];
 
   return (
     <AnimatePresence>
@@ -79,7 +150,8 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
           <div className="pt-3 pb-2 px-5 flex flex-col items-center border-b border-gray-100">
             <div className="w-12 h-1.5 bg-gray-300 rounded-full mb-3 sm:hidden" />
             <div className="w-full flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#F97316] bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200/60">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#F97316] bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200/60 flex items-center gap-1">
+                <Sparkles size={11} className="text-[#F97316]" />
                 {product.category || "Cetak.inc"}
               </span>
               <button
@@ -111,25 +183,113 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
                 </h3>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="font-black text-lg text-[#F97316]">
-                    {product.price}
+                    {formatRupiah(unitPrice)}
                   </span>
                   <span className="text-xs text-gray-400 font-medium">
-                    {product.unit || "/ pcs"}
+                    {isMeterProduct ? `(${luas} m²)` : (product.unit || "/ pcs")}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 line-clamp-2 mt-1 leading-relaxed">
-                  {product.description || product.desc}
+                  {product.description || product.desc || "Solusi cetak cepat dan berkualitas Cetak.inc Padang."}
                 </p>
               </div>
             </div>
 
-            {/* PILIHAN BAHAN / VARIAN ALA ASTRO */}
+            {/* 📐 KALKULATOR UKURAN SPANDUK & STIKER METERAN */}
+            {isMeterProduct && (
+              <div className="bg-orange-50/70 p-4 rounded-2xl border border-orange-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-orange-950 flex items-center gap-1.5">
+                    <Calculator size={14} className="text-[#F97316]" />
+                    Kalkulator Ukuran Cetak
+                  </span>
+                  <span className="text-[11px] font-extrabold text-[#F97316] bg-white px-2 py-0.5 rounded-md shadow-2xs border border-orange-200">
+                    Luas: {luas} m²
+                  </span>
+                </div>
+
+                {/* Preset Ukuran Populer */}
+                <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                  {[
+                    { p: 1, l: 1, label: "1x1m" },
+                    { p: 2, l: 1, label: "2x1m" },
+                    { p: 3, l: 1, label: "3x1m" },
+                    { p: 3, l: 2, label: "3x2m" },
+                    { p: 4, l: 1, label: "4x1m" },
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => handlePresetClick(preset.p, preset.l, preset.label)}
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 ${
+                        selectedPreset === preset.label
+                          ? "bg-[#F97316] text-white border-[#F97316] shadow-xs"
+                          : "bg-white text-gray-700 border-orange-200/80 hover:bg-orange-100/50"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Input Manual Panjang x Lebar */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-700 block mb-1">
+                      Panjang (meter)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.5"
+                        max="50"
+                        value={panjang}
+                        onChange={(e) => {
+                          setPanjang(parseFloat(e.target.value) || 1);
+                          setSelectedPreset("custom");
+                        }}
+                        className="w-full bg-white border border-orange-200 rounded-xl px-3 py-2 text-xs font-black text-gray-900 focus:outline-none focus:border-[#F97316]"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">m</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-700 block mb-1">
+                      Lebar (meter)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.5"
+                        max="5"
+                        value={lebar}
+                        onChange={(e) => {
+                          setLebar(parseFloat(e.target.value) || 1);
+                          setSelectedPreset("custom");
+                        }}
+                        className="w-full bg-white border border-orange-200 rounded-xl px-3 py-2 text-xs font-black text-gray-900 focus:outline-none focus:border-[#F97316]"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">m</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-gray-500 leading-tight">
+                  *Rumus: {panjang}m × {lebar}m = {rawLuas.toFixed(2)} m² (dihitung {luas} m²).
+                </p>
+              </div>
+            )}
+
+            {/* PILIHAN BAHAN / VARIAN */}
             <div>
               <label className="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">
                 Pilihan Bahan
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {["Standar", "Premium Vinyl", "Waterproof Extra"].map((bahan) => (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {BAHAN_OPTIONS.map((bahan) => (
                   <button
                     key={bahan}
                     type="button"
@@ -151,13 +311,13 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
               <label className="block text-xs font-black uppercase tracking-wider text-gray-700 mb-2">
                 Opsi Potong & Finishing
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {["Standar", "Die-Cut (Putus)", "Laminasi Doff"].map((fin) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {FINISHING_OPTIONS.map((fin) => (
                   <button
                     key={fin}
                     type="button"
                     onClick={() => setSelectedFinishing(fin)}
-                    className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition-all text-center ${
+                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all text-center leading-tight ${
                       selectedFinishing === fin
                         ? "bg-orange-50 border-[#F97316] text-[#F97316] shadow-xs"
                         : "bg-gray-50/60 border-gray-200 text-gray-600 hover:border-gray-300"
@@ -197,7 +357,7 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Contoh: Tolong potong rounded corner 5mm, warna tajam..."
+                placeholder="Contoh: Mata ayam tiap sudut 4 titik, warna tajam kontras..."
                 className="w-full text-xs p-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:outline-none focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] transition-all resize-none"
               />
             </div>

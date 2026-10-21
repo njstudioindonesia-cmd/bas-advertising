@@ -18,7 +18,8 @@ import {
   CreditCard,
   Building2,
   QrCode,
-  Loader2
+  Loader2,
+  Navigation
 } from "lucide-react";
 import { useCart, parsePriceToNumber } from "@/context/CartContext";
 
@@ -44,6 +45,7 @@ export default function CartDrawer() {
   const [paymentMethod, setPaymentMethod] = useState("QRIS");
   const [orderNotes, setOrderNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastOrderCode, setLastOrderCode] = useState("");
 
   const [settings, setSettings] = useState<Record<string, any>>({
     "contact.whatsapp": "6281234567890",
@@ -118,6 +120,8 @@ export default function CartDrawer() {
         console.warn("Simpan order DB offline, lanjut via WA:", err);
       }
 
+      setLastOrderCode(orderCode);
+
       // 3. Susun rincian item teks
       const itemsText = cart.map((item, idx) => {
         const itemPrice = parsePriceToNumber(item.product.price);
@@ -126,8 +130,9 @@ export default function CartDrawer() {
       }).join("\n");
 
       // 4. Susun pesan dari template
+      const trackingUrl = `https://bas-advertising-nj-studio1.vercel.app/lacak?code=${encodeURIComponent(orderCode)}`;
       const template = settings["checkout.waTemplate"] || "";
-      const message = template
+      const baseMessage = template
         .replace("{code}", orderCode)
         .replace("{nama}", customerName.trim())
         .replace("{phone}", customerPhone.trim())
@@ -137,6 +142,8 @@ export default function CartDrawer() {
         .replace("{catatan}", orderNotes.trim() || "-")
         .replace("{items}", itemsText)
         .replace("{total}", finalTotal);
+
+      const message = `${baseMessage}\n\n📍 *Lacak Status Pengerjaan (Peta Live):*\n${trackingUrl}`;
 
       let targetWa = String(settings["contact.whatsapp"] || "6281234567890").replace(/[^0-9]/g, "");
       if (targetWa.startsWith("0")) targetWa = "62" + targetWa.slice(1);
@@ -421,20 +428,43 @@ export default function CartDrawer() {
 
                 {/* STEP 3: SUCCESS */}
                 {step === "success" && (
-                  <div className="py-16 text-center flex flex-col items-center">
-                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                  <div className="py-12 text-center flex flex-col items-center space-y-4">
+                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shadow-xs">
                       <CheckCircle2 size={36} />
                     </div>
-                    <h3 className="font-bold text-[#1E1B4B] text-lg mb-1">Pesanan Dialihkan ke WhatsApp</h3>
-                    <p className="text-xs text-gray-500 max-w-xs mb-6">
-                      Rincian pesanan resmi Anda telah terbuka di WhatsApp. Silakan tekan tombol kirim di WhatsApp untuk konfirmasi dengan tim Cetak.inc.
-                    </p>
-                    <button
-                      onClick={handleClose}
-                      className="bg-[#0B1E36] hover:bg-black text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-colors"
-                    >
-                      Selesai & Tutup
-                    </button>
+                    <div>
+                      <h3 className="font-extrabold text-[#1E1B4B] text-lg">Pesanan Berhasil Dibuat!</h3>
+                      <p className="text-xs text-gray-500 max-w-xs mt-1">
+                        Rincian pesanan resmi Anda telah terbuka di WhatsApp. Anda juga dapat memantau proses pengerjaan dan rute kurir secara langsung di peta.
+                      </p>
+                    </div>
+
+                    {lastOrderCode && (
+                      <div className="bg-slate-50 border border-gray-200 rounded-2xl p-3 w-full text-center">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Nomor Pesanan Anda</span>
+                        <span className="font-mono font-black text-sm text-[#F97316]">{lastOrderCode}</span>
+                      </div>
+                    )}
+
+                    <div className="w-full space-y-2 pt-2">
+                      {lastOrderCode && (
+                        <Link
+                          href={`/lacak?code=${encodeURIComponent(lastOrderCode)}`}
+                          onClick={handleClose}
+                          className="w-full py-3 bg-[#F97316] hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2"
+                        >
+                          <Navigation size={15} />
+                          <span>Buka Live Tracking di Peta</span>
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleClose}
+                        className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-colors"
+                      >
+                        Selesai & Tutup Keranjang
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
