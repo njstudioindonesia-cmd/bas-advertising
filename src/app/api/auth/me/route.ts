@@ -1,31 +1,27 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/guard";
-import { verifySignedToken, getSessionTokenFromCookies } from "@/lib/auth/session";
+import { getCurrentUser } from "@/modules/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
-    const auth = await requireAdmin(request);
-    if (!auth.authorized) {
+    const user = await getCurrentUser(request);
+
+    if (!user) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
-
-    let token = request.headers.get("authorization")?.replace("Bearer ", "");
-    if (!token) {
-      token = (await getSessionTokenFromCookies()) || undefined;
-    }
-
-    const signedInfo = token ? verifySignedToken(token) : null;
-    const username = signedInfo?.username || "admin";
 
     return NextResponse.json(
       {
         authenticated: true,
         user: {
-          username
-        }
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          fullName: user.fullName || user.username,
+          hubId: user.hubId || null,
+        },
       },
       {
         headers: {

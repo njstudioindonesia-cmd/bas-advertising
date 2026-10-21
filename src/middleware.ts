@@ -9,7 +9,56 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/urang-dalam-bas-adv", request.url), 307);
   }
 
-  // 2. Add security headers
+  // 2. Multi-Role Route Guarding
+  const token =
+    request.cookies.get("cetak_auth_token")?.value ||
+    request.cookies.get("bas_admin_token")?.value;
+
+  let userRole: "customer" | "admin" | "vendor" | "driver" | null = null;
+
+  if (token && typeof token === "string" && token.includes(".")) {
+    try {
+      const [b64] = token.split(".");
+      // Decode URL-safe Base64
+      const binaryStr = atob(b64.replace(/-/g, "+").replace(/_/g, "/"));
+
+      if (binaryStr.includes("|")) {
+        const [, , role, , expiresAtStr] = binaryStr.split("|");
+        const exp = Number(expiresAtStr);
+        if (!Number.isNaN(exp) && Date.now() < exp) {
+          userRole = role as any;
+        }
+      } else if (binaryStr.includes(":")) {
+        const [, , expiresAtStr] = binaryStr.split(":");
+        const exp = Number(expiresAtStr);
+        if (!Number.isNaN(exp) && Date.now() < exp) {
+          userRole = "admin"; // Legacy token diasumsikan admin
+        }
+      }
+    } catch {
+      userRole = null;
+    }
+  }
+
+  // Proteksi Portal Vendor (/vendor/*)
+  if (pathname.startsWith("/vendor") && pathname !== "/vendor/login") {
+    if (!userRole || (userRole !== "vendor" && userRole !== "admin")) {
+      const loginUrl = new URL("/vendor/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // Proteksi Portal Driver (/driver/*)
+  if (pathname.startsWith("/driver") && pathname !== "/driver/login") {
+    if (!userRole || (userRole !== "driver" && userRole !== "admin")) {
+      const loginUrl = new URL("/driver/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // 3. Tambahkan Security Headers standar produksi
   const response = NextResponse.next();
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
@@ -21,6 +70,8 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/((?!_next/static|_next/image|favicon.ico|uploads/).*)",
+    "/vendor/:path*",
+    "/driver/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|uploads/|sw.js|manifest.webmanifest).*)",
   ],
 };

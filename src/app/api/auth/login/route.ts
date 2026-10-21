@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { authenticateAdmin } from "@/lib/auth/session";
+import { authenticate } from "@/modules/auth";
 import { LoginInputSchema } from "@/lib/validators";
 import { checkLoginRateLimit, resetLoginRateLimit } from "@/lib/auth/rate-limit";
 import { logAudit } from "@/lib/db/queries/audit";
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     const { username, password } = parsed.data;
-    const result = await authenticateAdmin(username, password);
+    const result = await authenticate(username, password);
 
     if (!result.success || !result.token) {
       return NextResponse.json(
@@ -46,26 +46,30 @@ export async function POST(request: Request) {
     resetLoginRateLimit(ip);
 
     const cookieStore = await cookies();
-    cookieStore.set("bas_admin_token", result.token, {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "lax" as const,
       path: "/",
       maxAge: 7 * 24 * 60 * 60, // 7 hari
-    });
+    };
+
+    // Set cookie terpadu & cookie legacy untuk kompatibilitas penuh
+    cookieStore.set("cetak_auth_token", result.token, cookieOptions);
+    cookieStore.set("bas_admin_token", result.token, cookieOptions);
 
     logAudit({
-      actor: username,
+      actor: `${result.user?.role || "user"}:${username}`,
       action: "LOGIN",
       entity: "auth",
-      diff: { ip },
+      diff: { ip, role: result.user?.role },
     });
 
     return NextResponse.json({
       success: true,
-      message: "Login berhasil sebagai Urang Dalam BAS ADV",
+      message: `Login berhasil sebagai ${result.user?.fullName || username}`,
       token: result.token,
-      user: { username }
+      user: result.user || { username, role: "admin" },
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || "Terjadi kesalahan server" }, { status: 500 });
