@@ -1,23 +1,38 @@
 import { NextResponse } from "next/server";
-import { getSessionTokenFromCookies, validateSession } from "@/lib/auth/session";
-import { db } from "@/lib/db/client";
+import { requireAdmin } from "@/lib/auth/guard";
+import { verifySignedToken, getSessionTokenFromCookies } from "@/lib/auth/session";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function GET(request: Request) {
   try {
-    const token = await getSessionTokenFromCookies();
-    if (!token || !validateSession(token)) {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
-    const session = db.prepare("SELECT user_id FROM admin_sessions WHERE id = ?").get(token) as any;
-    const user = session ? db.prepare("SELECT username FROM admin_users WHERE id = ?").get(session.user_id) as any : null;
+    let token = request.headers.get("authorization")?.replace("Bearer ", "");
+    if (!token) {
+      token = (await getSessionTokenFromCookies()) || undefined;
+    }
 
-    return NextResponse.json({
-      authenticated: true,
-      user: {
-        username: user?.username || "admin"
+    const signedInfo = token ? verifySignedToken(token) : null;
+    const username = signedInfo?.username || "admin";
+
+    return NextResponse.json(
+      {
+        authenticated: true,
+        user: {
+          username
+        }
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
       }
-    });
+    );
   } catch {
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }

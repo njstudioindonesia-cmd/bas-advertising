@@ -114,9 +114,6 @@ export default function Footer() {
           <div className="flex gap-6 items-center">
             <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link href="/urang-dalam-bas-adv" className="text-gray-600 hover:text-amber-400 text-[10px] transition-colors font-medium">
-              Urang Dalam BAS ADV
-            </Link>
           </div>
         </div>
       </div>

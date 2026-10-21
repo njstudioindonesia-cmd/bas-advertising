@@ -147,9 +147,29 @@ export default function UrangDalamAdminPortal() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  const adminFetch = async (url: string, options: RequestInit = {}) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("bas_admin_token") : null;
+    const headers = new Headers(options.headers || {});
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+    const res = await fetch(url, {
+      ...options,
+      headers,
+    });
+    if (res.status === 401 && !url.includes("/api/auth/me")) {
+      showToast("Sesi login telah berakhir. Silakan login kembali.", "error");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("bas_admin_token");
+      }
+      setIsAuthenticated(false);
+    }
+    return res;
+  };
+
   // 1. Initial Session Check
   useEffect(() => {
-    fetch("/api/auth/me")
+    adminFetch("/api/auth/me")
       .then((res) => {
         if (res.ok) {
           setIsAuthenticated(true);
@@ -166,11 +186,11 @@ export default function UrangDalamAdminPortal() {
     setLoading(true);
     try {
       const [pRes, cRes, bRes, sRes, oRes] = await Promise.all([
-        fetch("/api/products?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
-        fetch("/api/categories?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
-        fetch("/api/banners?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
-        fetch("/api/settings", { cache: "no-store" }).then((r) => r.json()),
-        fetch("/api/orders", { cache: "no-store" }).then((r) => r.json()),
+        adminFetch("/api/products?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
+        adminFetch("/api/categories?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
+        adminFetch("/api/banners?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
+        adminFetch("/api/settings", { cache: "no-store" }).then((r) => r.json()),
+        adminFetch("/api/orders", { cache: "no-store" }).then((r) => r.json()),
       ]);
 
       if (pRes.success) setProducts(pRes.data);
@@ -211,6 +231,9 @@ export default function UrangDalamAdminPortal() {
       const data = await res.json();
 
       if (data.success) {
+        if (data.token && typeof window !== "undefined") {
+          localStorage.setItem("bas_admin_token", data.token);
+        }
         setIsAuthenticated(true);
         showToast("Selamat datang di Urang Dalam BAS ADV", "success");
       } else {
@@ -225,7 +248,10 @@ export default function UrangDalamAdminPortal() {
 
   // Handle Logout
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await adminFetch("/api/auth/logout", { method: "POST" });
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("bas_admin_token");
+    }
     setIsAuthenticated(false);
     showToast("Anda telah keluar dari panel Urang Dalam", "success");
   };
@@ -240,7 +266,7 @@ export default function UrangDalamAdminPortal() {
     fd.append("file", file);
 
     try {
-      const res = await fetch("/api/upload", {
+      const res = await adminFetch("/api/upload", {
         method: "POST",
         body: fd,
       });
@@ -338,7 +364,7 @@ export default function UrangDalamAdminPortal() {
 
     try {
       if (prodModalMode === "add") {
-        const res = await fetch("/api/products", {
+        const res = await adminFetch("/api/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -353,7 +379,7 @@ export default function UrangDalamAdminPortal() {
           showToast(data.error || "Gagal menambah produk", "error");
         }
       } else {
-        const res = await fetch(`/api/products/${editingProdId}`, {
+        const res = await adminFetch(`/api/products/${editingProdId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -376,7 +402,7 @@ export default function UrangDalamAdminPortal() {
   const handleToggleProductStatus = async (p: any) => {
     const newStatus = !p.isActive;
     try {
-      const res = await fetch(`/api/products/${p.id}`, {
+      const res = await adminFetch(`/api/products/${p.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: newStatus }),
@@ -396,7 +422,7 @@ export default function UrangDalamAdminPortal() {
 
   const handleExecuteDelete = async (id: string, name: string, permanent: boolean) => {
     try {
-      const res = await fetch(`/api/products/${id}${permanent ? "?permanent=true" : ""}`, {
+      const res = await adminFetch(`/api/products/${id}${permanent ? "?permanent=true" : ""}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -441,7 +467,7 @@ export default function UrangDalamAdminPortal() {
       specs: p.specs || [],
     };
     try {
-      const res = await fetch("/api/products", {
+      const res = await adminFetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -462,7 +488,7 @@ export default function UrangDalamAdminPortal() {
     if (!confirm(`Jalankan aksi ${action} pada ${selectedProductIds.length} produk terpilih?`)) return;
 
     try {
-      const res = await fetch("/api/products/bulk", {
+      const res = await adminFetch("/api/products/bulk", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, ids: selectedProductIds }),
@@ -515,7 +541,7 @@ export default function UrangDalamAdminPortal() {
 
     try {
       if (catModalMode === "add") {
-        const res = await fetch("/api/categories", {
+        const res = await adminFetch("/api/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(catForm),
@@ -529,7 +555,7 @@ export default function UrangDalamAdminPortal() {
           showToast(data.error, "error");
         }
       } else {
-        const res = await fetch(`/api/categories/${editingCatId}`, {
+        const res = await adminFetch(`/api/categories/${editingCatId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(catForm),
@@ -551,7 +577,7 @@ export default function UrangDalamAdminPortal() {
   const handleDeleteCategory = async (id: string, name: string) => {
     if (!confirm(`Hapus kategori '${name}'?`)) return;
     try {
-      const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+      const res = await adminFetch(`/api/categories/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         showToast(`Kategori '${name}' berhasil dihapus`, "success");
@@ -570,7 +596,7 @@ export default function UrangDalamAdminPortal() {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/settings", {
+      const res = await adminFetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
@@ -591,7 +617,7 @@ export default function UrangDalamAdminPortal() {
   // ==========================================
   const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
     try {
-      const res = await fetch(`/api/orders/${id}`, {
+      const res = await adminFetch(`/api/orders/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -655,7 +681,7 @@ export default function UrangDalamAdminPortal() {
 
     setIsResetting(true);
     try {
-      const res = await fetch("/api/admin/backup", {
+      const res = await adminFetch("/api/admin/backup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "reset", confirmText: "RESET" }),
@@ -685,7 +711,7 @@ export default function UrangDalamAdminPortal() {
       return;
     }
     try {
-      const res = await fetch("/api/auth/change-password", {
+      const res = await adminFetch("/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oldPassword: passForm.oldPassword, newPassword: passForm.newPassword }),

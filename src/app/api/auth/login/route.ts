@@ -64,6 +64,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "Login berhasil sebagai Urang Dalam BAS ADV",
+      token: result.token,
       user: { username }
     });
   } catch (error: any) {
