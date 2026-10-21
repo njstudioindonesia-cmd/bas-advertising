@@ -41,7 +41,8 @@ import {
   KeyRound,
   Bike,
   MapPin,
-  Navigation
+  Navigation,
+  Sparkles
 } from "lucide-react";
 
 export default function UrangDalamAdminPortal() {
@@ -1471,6 +1472,29 @@ export default function UrangDalamAdminPortal() {
                     </button>
                   </div>
                 )}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm("Isi atau sinkronkan katalog dengan 15 produk percetakan standar (Spanduk PxL, Stiker A3+, Brosur, Kaos DTF, Neon Box)?")) return;
+                    try {
+                      const res = await adminFetch("/api/admin/seed-printing", { method: "POST" });
+                      const d = await res.json();
+                      if (d.success) {
+                        showToast(d.message, "success");
+                        notifyProductCatalogUpdated();
+                        refreshAllData();
+                      } else {
+                        showToast(d.error || "Gagal mengisi katalog", "error");
+                      }
+                    } catch {
+                      showToast("Gagal menghubungi server", "error");
+                    }
+                  }}
+                  className="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl text-xs sm:text-sm inline-flex items-center gap-1.5 border border-emerald-200 transition-all"
+                  title="Isi atau perbarui 15 master produk percetakan standar"
+                >
+                  <Sparkles size={15} /> Isi Master Cetak
+                </button>
                 <button
                   onClick={openAddProductModal}
                   className="px-4 py-2.5 bg-[#F97316] hover:bg-orange-600 text-white font-bold rounded-xl text-xs sm:text-sm inline-flex items-center gap-1.5 shadow-sm transition-all"
