@@ -13,6 +13,15 @@ export interface OrderItemRecord {
   total: number;
 }
 
+export interface CourierInfo {
+  name: string;
+  phone: string;
+  plate: string;
+  eta: string;
+  notes?: string;
+  currentLocation?: [number, number];
+}
+
 export interface OrderRecord {
   id: string;
   code: string;
@@ -22,10 +31,45 @@ export interface OrderRecord {
   address: string | null;
   paymentMethod: string;
   note: string | null;
+  courier?: CourierInfo | null;
   subtotal: number;
   status: string;
   items: OrderItemRecord[];
   createdAt: string;
+}
+
+export function extractCourierInfo(rawNote: string | null, rawOrder?: any): { note: string | null; courier: CourierInfo | null } {
+  let courier: CourierInfo | null = null;
+  let cleanNote = rawNote || "";
+
+  if (rawOrder && rawOrder.courier_name) {
+    courier = {
+      name: rawOrder.courier_name,
+      phone: rawOrder.courier_phone || "",
+      plate: rawOrder.courier_plate || "",
+      eta: rawOrder.estimated_delivery_at || "15 - 25 Menit",
+      notes: rawOrder.delivery_notes || "",
+    };
+  }
+
+  if (cleanNote && cleanNote.includes("[COURIER_DATA:")) {
+    const match = cleanNote.match(/\[COURIER_DATA:([\s\S]*?)\]/);
+    if (match && match[1]) {
+      try {
+        const parsed = JSON.parse(match[1]);
+        courier = {
+          name: parsed.name || courier?.name || "Kurir Cetak.inc Padang",
+          phone: parsed.phone || courier?.phone || "6282283995544",
+          plate: parsed.plate || courier?.plate || "BA 4821 QA",
+          eta: parsed.eta || courier?.eta || "15 - 25 Menit",
+          notes: parsed.notes || courier?.notes || "",
+        };
+      } catch {}
+      cleanNote = cleanNote.replace(/\[COURIER_DATA:[\s\S]*?\]/, "").trim();
+    }
+  }
+
+  return { note: cleanNote || null, courier };
 }
 
 export function generateOrderCode(): string {
@@ -166,30 +210,34 @@ export async function getOrders(options?: {
       return { orders: [], total: 0 };
     }
 
-    const orders: OrderRecord[] = data.map((o: any) => ({
-      id: o.id,
-      code: o.code,
-      customerName: o.customer_name,
-      customerPhone: o.customer_phone,
-      deliveryMethod: o.delivery_method,
-      address: o.address,
-      paymentMethod: o.payment_method,
-      note: o.note,
-      subtotal: Number(o.subtotal) || 0,
-      status: o.status,
-      items: (o.order_items || []).map((it: any) => ({
-        id: it.id,
-        orderId: it.order_id,
-        productId: it.product_id,
-        nameSnapshot: it.product_name,
-        priceSnapshot: Number(it.product_price) || 0,
-        unitSnapshot: "/ pcs",
-        qty: it.qty,
-        designNote: it.design_note,
-        total: Number(it.subtotal) || 0,
-      })),
-      createdAt: o.created_at,
-    }));
+    const orders: OrderRecord[] = data.map((o: any) => {
+      const { note: cleanNote, courier } = extractCourierInfo(o.note, o);
+      return {
+        id: o.id,
+        code: o.code,
+        customerName: o.customer_name,
+        customerPhone: o.customer_phone,
+        deliveryMethod: o.delivery_method,
+        address: o.address,
+        paymentMethod: o.payment_method,
+        note: cleanNote,
+        courier: courier || null,
+        subtotal: Number(o.subtotal) || 0,
+        status: o.status,
+        items: (o.order_items || []).map((it: any) => ({
+          id: it.id,
+          orderId: it.order_id,
+          productId: it.product_id,
+          nameSnapshot: it.name_snapshot || it.product_name,
+          priceSnapshot: Number(it.price_snapshot || it.product_price) || 0,
+          unitSnapshot: it.unit_snapshot || "/ pcs",
+          qty: it.qty,
+          designNote: it.design_note,
+          total: Number(it.total || it.subtotal) || 0,
+        })),
+        createdAt: o.created_at,
+      };
+    });
 
     return {
       orders,
@@ -212,6 +260,8 @@ export async function getOrderById(id: string): Promise<OrderRecord | null> {
 
     if (error || !data) return null;
 
+    const { note: cleanNote, courier } = extractCourierInfo(data.note, data);
+
     return {
       id: data.id,
       code: data.code,
@@ -220,19 +270,20 @@ export async function getOrderById(id: string): Promise<OrderRecord | null> {
       deliveryMethod: data.delivery_method,
       address: data.address,
       paymentMethod: data.payment_method,
-      note: data.note,
+      note: cleanNote,
+      courier: courier || null,
       subtotal: Number(data.subtotal) || 0,
       status: data.status,
       items: (data.order_items || []).map((it: any) => ({
         id: it.id,
         orderId: it.order_id,
         productId: it.product_id,
-        nameSnapshot: it.product_name,
-        priceSnapshot: Number(it.product_price) || 0,
-        unitSnapshot: "/ pcs",
+        nameSnapshot: it.name_snapshot || it.product_name,
+        priceSnapshot: Number(it.price_snapshot || it.product_price) || 0,
+        unitSnapshot: it.unit_snapshot || "/ pcs",
         qty: it.qty,
         designNote: it.design_note,
-        total: Number(it.subtotal) || 0,
+        total: Number(it.total || it.subtotal) || 0,
       })),
       createdAt: data.created_at,
     };
@@ -241,10 +292,59 @@ export async function getOrderById(id: string): Promise<OrderRecord | null> {
   }
 }
 
-export async function updateOrderStatus(id: string, status: string): Promise<boolean> {
+export async function updateOrderStatus(
+  id: string,
+  status: string,
+  courierData?: CourierInfo | null
+): Promise<boolean> {
+  const now = new Date().toISOString();
+
+  if (courierData && (courierData.name || courierData.plate)) {
+    // 1. Coba update ke kolom native jika kolom sudah ada di Supabase
+    const { error: nativeErr } = await supabaseAdmin
+      .from("orders")
+      .update({
+        status,
+        updated_at: now,
+        courier_name: courierData.name || null,
+        courier_phone: courierData.phone || null,
+        courier_plate: courierData.plate || null,
+        estimated_delivery_at: courierData.eta || null,
+        delivery_notes: courierData.notes || null,
+      })
+      .or(`id.eq.${id},code.eq.${id}`);
+
+    if (!nativeErr) {
+      return true;
+    }
+
+    // 2. Jika kolom native belum ada di schema DB, simpan fallback dengan menyisipkan [COURIER_DATA:...] pada kolom note
+    const { data: existing } = await supabaseAdmin
+      .from("orders")
+      .select("note")
+      .or(`id.eq.${id},code.eq.${id}`)
+      .limit(1)
+      .maybeSingle();
+
+    const currentNote = existing?.note || "";
+    const cleanNote = currentNote.replace(/\[COURIER_DATA:[\s\S]*?\]/, "").trim();
+    const newNote = `${cleanNote ? cleanNote + "\n" : ""}[COURIER_DATA:${JSON.stringify(courierData)}]`;
+
+    const { error: fallbackErr } = await supabaseAdmin
+      .from("orders")
+      .update({
+        status,
+        note: newNote,
+        updated_at: now,
+      })
+      .or(`id.eq.${id},code.eq.${id}`);
+
+    return !fallbackErr;
+  }
+
   const { error } = await supabaseAdmin
     .from("orders")
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({ status, updated_at: now })
     .or(`id.eq.${id},code.eq.${id}`);
 
   return !error;

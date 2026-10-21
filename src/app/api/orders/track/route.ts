@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { extractCourierInfo } from "@/lib/db/queries/orders";
 
 export async function GET(request: Request) {
   try {
@@ -71,6 +72,17 @@ export async function GET(request: Request) {
       };
 
       const info = statusMap[o.status] || statusMap["BARU"];
+      const { note: cleanNote, courier } = extractCourierInfo(o.note, o);
+
+      const isEnRoute = o.status === "DIKIRIM" || o.status === "SHIPPED";
+      const courierData = courier || (isEnRoute ? {
+        name: "Kurir Cetak.inc Padang",
+        phone: "6282283995544",
+        plate: "BA 4821 QA",
+        eta: "15 - 25 Menit",
+        notes: "Kurir sedang dalam perjalanan menuju lokasi Anda dengan aman",
+        currentLocation: [-0.9325, 100.3698] as [number, number],
+      } : null);
 
       return {
         id: o.id,
@@ -84,6 +96,11 @@ export async function GET(request: Request) {
         deliveryMethod: o.delivery_method,
         address: o.address,
         paymentMethod: o.payment_method,
+        note: cleanNote,
+        courier: courierData,
+        driverName: courierData?.name,
+        driverPhone: courierData?.phone,
+        driverPlate: courierData?.plate,
         subtotal: Number(o.subtotal) || 0,
         createdAt: o.created_at,
         items: (o.order_items || []).map((it: any) => ({

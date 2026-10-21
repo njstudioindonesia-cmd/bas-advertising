@@ -38,7 +38,10 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   Clock,
-  KeyRound
+  KeyRound,
+  Bike,
+  MapPin,
+  Navigation
 } from "lucide-react";
 
 export default function UrangDalamAdminPortal() {
@@ -143,6 +146,17 @@ export default function UrangDalamAdminPortal() {
   // Order modal / detail
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState("Semua");
+
+  // Courier Dispatcher Modal (Live Map Sync)
+  const [dispatchModalOrder, setDispatchModalOrder] = useState<any | null>(null);
+  const [dispatchForm, setDispatchForm] = useState({
+    name: "Budi Santoso",
+    phone: "082283995544",
+    plate: "Honda Vario (BA 4821 QA)",
+    eta: "20 Menit",
+    notes: "Kurir Toko Cetak.inc sedang meluncur membawa pesanan Anda",
+  });
+  const [dispatchingLoading, setDispatchingLoading] = useState(false);
 
   // Account modal
   const [passForm, setPassForm] = useState({ oldPassword: "", newPassword: "", confirmPassword: "" });
@@ -846,20 +860,45 @@ export default function UrangDalamAdminPortal() {
   };
 
   // ==========================================
-  // ORDER ACTIONS
+  // ORDER ACTIONS & DISPATCHER
   // ==========================================
-  const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
+  const handleUpdateOrderStatus = async (id: string, newStatus: string, customCourier?: any) => {
+    // Jika admin memilih status DIKIRIM dan belum mengisi data kurir, buka modal dispatcher
+    if ((newStatus === "DIKIRIM" || newStatus === "SHIPPED") && !customCourier) {
+      const ord = orders.find((o) => o.id === id);
+      if (ord) {
+        setDispatchModalOrder(ord);
+        if (ord.courier) {
+          setDispatchForm({
+            name: ord.courier.name || "Budi Santoso",
+            phone: ord.courier.phone || "082283995544",
+            plate: ord.courier.plate || "Honda Vario (BA 4821 QA)",
+            eta: ord.courier.eta || "20 Menit",
+            notes: ord.courier.notes || "Kurir Toko Cetak.inc sedang meluncur membawa pesanan Anda",
+          });
+        }
+      }
+      return;
+    }
+
     try {
       const res = await adminFetch(`/api/orders/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          courier: customCourier || undefined,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         showToast(data.message, "success");
         if (selectedOrder && selectedOrder.id === id) {
-          setSelectedOrder((prev: any) => ({ ...prev, status: newStatus }));
+          setSelectedOrder((prev: any) => ({
+            ...prev,
+            status: newStatus,
+            courier: customCourier || prev.courier,
+          }));
         }
         refreshAllData();
       } else {
@@ -868,6 +907,14 @@ export default function UrangDalamAdminPortal() {
     } catch {
       showToast("Gagal menghubungi server pesanan", "error");
     }
+  };
+
+  const handleConfirmDispatch = async () => {
+    if (!dispatchModalOrder) return;
+    setDispatchingLoading(true);
+    await handleUpdateOrderStatus(dispatchModalOrder.id, "DIKIRIM", dispatchForm);
+    setDispatchingLoading(false);
+    setDispatchModalOrder(null);
   };
 
   const exportOrdersToCsv = () => {
@@ -1696,13 +1743,15 @@ export default function UrangDalamAdminPortal() {
                             <select
                               value={o.status}
                               onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border transition-all ${
                                 o.status === "BARU"
                                   ? "bg-blue-50 text-blue-600 border-blue-200"
                                   : o.status === "DIPROSES"
                                   ? "bg-amber-50 text-amber-600 border-amber-200"
                                   : o.status === "SIAP"
                                   ? "bg-purple-50 text-purple-600 border-purple-200"
+                                  : o.status === "DIKIRIM" || o.status === "SHIPPED"
+                                  ? "bg-violet-100 text-violet-800 border-violet-300 ring-2 ring-violet-200 font-black animate-pulse"
                                   : o.status === "SELESAI"
                                   ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                                   : "bg-red-50 text-red-600 border-red-200"
@@ -1711,24 +1760,59 @@ export default function UrangDalamAdminPortal() {
                               <option value="BARU">BARU</option>
                               <option value="DIPROSES">DIPROSES</option>
                               <option value="SIAP">SIAP</option>
+                              <option value="DIKIRIM">DIKIRIM (Kurir)</option>
                               <option value="SELESAI">SELESAI</option>
                               <option value="BATAL">BATAL</option>
                             </select>
+
+                            {(o.status === "DIKIRIM" || o.status === "SHIPPED" || o.courier) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDispatchModalOrder(o);
+                                  if (o.courier) {
+                                    setDispatchForm({
+                                      name: o.courier.name || "Budi Santoso",
+                                      phone: o.courier.phone || "082283995544",
+                                      plate: o.courier.plate || "Honda Vario (BA 4821 QA)",
+                                      eta: o.courier.eta || "20 Menit",
+                                      notes: o.courier.notes || "Kurir Toko Cetak.inc sedang meluncur membawa pesanan Anda",
+                                    });
+                                  }
+                                }}
+                                className="flex items-center gap-1 text-[9px] text-violet-700 hover:text-violet-900 mt-1 font-bold bg-violet-50 hover:bg-violet-100 px-2 py-0.5 rounded-md border border-violet-200 transition-all text-left"
+                                title="Klik untuk edit data kurir"
+                              >
+                                <Bike size={11} className="shrink-0" />
+                                <span className="truncate max-w-[120px]">
+                                  {o.courier?.name || "Kurir OTW"} ({o.courier?.plate || "Motor"})
+                                </span>
+                              </button>
+                            )}
                           </td>
                           <td className="p-3.5 text-right">
                             <div className="flex items-center justify-end gap-1.5">
                               <a
+                                href={`/lacak?code=${o.code}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 bg-orange-50 hover:bg-orange-100 text-[#F97316] rounded-lg text-xs transition-colors"
+                                title="Buka Live Tracking Peta Customer"
+                              >
+                                <MapPin size={14} />
+                              </a>
+                              <a
                                 href={`https://wa.me/${String(o.customerPhone).replace(/[^0-9]/g, "")}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-1.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg text-xs"
+                                className="p-1.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg text-xs transition-colors"
                                 title="Chat Pelanggan di WhatsApp"
                               >
                                 <Phone size={14} />
                               </a>
                               <button
                                 onClick={() => setSelectedOrder(o)}
-                                className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-bold"
+                                className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-bold transition-colors"
                               >
                                 Rincian
                               </button>
@@ -2387,6 +2471,22 @@ export default function UrangDalamAdminPortal() {
               {selectedOrder.note && <div><strong>Catatan:</strong> {selectedOrder.note}</div>}
             </div>
 
+            {selectedOrder.courier && (
+              <div className="bg-violet-50 border border-violet-200 p-3.5 rounded-2xl text-xs space-y-1">
+                <div className="font-extrabold text-violet-900 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Bike size={15} /> Kurir Pengantaran Aktif:
+                  </span>
+                  <span className="text-[10px] bg-violet-200/70 text-violet-800 px-2 py-0.5 rounded-full font-black">
+                    {selectedOrder.courier.eta || "OTW"}
+                  </span>
+                </div>
+                <div><strong>Driver:</strong> {selectedOrder.courier.name} ({selectedOrder.courier.plate})</div>
+                <div><strong>Kontak Driver:</strong> {selectedOrder.courier.phone}</div>
+                {selectedOrder.courier.notes && <div><strong>Catatan:</strong> {selectedOrder.courier.notes}</div>}
+              </div>
+            )}
+
             <div>
               <h4 className="font-bold text-xs text-gray-700 mb-2">Daftar Item:</h4>
               <div className="space-y-2">
@@ -2416,18 +2516,235 @@ export default function UrangDalamAdminPortal() {
 
             <div className="flex gap-2 pt-2">
               <a
+                href={`/lacak?code=${selectedOrder.code}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-2.5 bg-orange-50 hover:bg-orange-100 text-[#F97316] text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 border border-orange-200 transition-colors"
+                title="Buka Live Tracking Peta Customer"
+              >
+                <MapPin size={14} /> Peta
+              </a>
+              <a
                 href={`https://wa.me/${String(selectedOrder.customerPhone).replace(/[^0-9]/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 py-2.5 bg-[#25D366] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors"
               >
-                <Phone size={14} /> Hubungi via WhatsApp
+                <Phone size={14} /> WhatsApp
               </a>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="px-4 py-2.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-xl"
+                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors"
               >
                 Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: DISPATCHER KURIR PENGANTARAN (LIVE MAP SYNC)        */}
+      {/* ========================================================= */}
+      {dispatchModalOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90dvh] overflow-y-auto shadow-2xl p-5 sm:p-6 space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center">
+                  <Bike size={22} />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-black tracking-wider text-violet-600 block">
+                    Alokasi Dispatcher Kurir
+                  </span>
+                  <h3 className="font-extrabold text-base text-gray-900">
+                    Kirim Pesanan #{dispatchModalOrder.code}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setDispatchModalOrder(null)}
+                className="p-1 text-gray-400 hover:text-gray-700 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="bg-gray-50 p-3.5 rounded-2xl text-xs space-y-1">
+              <div><strong>Penerima:</strong> {dispatchModalOrder.customerName} ({dispatchModalOrder.customerPhone})</div>
+              <div><strong>Alamat Tujuan:</strong> {dispatchModalOrder.address || "Diantar ke alamat pemesan (Kota Padang)"}</div>
+              <div><strong>Metode:</strong> {dispatchModalOrder.deliveryMethod === "kirim" ? "Pengiriman Kurir" : "Ambil Sendiri"}</div>
+            </div>
+
+            {/* Quick Presets */}
+            <div>
+              <label className="text-xs font-bold text-gray-700 block mb-2">
+                Pilih Preset Kurir Cepat:
+              </label>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDispatchForm({
+                      name: "Budi Santoso",
+                      phone: "082283995544",
+                      plate: "Honda Vario (BA 4821 QA)",
+                      eta: "20 Menit",
+                      notes: "Kurir Toko Cetak.inc sedang meluncur membawa pesanan Anda",
+                    })
+                  }
+                  className="p-2.5 rounded-xl border border-gray-200 hover:border-violet-500 hover:bg-violet-50/50 text-left transition-all group"
+                >
+                  <div className="font-bold text-gray-900 group-hover:text-violet-700">🛵 Kurir Toko: Budi</div>
+                  <div className="text-[10px] text-gray-400">BA 4821 QA • 20 Menit</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDispatchForm({
+                      name: "Rian Pratama",
+                      phone: "081266778899",
+                      plate: "Yamaha NMAX (BA 3912 PK)",
+                      eta: "30 Menit",
+                      notes: "Kurir Toko Cetak.inc membawa pesanan dengan box pelindung",
+                    })
+                  }
+                  className="p-2.5 rounded-xl border border-gray-200 hover:border-violet-500 hover:bg-violet-50/50 text-left transition-all group"
+                >
+                  <div className="font-bold text-gray-900 group-hover:text-violet-700">🛵 Kurir Toko: Rian</div>
+                  <div className="text-[10px] text-gray-400">BA 3912 PK • 30 Menit</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDispatchForm({
+                      name: "Driver Maxim / GoSend",
+                      phone: "081399887766",
+                      plate: "Motor Ojol (BA Instant)",
+                      eta: "25 Menit",
+                      notes: "Pesanan dikirimkan via kurir instan online",
+                    })
+                  }
+                  className="p-2.5 rounded-xl border border-gray-200 hover:border-violet-500 hover:bg-violet-50/50 text-left transition-all group"
+                >
+                  <div className="font-bold text-gray-900 group-hover:text-violet-700">⚡ Maxim / GoSend</div>
+                  <div className="text-[10px] text-gray-400">Kurir Online Instan</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDispatchForm({
+                      name: "Ekspedisi J&T / Indah Cargo",
+                      phone: "082155443322",
+                      plate: "Resi Ekspedisi",
+                      eta: "1 - 2 Hari",
+                      notes: "Paket telah diserahkan ke counter ekspedisi",
+                    })
+                  }
+                  className="p-2.5 rounded-xl border border-gray-200 hover:border-violet-500 hover:bg-violet-50/50 text-left transition-all group"
+                >
+                  <div className="font-bold text-gray-900 group-hover:text-violet-700">🚚 Ekspedisi Luar Kota</div>
+                  <div className="text-[10px] text-gray-400">J&T / Indah Cargo</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Inputs */}
+            <div className="space-y-3 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                    Nama Kurir / Driver:
+                  </label>
+                  <input
+                    type="text"
+                    value={dispatchForm.name}
+                    onChange={(e) => setDispatchForm((prev) => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                    placeholder="Contoh: Budi Santoso"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                    No. WhatsApp / HP Kurir:
+                  </label>
+                  <input
+                    type="text"
+                    value={dispatchForm.phone}
+                    onChange={(e) => setDispatchForm((prev) => ({ ...prev, phone: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                    placeholder="Contoh: 082283995544"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                    Plat Kendaraan / Resi:
+                  </label>
+                  <input
+                    type="text"
+                    value={dispatchForm.plate}
+                    onChange={(e) => setDispatchForm((prev) => ({ ...prev, plate: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                    placeholder="Contoh: BA 4821 QA"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                    Estimasi Tiba (ETA):
+                  </label>
+                  <input
+                    type="text"
+                    value={dispatchForm.eta}
+                    onChange={(e) => setDispatchForm((prev) => ({ ...prev, eta: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                    placeholder="Contoh: 20 Menit / 15-25 Menit"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-gray-700 block mb-1">
+                  Catatan Pengantaran untuk Pelanggan:
+                </label>
+                <textarea
+                  value={dispatchForm.notes}
+                  onChange={(e) => setDispatchForm((prev) => ({ ...prev, notes: e.target.value }))}
+                  rows={2}
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                  placeholder="Contoh: Kurir membawa paket spanduk yang sudah digulung rapi"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 pt-3 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setDispatchModalOrder(null)}
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={dispatchingLoading}
+                onClick={handleConfirmDispatch}
+                className="flex-2 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-violet-200 transition-all disabled:opacity-50"
+              >
+                {dispatchingLoading ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" /> Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Bike size={15} /> Luncurkan Kurir & Update Peta
+                  </>
+                )}
               </button>
             </div>
           </div>

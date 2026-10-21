@@ -34,9 +34,9 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { status } = body;
+    const { status, courier } = body;
 
-    const validStatuses = ["BARU", "DIPROSES", "SIAP", "SELESAI", "BATAL"];
+    const validStatuses = ["BARU", "DIPROSES", "SIAP", "DIKIRIM", "SHIPPED", "SELESAI", "BATAL"];
     if (!status || !validStatuses.includes(status)) {
       return NextResponse.json(
         { success: false, error: `Status tidak valid. Harus salah satu dari: ${validStatuses.join(", ")}` },
@@ -49,14 +49,14 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "Pesanan tidak ditemukan" }, { status: 404 });
     }
 
-    await updateOrderStatus(order.id, status);
+    await updateOrderStatus(order.id, status, courier);
 
     logAudit({
       actor: "admin",
       action: "UPDATE_STATUS",
       entity: "orders",
       entityId: order.id,
-      diff: { oldStatus: order.status, newStatus: status },
+      diff: { oldStatus: order.status, newStatus: status, courier },
     });
 
     return NextResponse.json({

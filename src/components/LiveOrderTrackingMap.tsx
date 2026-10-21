@@ -18,6 +18,14 @@ interface LiveOrderTrackingMapProps {
     driverName?: string;
     driverPhone?: string;
     driverPlate?: string;
+    courier?: {
+      name?: string;
+      phone?: string;
+      plate?: string;
+      eta?: string;
+      notes?: string;
+      currentLocation?: [number, number];
+    } | null;
   };
 }
 
@@ -39,11 +47,11 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
     : WORKSHOP_COORDS;
 
   const driver = {
-    name: order.driverName || "Fajar Pratama",
-    phone: order.driverPhone || "6281234567890",
-    vehicle: order.driverPlate || "Honda Vario 160 (BA 4219 QB)",
-    eta: isEnRoute ? "12 - 18 Menit" : "Menunggu Antrean Kurir",
-    statusText: isEnRoute ? "Kurir sedang meluncur ke alamat Anda" : "Pesanan sedang dalam proses cetak & finishing",
+    name: order.courier?.name || order.driverName || "Fajar Pratama (Kurir Cetak.inc)",
+    phone: order.courier?.phone || order.driverPhone || "6282283995544",
+    vehicle: order.courier?.plate || order.driverPlate || "Honda Vario 160 (BA 4219 QB)",
+    eta: order.courier?.eta || (isEnRoute ? "15 - 25 Menit" : "Menunggu Antrean Kurir"),
+    statusText: order.courier?.notes || (isEnRoute ? "Kurir sedang meluncur ke alamat Anda membawa pesanan cetak" : "Pesanan sedang dalam proses cetak & finishing"),
   };
 
   useEffect(() => {
