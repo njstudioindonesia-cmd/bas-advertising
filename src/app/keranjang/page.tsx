@@ -136,6 +136,7 @@ export default function KeranjangPage() {
 
       let orderCode = `BAS-${Date.now().toString().slice(-6)}`;
       let finalTotal = formatRupiah(grandTotal);
+      let invoiceUrl = `https://bas-advertising-nj-studio1.vercel.app/invoice/${encodeURIComponent(orderCode)}`;
 
       // Simpan ke API pesanan
       try {
@@ -148,6 +149,9 @@ export default function KeranjangPage() {
         const orderData = await orderRes.json();
         if (orderData.success && orderData.order) {
           orderCode = orderData.order.code;
+          if (orderData.invoice?.invoiceNo) {
+            invoiceUrl = `https://bas-advertising-nj-studio1.vercel.app/invoice/${encodeURIComponent(orderData.invoice.invoiceNo)}${orderData.invoice.publicToken ? `?token=${orderData.invoice.publicToken}` : ""}`;
+          }
         }
       } catch (err) {
         console.warn("Penyimpanan pesanan database offline, lanjut via WA langsung:", err);
@@ -177,7 +181,7 @@ export default function KeranjangPage() {
         .replace("{items}", itemsText)
         .replace("{total}", finalTotal);
 
-      const message = `${baseMessage}\n\n📍 *Lacak Status Pengerjaan (Peta Live):*\n${trackingUrl}`;
+      const message = `${baseMessage}\n\n📍 *Lacak Status Pengerjaan (Peta Live):*\n${trackingUrl}\n\n🧾 *Invoice Resmi & Instruksi Rekening:*\n${invoiceUrl}`;
 
       // Dapatkan nomor WA dari database settings
       let targetWa = String(settings["contact.whatsapp"] || "6282283995544").replace(/[^0-9]/g, "");

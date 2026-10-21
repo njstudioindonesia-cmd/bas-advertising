@@ -3,6 +3,12 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { InvoiceRecord, InvoiceSnapshot } from "./types";
 
 /**
+ * In-memory fallback cache untuk memastikan invoice tetap aman dan dapat diakses
+ * bahkan jika tabel belum termigrasi atau koneksi Supabase offline.
+ */
+const fallbackInvoices = new Map<string, InvoiceRecord>();
+
+/**
  * Format nomor invoice resmi: INV/CTK/YYYY/MM/XXXXXX
  */
 export function generateInvoiceNumber(sequenceNum?: number): string {
@@ -39,7 +45,7 @@ export async function createOrGetInvoice(
       .maybeSingle();
 
     if (existing) {
-      return {
+      const record: InvoiceRecord = {
         id: existing.id,
         invoiceNo: existing.invoice_no,
         publicToken: existing.public_token,
@@ -48,6 +54,9 @@ export async function createOrGetInvoice(
         paidAt: existing.paid_at,
         snapshot: existing.snapshot as InvoiceSnapshot,
       };
+      fallbackInvoices.set(record.invoiceNo, record);
+      fallbackInvoices.set(orderId, record);
+      return record;
     }
 
     const { data: created, error } = await supabaseAdmin
@@ -64,7 +73,7 @@ export async function createOrGetInvoice(
       .maybeSingle();
 
     if (!error && created) {
-      return {
+      const record: InvoiceRecord = {
         id: created.id,
         invoiceNo: created.invoice_no,
         publicToken: created.public_token,
@@ -73,17 +82,131 @@ export async function createOrGetInvoice(
         paidAt: created.paid_at,
         snapshot: created.snapshot as InvoiceSnapshot,
       };
+      fallbackInvoices.set(record.invoiceNo, record);
+      fallbackInvoices.set(orderId, record);
+      return record;
     }
   } catch (err) {
     console.warn("[INVOICES] Gagal menyimpan ke DB, menggunakan fallback in-memory:", err);
   }
 
-  return {
+  const fallbackRecord: InvoiceRecord = {
     id: `inv_${Date.now()}`,
     invoiceNo,
     publicToken,
     orderId,
     issuedAt: now,
+    paidAt: snapshot.paidAt || null,
     snapshot,
   };
+  fallbackInvoices.set(invoiceNo, fallbackRecord);
+  fallbackInvoices.set(orderId, fallbackRecord);
+  return fallbackRecord;
+}
+
+export async function getInvoiceByNo(
+  invoiceNo: string,
+  token?: string
+): Promise<InvoiceRecord | null> {
+  // Decode URL format jika nomor invoice ada garis miring ter-encode
+  const decodedNo = decodeURIComponent(invoiceNo);
+
+  try {
+    let query = supabaseAdmin
+      .from("invoices")
+      .select("*")
+      .or(`invoice_no.eq.${decodedNo},invoice_no.eq.${invoiceNo}`);
+
+    const { data, error } = await query.maybeSingle();
+    if (!error && data) {
+      // Jika token disediakan, validasi token
+      if (token && data.public_token && data.public_token !== token) {
+        return null;
+      }
+      return {
+        id: data.id,
+        invoiceNo: data.invoice_no,
+        publicToken: data.public_token,
+        orderId: data.order_id,
+        issuedAt: data.issued_at,
+        paidAt: data.paid_at,
+        snapshot: data.snapshot as InvoiceSnapshot,
+      };
+    }
+  } catch (err) {
+    console.warn("[INVOICES] DB fetch failed, checking in-memory cache:", err);
+  }
+
+  const cached = fallbackInvoices.get(decodedNo) || fallbackInvoices.get(invoiceNo);
+  if (cached) {
+    if (token && cached.publicToken && cached.publicToken !== token) {
+      return null;
+    }
+    return cached;
+  }
+
+  return null;
+}
+
+export async function getInvoiceByOrderId(orderId: string): Promise<InvoiceRecord | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("invoices")
+      .select("*")
+      .eq("order_id", orderId)
+      .maybeSingle();
+
+    if (!error && data) {
+      return {
+        id: data.id,
+        invoiceNo: data.invoice_no,
+        publicToken: data.public_token,
+        orderId: data.order_id,
+        issuedAt: data.issued_at,
+        paidAt: data.paid_at,
+        snapshot: data.snapshot as InvoiceSnapshot,
+      };
+    }
+  } catch {}
+
+  return fallbackInvoices.get(orderId) || null;
+}
+
+export async function markInvoicePaid(
+  orderId: string
+): Promise<{ success: boolean; invoice?: InvoiceRecord }> {
+  const now = new Date().toISOString();
+
+  try {
+    const inv = await getInvoiceByOrderId(orderId);
+    if (!inv) return { success: false };
+
+    const updatedSnapshot: InvoiceSnapshot = {
+      ...inv.snapshot,
+      paymentStatus: "LUNAS",
+      paidAt: now,
+    };
+
+    await supabaseAdmin
+      .from("invoices")
+      .update({
+        paid_at: now,
+        snapshot: updatedSnapshot,
+      })
+      .eq("order_id", orderId);
+
+    const updatedRecord: InvoiceRecord = {
+      ...inv,
+      paidAt: now,
+      snapshot: updatedSnapshot,
+    };
+
+    fallbackInvoices.set(inv.invoiceNo, updatedRecord);
+    fallbackInvoices.set(orderId, updatedRecord);
+
+    return { success: true, invoice: updatedRecord };
+  } catch (err: any) {
+    console.warn("[INVOICES] Failed marking invoice paid:", err);
+    return { success: false };
+  }
 }

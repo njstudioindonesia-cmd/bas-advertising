@@ -257,6 +257,26 @@ function TrackOrderContent() {
                 </div>
               </div>
 
+              {/* STATUS PEMBAYARAN NOTIFIKASI (FASE 4 BLUEPRINT V2) */}
+              {order.status === "MENUNGGU_VERIFIKASI" && (
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 text-xs text-amber-800">
+                  <Clock className="text-amber-600 shrink-0" size={18} />
+                  <div>
+                    <strong className="block font-bold">Bukti Pembayaran Sedang Diverifikasi</strong>
+                    <span>Admin Urang Dalam sedang mencocokkan mutasi transfer Anda. Setelah diverifikasi lunas, pesanan langsung diproduksi oleh workshop cabang.</span>
+                  </div>
+                </div>
+              )}
+              {order.status === "PEMBAYARAN_DITOLAK" && (
+                <div className="bg-red-50 border border-red-200 p-4 rounded-2xl flex items-center gap-3 text-xs text-red-800">
+                  <AlertCircle className="text-red-600 shrink-0" size={18} />
+                  <div>
+                    <strong className="block font-bold">Bukti Pembayaran Belum Sesuai</strong>
+                    <span>Mohon periksa kembali nominal atau kirimkan struk transfer yang jelas via WhatsApp admin.</span>
+                  </div>
+                </div>
+              )}
+
               {/* ACTION BUTTONS: WHATSAPP OPERATOR & NOTA */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <a
@@ -267,13 +287,14 @@ function TrackOrderContent() {
                 >
                   <Phone size={15} /> Chat Operator Mesin
                 </a>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
+                <a
+                  href={`/invoice/${encodeURIComponent(order.code)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="btn-primary flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-2xl"
                 >
-                  <FileText size={15} /> Cetak Struk / Invoice
-                </button>
+                  <FileText size={15} /> Buka Invoice Resmi & SPK
+                </a>
               </div>
             </motion.div>
           );

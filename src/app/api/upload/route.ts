@@ -17,9 +17,6 @@ const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
-    const auth = await requireAdmin(request);
-    if (!auth.authorized) return auth.response!;
-
     const url = new URL(request.url);
     const queryFolder = url.searchParams.get("folder");
 
@@ -28,6 +25,12 @@ export async function POST(request: Request) {
     const formFolder = formData.get("folder") as string | null;
 
     const targetFolder = formFolder || queryFolder || "products";
+
+    // Hanya izinkan unggahan publik tanpa sesi admin jika ditujukan untuk folder payment-proofs
+    if (targetFolder !== "payment-proofs") {
+      const auth = await requireAdmin(request);
+      if (!auth.authorized) return auth.response!;
+    }
 
     if (!file) {
       return NextResponse.json({ success: false, error: "File gambar tidak ditemukan" }, { status: 400 });

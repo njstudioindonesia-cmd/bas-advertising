@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { OrderInput } from "@/lib/validators";
 import { assignHub } from "@/modules/hubs";
+import { createOrGetInvoice, generateInvoiceNumber } from "@/modules/invoices";
+import { generateUniqueCode } from "@/modules/payments";
 
 export interface OrderItemRecord {
   id: string;
@@ -82,7 +84,7 @@ export function generateOrderCode(): string {
 
 export async function createOrder(
   input: OrderInput
-): Promise<{ order: OrderRecord | null; error?: string }> {
+): Promise<{ order: OrderRecord | null; invoice?: any; error?: string }> {
   try {
     const productIds = input.items.map((i) => i.productId);
     const { data: prods, error: pErr } = await supabaseAdmin
@@ -221,7 +223,40 @@ export async function createOrder(
       createdAt: now,
     };
 
-    return { order: createdOrder };
+    // Auto-generate invoice snapshot (Blueprint V2 Fase 4)
+    let createdInvoice: any = null;
+    try {
+      const uniqueCode = generateUniqueCode();
+      const deliveryFee = input.deliveryFee || 0;
+      const grandTotal = calculatedSubtotal + deliveryFee + uniqueCode;
+
+      createdInvoice = await createOrGetInvoice(orderId, {
+        invoiceNo: generateInvoiceNumber(),
+        orderCode,
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        deliveryMethod: input.deliveryMethod === "kirim" ? "Kurir Workshop" : "Ambil di Workshop",
+        deliveryAddress: input.destAddress || input.address || null,
+        hubName: assignedHubId?.includes("lubuk") ? "Hub Lubuk Buaya" : "Hub Pusat Padang",
+        items: finalItems.map((it) => ({
+          name: it.product_name,
+          specs: it.design_note || undefined,
+          qty: it.qty,
+          unitPrice: it.product_price,
+          subtotal: it.subtotal,
+        })),
+        subtotal: calculatedSubtotal,
+        deliveryFee,
+        uniqueCode,
+        total: grandTotal,
+        paymentStatus: "BELUM_DIBAYAR",
+        issuedAt: now,
+      });
+    } catch (e) {
+      console.warn("[ORDERS] Gagal auto-generate invoice:", e);
+    }
+
+    return { order: createdOrder, invoice: createdInvoice };
   } catch (err: any) {
     return { order: null, error: err.message || "Gagal membuat pesanan" };
   }

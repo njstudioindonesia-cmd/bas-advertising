@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { order, error } = await createOrder(parsed.data);
+    const { order, invoice, error } = await createOrder(parsed.data);
     if (error || !order) {
       return NextResponse.json({ success: false, error: error || "Gagal membuat pesanan" }, { status: 400 });
     }
@@ -47,6 +47,14 @@ export async function POST(request: Request) {
           subtotal: order.subtotal,
           itemsCount: order.items.length,
         },
+        invoice: invoice
+          ? {
+              invoiceNo: invoice.invoiceNo,
+              publicToken: invoice.publicToken,
+              total: invoice.snapshot?.total,
+              uniqueCode: invoice.snapshot?.uniqueCode,
+            }
+          : null,
       },
       { status: 201 }
     );
