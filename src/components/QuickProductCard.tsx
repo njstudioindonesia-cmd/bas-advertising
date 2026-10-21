@@ -37,7 +37,7 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
   return (
     <div
       onClick={handleCardClick}
-      className="group relative bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-100 hover:border-orange-200/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer active:scale-[0.98]"
+      className="group relative bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-100 hover:border-orange-200/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer active:scale-[0.98] w-full min-w-0 overflow-hidden"
     >
       {/* GAMBAR PRODUK DENGAN BADGE ALA ASTRO */}
       <div className="relative aspect-square w-full rounded-xl sm:rounded-2xl overflow-hidden bg-gray-50 border border-gray-100/60 mb-2">

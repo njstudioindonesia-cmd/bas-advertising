@@ -104,58 +104,49 @@ export default function PWAInstallPrompt() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-20 md:bottom-6 left-3 right-3 sm:left-auto sm:right-6 sm:w-[420px] z-40 bg-white/95 backdrop-blur-md rounded-3xl p-4 border border-orange-100 shadow-[0_12px_40px_-10px_rgba(249,115,22,0.25)] flex flex-col gap-3"
+            className="fixed bottom-18 md:bottom-6 left-2.5 right-2.5 sm:left-auto sm:right-6 sm:w-[380px] z-40 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 border border-orange-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.12)] flex items-center justify-between gap-2.5"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1E1B4B] to-[#0B1E36] p-1.5 shadow-sm shrink-0 flex items-center justify-center overflow-hidden border border-white/20">
-                  <Image
-                    src="/icon-192.png"
-                    alt="Cetak.inc App Icon"
-                    width={48}
-                    height={48}
-                    className="w-full h-full object-contain rounded-xl"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-extrabold text-sm text-[#1E1B4B] leading-tight">
-                      Install Cetak.inc App
-                    </h3>
-                    <span className="bg-orange-100 text-[#F97316] text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full">
-                      PWA
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1">
-                    Pesan cetakan kilat langsung dari layar utama HP
-                  </p>
-                </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[#1E1B4B] p-1 shadow-2xs shrink-0 flex items-center justify-center overflow-hidden">
+                <Image
+                  src="/icon-192.png"
+                  alt="Cetak.inc App Icon"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain rounded-lg"
+                />
               </div>
-
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-700 flex items-center justify-center shrink-0 transition-colors"
-              >
-                <X size={14} />
-              </button>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1">
+                  <h4 className="font-extrabold text-xs text-[#1E1B4B] leading-none truncate">
+                    Install Cetak.inc
+                  </h4>
+                  <span className="bg-orange-100 text-[#F97316] text-[8px] font-black uppercase px-1 py-0.2 rounded">
+                    PWA
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-0.5 truncate">
+                  Pesan kilat via homescreen HP
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="flex-1 py-2.5 px-4 bg-[#F97316] hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
+                className="py-1.5 px-3 bg-[#F97316] hover:bg-orange-600 active:scale-95 text-white font-black text-[11px] rounded-xl shadow-2xs transition-all flex items-center gap-1"
               >
-                <Download size={14} />
-                <span>Tambahkan ke Layar Utama</span>
+                <Download size={12} strokeWidth={2.5} />
+                <span>Install</span>
               </button>
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="py-2.5 px-3 text-gray-500 hover:text-gray-800 text-xs font-semibold rounded-xl transition-colors"
+                className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-700 flex items-center justify-center transition-colors"
+                aria-label="Tutup"
               >
-                Nanti
+                <X size={12} />
               </button>
             </div>
           </motion.div>
