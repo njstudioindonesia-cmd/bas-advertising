@@ -19,9 +19,11 @@ import {
   QrCode,
   AlertCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  MapPin
 } from "lucide-react";
 import { useCart, parsePriceToNumber } from "@/context/CartContext";
+import CheckoutLocationPicker, { DeliveryLocationData } from "@/components/CheckoutLocationPicker";
 
 export default function KeranjangPage() {
   const { 
@@ -45,9 +47,22 @@ export default function KeranjangPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
+  // Location & Hub State dari CheckoutLocationPicker
+  const [deliveryLocation, setDeliveryLocation] = useState<DeliveryLocationData>({
+    address: "Jl. Belanti Baru, Lolong Belanti, Padang Utara",
+    lat: -0.9025,
+    lng: 100.3542,
+    landmarkNote: "",
+    hubId: "00000000-0000-0000-0000-000000000001",
+    hubName: "Hub Pusat BAS Advertising Padang",
+    distanceKm: 1.5,
+    deliveryFee: 8000,
+    etaMin: 15,
+  });
+
   // Settings from backend
   const [settings, setSettings] = useState<Record<string, any>>({
-    "contact.whatsapp": "6281234567890",
+    "contact.whatsapp": "6282283995544",
     "checkout.paymentMethods": [
       { id: "QRIS", name: "QRIS Instant", enabled: true, details: "Scan QRIS via GoPay, OVO, Dana, BCA, Livin" },
       { id: "Transfer Bank", name: "Transfer Bank", enabled: true, details: "BCA / Mandiri / BNI a/n Cetak.inc" },
@@ -57,7 +72,7 @@ export default function KeranjangPage() {
       { id: "kirim", name: "Kirim ke Alamat", enabled: true, note: "Kurir lokal Padang & Ekspedisi" },
       { id: "pickup", name: "Ambil di Toko / Workshop", enabled: true, note: "Gratis tanpa ongkir" }
     ],
-    "checkout.waTemplate": "*HALO CETAK.INC, SAYA INGIN PESAN:*\n----------------------------------------\n*No. Pesanan:* {code}\n*Nama:* {nama}\n*WhatsApp:* {phone}\n*Metode:* {metode}\n*Alamat:* {alamat}\n*Pembayaran:* {pembayaran}\n*Catatan:* {catatan}\n----------------------------------------\n*RINCIAN PESANAN:*\n{items}\n----------------------------------------\n*TOTAL:* *{total}*\n----------------------------------------\nMohon diproses, terima kasih!"
+    "checkout.waTemplate": "*HALO CETAK.INC, SAYA INGIN PESAN:*\n----------------------------------------\n*No. Pesanan:* {code}\n*Nama:* {nama}\n*WhatsApp:* {phone}\n*Metode:* {metode}\n*Workshop Cetak:* {hub}\n*Alamat:* {alamat}\n*Catatan Patokan:* {patokan}\n*Ongkir:* {ongkir}\n*Pembayaran:* {pembayaran}\n*Catatan Desain:* {catatan}\n----------------------------------------\n*RINCIAN PESANAN:*\n{items}\n----------------------------------------\n*TOTAL PESANAN:* *{total}*\n----------------------------------------\nMohon diproses, terima kasih!"
   });
 
   useEffect(() => {
@@ -71,6 +86,9 @@ export default function KeranjangPage() {
       .catch(() => {});
   }, []);
 
+  const currentDeliveryFee = deliveryType === "kirim" ? deliveryLocation.deliveryFee : 0;
+  const grandTotal = subtotal + currentDeliveryFee;
+
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -80,8 +98,12 @@ export default function KeranjangPage() {
       return;
     }
 
-    if (deliveryType === "kirim" && !address.trim()) {
-      setErrorMessage("Harap cantumkan alamat pengiriman di Kota Padang atau sekitarnya.");
+    const finalAddress = deliveryType === "kirim" 
+      ? (deliveryLocation.address.trim() || address.trim()) 
+      : "Ambil di Workshop Cetak.inc Padang";
+
+    if (deliveryType === "kirim" && !finalAddress) {
+      setErrorMessage("Harap tentukan titik dan alamat pengiriman di peta.");
       return;
     }
 
@@ -91,12 +113,18 @@ export default function KeranjangPage() {
       // 1. Validasi keranjang dengan live DB terlebih dahulu
       await validateCartWithServer();
 
-      // 2. Siapkan payload order
+      // 2. Siapkan payload order lengkap dengan Hub & Koordinat
       const orderPayload = {
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         deliveryMethod: deliveryType,
-        address: deliveryType === "kirim" ? address.trim() : "Ambil di Workshop Padang",
+        address: finalAddress,
+        destLat: deliveryType === "kirim" ? deliveryLocation.lat : null,
+        destLng: deliveryType === "kirim" ? deliveryLocation.lng : null,
+        destAddress: deliveryType === "kirim" ? finalAddress : null,
+        destNote: deliveryType === "kirim" ? deliveryLocation.landmarkNote : null,
+        hubId: deliveryType === "kirim" ? deliveryLocation.hubId : null,
+        deliveryFee: currentDeliveryFee,
         paymentMethod,
         note: orderNotes.trim() || undefined,
         items: cart.map(it => ({
@@ -107,7 +135,7 @@ export default function KeranjangPage() {
       };
 
       let orderCode = `BAS-${Date.now().toString().slice(-6)}`;
-      let finalTotal = formatRupiah(subtotal);
+      let finalTotal = formatRupiah(grandTotal);
 
       // Simpan ke API pesanan
       try {
@@ -120,7 +148,6 @@ export default function KeranjangPage() {
         const orderData = await orderRes.json();
         if (orderData.success && orderData.order) {
           orderCode = orderData.order.code;
-          finalTotal = formatRupiah(orderData.order.subtotal);
         }
       } catch (err) {
         console.warn("Penyimpanan pesanan database offline, lanjut via WA langsung:", err);
@@ -141,7 +168,10 @@ export default function KeranjangPage() {
         .replace("{nama}", customerName.trim())
         .replace("{phone}", customerPhone.trim())
         .replace("{metode}", deliveryType === "kirim" ? "Kirim ke Alamat" : "Ambil di Workshop")
-        .replace("{alamat}", deliveryType === "kirim" ? address.trim() : "Ambil di Workshop")
+        .replace("{hub}", deliveryType === "kirim" ? `${deliveryLocation.hubName} (~${deliveryLocation.distanceKm} km)` : "Workshop Pusat")
+        .replace("{alamat}", finalAddress)
+        .replace("{patokan}", deliveryLocation.landmarkNote || "-")
+        .replace("{ongkir}", currentDeliveryFee === 0 ? "GRATIS" : formatRupiah(currentDeliveryFee))
         .replace("{pembayaran}", paymentMethod)
         .replace("{catatan}", orderNotes.trim() || "-")
         .replace("{items}", itemsText)
@@ -150,7 +180,7 @@ export default function KeranjangPage() {
       const message = `${baseMessage}\n\n📍 *Lacak Status Pengerjaan (Peta Live):*\n${trackingUrl}`;
 
       // Dapatkan nomor WA dari database settings
-      let targetWa = String(settings["contact.whatsapp"] || "6281234567890").replace(/[^0-9]/g, "");
+      let targetWa = String(settings["contact.whatsapp"] || "6282283995544").replace(/[^0-9]/g, "");
       if (targetWa.startsWith("0")) targetWa = "62" + targetWa.slice(1);
 
       const encodedMessage = encodeURIComponent(message);
@@ -198,45 +228,45 @@ export default function KeranjangPage() {
             </div>
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Keranjang Anda Kosong</h2>
             <p className="text-xs sm:text-sm text-gray-500 mb-6">
-              Belum ada produk cetak yang Anda tambahkan. Silakan lihat katalog produk lengkap kami.
+              Yuk lihat produk cetak unggulan kami dan masukkan item pesanan Anda sekarang.
             </p>
-            <Link 
-              href="/produk" 
-              className="bg-[#1E1B4B] text-white px-6 py-3 rounded-full text-xs sm:text-sm font-bold inline-flex items-center gap-2 hover:bg-[#F97316] transition-colors shadow-sm"
+            <Link
+              href="/produk"
+              className="inline-flex items-center gap-2 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-full transition-all shadow-md shadow-orange-500/20 active:scale-95"
             >
-              Mulai Belanja Produk <ArrowRight size={16} />
+              Mulai Pesan Cetakan <ArrowRight size={16} />
             </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             
-            {/* Left Column: Cart Items List */}
-            <div className="lg:col-span-7 space-y-3 sm:space-y-4">
+            {/* Left Column: Cart Items */}
+            <div className="lg:col-span-7 space-y-4">
               <div className="bg-white rounded-3xl p-4 sm:p-6 border border-gray-100 shadow-2xs">
-                <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-                  <h2 className="font-extrabold text-sm sm:text-base text-gray-900">
-                    Daftar Pesanan ({totalItems} item)
+                <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+                  <h2 className="font-extrabold text-base text-gray-900">
+                    Daftar Pesanan ({totalItems} Item)
                   </h2>
-                  <button 
+                  <button
                     onClick={clearCart}
-                    className="text-xs text-red-500 hover:text-red-700 font-medium"
+                    className="text-xs text-red-500 hover:text-red-600 font-bold flex items-center gap-1 transition-colors"
                   >
-                    Kosongkan
+                    <Trash2 size={13} /> Kosongkan
                   </button>
                 </div>
 
                 <div className="divide-y divide-gray-100">
                   {cart.map((item) => {
-                    const unitPrice = parsePriceToNumber(item.product.price);
-                    const itemTotal = unitPrice * item.quantity;
-                    const img = item.product.imageUrl || item.product.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop";
+                    const itemPrice = parsePriceToNumber(item.product.price);
+                    const itemTotal = itemPrice * item.quantity;
+                    const img = item.notes?.match(/\[MOCKUP_IMG:(data:image\/[^;]+;base64,[^\]]+)\]/)?.[1] || item.product.img || item.product.imageUrl || item.product.images?.[0] || "";
 
                     return (
-                      <div key={item.product.id} className="py-3 sm:py-4 flex gap-3 sm:gap-4 items-center">
-                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gray-50 overflow-hidden shrink-0 border border-gray-100">
-                          <Image 
-                            src={img} 
-                            alt={item.product.title} 
+                      <div key={item.product.id} className="py-4 first:pt-0 last:pb-0 flex items-center gap-3 sm:gap-4">
+                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gray-50 shrink-0 border border-gray-100">
+                          <Image
+                            src={img}
+                            alt={item.product.title}
                             fill 
                             sizes="80px"
                             unoptimized={Boolean(img?.startsWith("data:"))}
@@ -370,26 +400,20 @@ export default function KeranjangPage() {
                           : "border-gray-200 text-gray-600 bg-white"
                       }`}
                     >
-                      <Building2 size={15} /> Ambil di Toko
+                      <Building2 size={15} /> Ambil di Workshop
                     </button>
                   </div>
                 </div>
 
-                {/* Alamat bila kirim */}
+                {/* Lokasi & Pin Peta Interaktif (Fase 2 Blueprint V2) */}
                 {deliveryType === "kirim" && (
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Alamat Pengiriman (Kota Padang & Sekitarnya) *
-                    </label>
-                    <textarea
-                      required
-                      rows={2}
-                      placeholder="Jalan, No. Rumah/Ruko, Kelurahan, Kecamatan di Kota Padang..."
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="w-full text-xs sm:text-sm px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:border-[#F97316] transition-all"
-                    />
-                  </div>
+                  <CheckoutLocationPicker
+                    subtotal={subtotal}
+                    onLocationChange={(loc) => {
+                      setDeliveryLocation(loc);
+                      setAddress(loc.address);
+                    }}
+                  />
                 )}
 
                 {/* Metode Pembayaran */}
@@ -439,24 +463,38 @@ export default function KeranjangPage() {
                   />
                 </div>
 
-                {/* Subtotal & Tombol Pesan */}
-                <div className="pt-3 border-t border-gray-100">
-                  <div className="flex items-baseline justify-between mb-4">
-                    <span className="text-xs font-semibold text-gray-500">Total Pembelian:</span>
+                {/* Rincian Subtotal, Ongkir & Total Akhir */}
+                <div className="pt-3 border-t border-gray-100 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span>Subtotal Produk ({totalItems} item):</span>
+                    <span className="font-bold text-gray-900">{formatRupiah(subtotal)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span>Ongkir Pengantaran:</span>
+                    <span className="font-bold text-gray-900">
+                      {deliveryType === "kirim" 
+                        ? (currentDeliveryFee === 0 ? "GRATIS" : formatRupiah(currentDeliveryFee)) 
+                        : "GRATIS (Ambil Sendiri)"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between pt-2 border-t border-gray-100">
+                    <span className="text-xs font-extrabold text-gray-900">Total Pembayaran:</span>
                     <span className="text-xl sm:text-2xl font-black text-[#F97316]">
-                      {formatRupiah(subtotal)}
+                      {formatRupiah(grandTotal)}
                     </span>
                   </div>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 px-4 bg-[#25D366] hover:bg-[#1EBE5D] text-white rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all disabled:opacity-50"
+                    className="w-full mt-2 py-3.5 px-4 bg-[#25D366] hover:bg-[#1EBE5D] text-white rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all disabled:opacity-50"
                   >
                     {isSubmitting ? (
                       <>
                         <Loader2 size={16} className="animate-spin" />
-                        <span>Mencatat Pesanan...</span>
+                        <span>Mencatat Pesanan & Menugaskan Hub...</span>
                       </>
                     ) : (
                       <>
@@ -468,7 +506,7 @@ export default function KeranjangPage() {
 
                   <p className="text-[10px] text-gray-400 text-center mt-2 flex items-center justify-center gap-1">
                     <ShieldCheck size={12} className="text-emerald-500" />
-                    Pesanan dicatat resmi di sistem & tim kami akan membalas langsung di WhatsApp.
+                    Pesanan dicatat resmi di sistem & diarahkan otomatis ke workshop terdekat.
                   </p>
                 </div>
               </form>

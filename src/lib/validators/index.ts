@@ -60,6 +60,12 @@ export const OrderInputSchema = z.object({
   customerPhone: z.string().min(8, "Nomor WhatsApp tidak valid"),
   deliveryMethod: z.enum(["kirim", "pickup"]),
   address: z.string().optional().nullable(),
+  destLat: z.coerce.number().optional().nullable(),
+  destLng: z.coerce.number().optional().nullable(),
+  destAddress: z.string().optional().nullable(),
+  destNote: z.string().optional().nullable(),
+  hubId: z.string().optional().nullable(),
+  deliveryFee: z.coerce.number().optional().default(0),
   paymentMethod: z.string().min(1, "Metode pembayaran wajib dipilih"),
   note: z.string().optional().nullable(),
   items: z.array(

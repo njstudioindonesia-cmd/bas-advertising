@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { OrderInput } from "@/lib/validators";
+import { assignHub } from "@/modules/hubs";
 
 export interface OrderItemRecord {
   id: string;
@@ -122,20 +123,62 @@ export async function createOrder(
     const orderCode = generateOrderCode();
     const now = new Date().toISOString();
 
-    const { error: ordErr } = await supabaseAdmin.from("orders").insert({
+    // 3. Alokasi Hub Otomatis berdasarkan alamat & koordinat (Blueprint V2 Fase 2)
+    let assignedHubId = input.hubId || null;
+    if (!assignedHubId && input.deliveryMethod === "kirim") {
+      try {
+        const assignment = await assignHub({
+          lat: input.destLat,
+          lng: input.destLng,
+          address: input.destAddress || input.address,
+        });
+        assignedHubId = assignment.hubId;
+      } catch {}
+    }
+
+    const fullOrderPayload: Record<string, any> = {
       id: orderId,
       code: orderCode,
       customer_name: input.customerName,
       customer_phone: input.customerPhone,
       delivery_method: input.deliveryMethod,
       address: input.address || null,
+      dest_lat: input.destLat || null,
+      dest_lng: input.destLng || null,
+      dest_address: input.destAddress || input.address || null,
+      dest_note: input.destNote || null,
+      delivery_fee: input.deliveryFee || 0,
+      hub_id: assignedHubId,
       payment_method: input.paymentMethod,
       note: input.note || null,
       subtotal: calculatedSubtotal,
       status: "BARU",
       created_at: now,
       updated_at: now,
-    });
+    };
+
+    let { error: ordErr } = await supabaseAdmin.from("orders").insert(fullOrderPayload);
+
+    // Fallback: Jika tabel di Supabase belum di-alter dengan kolom baru, insert payload dasar
+    if (ordErr && (ordErr.message.includes("column") || ordErr.message.includes("schema cache"))) {
+      console.warn("[ORDERS] Fallback insert dengan kolom dasar:", ordErr.message);
+      const basePayload = {
+        id: orderId,
+        code: orderCode,
+        customer_name: input.customerName,
+        customer_phone: input.customerPhone,
+        delivery_method: input.deliveryMethod,
+        address: input.address || null,
+        payment_method: input.paymentMethod,
+        note: input.note || null,
+        subtotal: calculatedSubtotal,
+        status: "BARU",
+        created_at: now,
+        updated_at: now,
+      };
+      const retry = await supabaseAdmin.from("orders").insert(basePayload);
+      ordErr = retry.error;
+    }
 
     if (ordErr) {
       return { order: null, error: ordErr.message };

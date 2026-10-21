@@ -42,7 +42,8 @@ import {
   Bike,
   MapPin,
   Navigation,
-  Sparkles
+  Sparkles,
+  Building2
 } from "lucide-react";
 
 export default function UrangDalamAdminPortal() {
@@ -55,8 +56,28 @@ export default function UrangDalamAdminPortal() {
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "products" | "categories" | "banners" | "portfolio" | "settings" | "orders" | "backup" | "account"
+    "dashboard" | "products" | "categories" | "banners" | "portfolio" | "settings" | "orders" | "hubs" | "backup" | "account"
   >("dashboard");
+
+  // Hubs Management (Fase 2 Blueprint V2)
+  const [hubsList, setHubsList] = useState<any[]>([]);
+  const [isHubModalOpen, setIsHubModalOpen] = useState(false);
+  const [hubModalMode, setHubModalMode] = useState<"add" | "edit">("add");
+  const [editingHubId, setEditingHubId] = useState<string | null>(null);
+  const [hubForm, setHubForm] = useState({
+    name: "",
+    slug: "",
+    address: "",
+    lat: -0.9025,
+    lng: 100.3542,
+    phone: "082283995544",
+    whatsapp: "6282283995544",
+    maxRadiusKm: 15,
+    dailyCapacity: 50,
+    isActive: true,
+    isOpen: true,
+    notes: "",
+  });
 
   // Notifications
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -215,12 +236,13 @@ export default function UrangDalamAdminPortal() {
   const refreshAllData = async () => {
     setLoading(true);
     try {
-      const [pRes, cRes, bRes, sRes, oRes] = await Promise.all([
+      const [pRes, cRes, bRes, sRes, oRes, hRes] = await Promise.all([
         adminFetch("/api/products?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/categories?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/banners?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/settings", { cache: "no-store" }).then((r) => r.json()),
         adminFetch("/api/orders", { cache: "no-store" }).then((r) => r.json()),
+        adminFetch("/api/admin/hubs", { cache: "no-store" }).then((r) => r.json()).catch(() => ({ success: false })),
       ]);
 
       if (pRes.success) setProducts(pRes.data);
@@ -233,10 +255,117 @@ export default function UrangDalamAdminPortal() {
       if (bRes.success) setBanners(bRes.data);
       if (sRes.success) setSettings(sRes.data);
       if (oRes.success) setOrders(oRes.data);
+      if (hRes && hRes.success) setHubsList(hRes.data);
     } catch (err: any) {
       showToast("Gagal memuat beberapa data dari server", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openAddHubModal = () => {
+    setHubModalMode("add");
+    setEditingHubId(null);
+    setHubForm({
+      name: "",
+      slug: "",
+      address: "",
+      lat: -0.9025,
+      lng: 100.3542,
+      phone: "082283995544",
+      whatsapp: "6282283995544",
+      maxRadiusKm: 15,
+      dailyCapacity: 50,
+      isActive: true,
+      isOpen: true,
+      notes: "",
+    });
+    setIsHubModalOpen(true);
+  };
+
+  const openEditHubModal = (hub: any) => {
+    setHubModalMode("edit");
+    setEditingHubId(hub.id);
+    setHubForm({
+      name: hub.name,
+      slug: hub.slug,
+      address: hub.address || "",
+      lat: hub.lat,
+      lng: hub.lng,
+      phone: hub.phone || "082283995544",
+      whatsapp: hub.whatsapp || "6282283995544",
+      maxRadiusKm: hub.maxRadiusKm || 15,
+      dailyCapacity: hub.dailyCapacity || 50,
+      isActive: hub.isActive ?? true,
+      isOpen: hub.isOpen ?? true,
+      notes: hub.notes || "",
+    });
+    setIsHubModalOpen(true);
+  };
+
+  const handleHubSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hubForm.name.trim() || !hubForm.address.trim()) {
+      showToast("Nama hub dan alamat workshop wajib diisi", "error");
+      return;
+    }
+
+    try {
+      const url = hubModalMode === "add" ? "/api/admin/hubs" : `/api/admin/hubs/${editingHubId}`;
+      const method = hubModalMode === "add" ? "POST" : "PUT";
+      const res = await adminFetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(hubForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          hubModalMode === "add" ? "Workshop Hub berhasil ditambahkan!" : "Data Hub berhasil diperbarui!",
+          "success"
+        );
+        setIsHubModalOpen(false);
+        refreshAllData();
+      } else {
+        showToast(data.error || "Gagal menyimpan data hub", "error");
+      }
+    } catch {
+      showToast("Terjadi kesalahan jaringan", "error");
+    }
+  };
+
+  const handleToggleHubOpen = async (hub: any) => {
+    try {
+      const res = await adminFetch(`/api/admin/hubs/${hub.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isOpen: !hub.isOpen }),
+      });
+      if (res.ok) {
+        showToast(`Status ${hub.name} diubah menjadi ${!hub.isOpen ? "BUKA" : "TUTUP"}`, "success");
+        refreshAllData();
+      }
+    } catch {
+      showToast("Gagal mengubah status hub", "error");
+    }
+  };
+
+  const handleAssignHubToOrder = async (orderId: string, hubId: string) => {
+    try {
+      const res = await adminFetch(`/api/admin/orders/${orderId}/assign-hub`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hubId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || "Hub pesanan berhasil diperbarui!", "success");
+        refreshAllData();
+      } else {
+        showToast(data.error || "Gagal mengubah alokasi hub", "error");
+      }
+    } catch {
+      showToast("Gagal menghubungi server", "error");
     }
   };
 
@@ -1224,6 +1353,7 @@ export default function UrangDalamAdminPortal() {
           { id: "products", label: `Katalog Produk (${products.length})`, icon: Package },
           { id: "categories", label: `Kategori (${categories.length})`, icon: Layers },
           { id: "orders", label: `Pesanan (${orders.length})`, icon: ShoppingCart },
+          { id: "hubs", label: `Titik Workshop (${hubsList.length || 2})`, icon: Building2 },
           { id: "banners", label: "Banner Promo", icon: ImageIcon },
           { id: "settings", label: "Pengaturan & WA", icon: Settings },
           { id: "backup", label: "Backup & Reset", icon: Database },
@@ -1759,6 +1889,18 @@ export default function UrangDalamAdminPortal() {
                           <td className="p-3.5">
                             <div>{o.deliveryMethod === "kirim" ? "🚚 Kirim Alamat" : "🏬 Ambil Workshop"}</div>
                             <div className="text-[10px] text-gray-400">{o.paymentMethod}</div>
+                            <div className="mt-1 flex items-center gap-1">
+                              <Building2 size={11} className="text-[#F97316] shrink-0" />
+                              <select
+                                value={o.hub_id || (o.address?.toLowerCase().includes("lubuk buaya") ? "00000000-0000-0000-0000-000000000002" : "00000000-0000-0000-0000-000000000001")}
+                                onChange={(e) => handleAssignHubToOrder(o.id, e.target.value)}
+                                className="text-[9px] font-bold bg-orange-50 text-[#F97316] border border-orange-200 rounded px-1 py-0.5"
+                                title="Ubah Alokasi Workshop Hub untuk pesanan ini"
+                              >
+                                <option value="00000000-0000-0000-0000-000000000001">Hub Pusat Padang</option>
+                                <option value="00000000-0000-0000-0000-000000000002">Hub Lubuk Buaya</option>
+                              </select>
+                            </div>
                           </td>
                           <td className="p-3.5 font-extrabold text-[#F97316]">
                             Rp {Number(o.subtotal).toLocaleString("id-ID")}
@@ -2278,6 +2420,145 @@ export default function UrangDalamAdminPortal() {
                 Perbarui Password
               </button>
             </form>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 8: MANAJEMEN TITIK WORKSHOP (MULTI-HUB) */}
+        {/* ========================================================= */}
+        {activeTab === "hubs" && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-3xl border border-gray-100 shadow-2xs">
+              <div>
+                <h2 className="font-extrabold text-base text-gray-900 flex items-center gap-2">
+                  <Building2 className="text-[#F97316]" size={18} /> Titik Workshop Percetakan (Multi-Hub)
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Daftar cabang percetakan mitra & pusat di Kota Padang untuk alokasi otomatis pesanan terdekat.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={openAddHubModal}
+                className="px-4 py-2.5 bg-[#F97316] hover:bg-orange-600 text-white rounded-2xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+              >
+                <Plus size={15} /> Tambah Workshop Hub
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(hubsList.length > 0 ? hubsList : [
+                {
+                  id: "00000000-0000-0000-0000-000000000001",
+                  name: "Hub Pusat BAS Advertising Padang",
+                  slug: "hub-padang-pusat",
+                  address: "Jl. Belanti Baru No. 17, Lolong Belanti, Kec. Padang Utara, Kota Padang",
+                  lat: -0.9025,
+                  lng: 100.3542,
+                  phone: "082283995544",
+                  whatsapp: "6282283995544",
+                  maxRadiusKm: 25,
+                  dailyCapacity: 150,
+                  isActive: true,
+                  isOpen: true,
+                  notes: "Workshop Pusat - Fasilitas Cetak Lengkap",
+                },
+                {
+                  id: "00000000-0000-0000-0000-000000000002",
+                  name: "Hub Lubuk Buaya (Workshop Cabang)",
+                  slug: "hub-lubuk-buaya",
+                  address: "Jl. Adinegoro No. 88, Lubuk Buaya, Kec. Koto Tangah, Kota Padang",
+                  lat: -0.8354,
+                  lng: 100.315,
+                  phone: "082283995544",
+                  whatsapp: "6282283995544",
+                  maxRadiusKm: 20,
+                  dailyCapacity: 100,
+                  isActive: true,
+                  isOpen: true,
+                  notes: "Workshop Cabang Utara - Prioritas Area Lubuk Buaya & Koto Tangah",
+                },
+              ]).map((hub) => (
+                <div
+                  key={hub.id}
+                  className="bg-white rounded-3xl p-5 border border-gray-100 shadow-2xs flex flex-col justify-between gap-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-2xl bg-orange-50 text-[#F97316] flex items-center justify-center font-bold">
+                          <Building2 size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-sm text-gray-900">{hub.name}</h3>
+                          <span className="font-mono text-[11px] text-gray-400">slug: {hub.slug}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                            hub.isOpen
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                              : "bg-red-50 text-red-600 border-red-200"
+                          }`}
+                        >
+                          {hub.isOpen ? "BUKA" : "TUTUP"}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                            hub.isActive
+                              ? "bg-blue-50 text-blue-600 border-blue-200"
+                              : "bg-gray-100 text-gray-500 border-gray-200"
+                          }`}
+                        >
+                          {hub.isActive ? "AKTIF" : "NONAKTIF"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-2xl p-3 text-xs space-y-1.5 text-gray-600">
+                      <p className="flex items-start gap-1.5">
+                        <MapPin size={14} className="text-gray-400 shrink-0 mt-0.5" />
+                        <span>{hub.address}</span>
+                      </p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] pt-1 text-gray-500">
+                        <span>Koordinat: <strong className="text-gray-800">{Number(hub.lat).toFixed(4)}, {Number(hub.lng).toFixed(4)}</strong></span>
+                        <span>Radius: <strong className="text-gray-800">{hub.maxRadiusKm || 15} km</strong></span>
+                        <span>Kapasitas: <strong className="text-gray-800">{hub.dailyCapacity || 50} order/hari</strong></span>
+                        <span>WA: <strong className="text-gray-800">{hub.whatsapp || hub.phone}</strong></span>
+                      </div>
+                    </div>
+
+                    {hub.notes && (
+                      <p className="text-[11px] text-gray-500 italic">
+                        Catatan: {hub.notes}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => openEditHubModal(hub)}
+                      className="flex-1 py-2 px-3 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-bold transition-colors"
+                    >
+                      Edit Hub
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleHubOpen(hub)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors ${
+                        hub.isOpen
+                          ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                          : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      }`}
+                    >
+                      {hub.isOpen ? "Tutup Cabang" : "Buka Cabang"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </main>
@@ -3067,6 +3348,164 @@ export default function UrangDalamAdminPortal() {
                   className="px-4 py-2 bg-[#F97316] text-white rounded-xl text-xs font-bold shadow-sm hover:bg-orange-600 transition-colors cursor-pointer"
                 >
                   Simpan Banner Promo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: TAMBAH / EDIT WORKSHOP HUB (Fase 2 Blueprint V2) */}
+      {/* ========================================================= */}
+      {isHubModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92dvh] overflow-y-auto shadow-2xl border border-gray-100 flex flex-col my-auto">
+            <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+              <h2 className="font-extrabold text-sm sm:text-base text-gray-900 flex items-center gap-2">
+                <Building2 className="text-[#F97316]" size={18} />
+                {hubModalMode === "add" ? "Tambah Workshop Hub Baru" : "Edit Data Workshop Hub"}
+              </h2>
+              <button onClick={() => setIsHubModalOpen(false)} className="p-1 text-gray-400 hover:text-gray-700">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleHubSubmit} className="p-4 sm:p-6 space-y-4 flex-1">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Nama Workshop / Cabang *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Hub Lubuk Buaya (Workshop Cabang)"
+                  value={hubForm.name}
+                  onChange={(e) => setHubForm({ ...hubForm, name: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Alamat Lengkap Workshop *</label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="Jl. Adinegoro No. 88, Lubuk Buaya..."
+                  value={hubForm.address}
+                  onChange={(e) => setHubForm({ ...hubForm, address: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={hubForm.lat}
+                    onChange={(e) => setHubForm({ ...hubForm, lat: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={hubForm.lng}
+                    onChange={(e) => setHubForm({ ...hubForm, lng: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Radius Layanan (km)</label>
+                  <input
+                    type="number"
+                    value={hubForm.maxRadiusKm}
+                    onChange={(e) => setHubForm({ ...hubForm, maxRadiusKm: parseInt(e.target.value) || 15 })}
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Kapasitas Harian (order)</label>
+                  <input
+                    type="number"
+                    value={hubForm.dailyCapacity}
+                    onChange={(e) => setHubForm({ ...hubForm, dailyCapacity: parseInt(e.target.value) || 50 })}
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Nomor WhatsApp</label>
+                  <input
+                    type="text"
+                    value={hubForm.whatsapp}
+                    onChange={(e) => setHubForm({ ...hubForm, whatsapp: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Nomor Telepon</label>
+                  <input
+                    type="text"
+                    value={hubForm.phone}
+                    onChange={(e) => setHubForm({ ...hubForm, phone: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Catatan / Spesialisasi Workshop</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Fokus Spanduk Outdoor & Stiker A3+"
+                  value={hubForm.notes}
+                  onChange={(e) => setHubForm({ ...hubForm, notes: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                />
+              </div>
+
+              <div className="flex items-center gap-4 pt-2">
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hubForm.isOpen}
+                    onChange={(e) => setHubForm({ ...hubForm, isOpen: e.target.checked })}
+                    className="w-4 h-4 text-[#F97316] rounded-md border-gray-300 focus:ring-[#F97316]"
+                  />
+                  <span className="text-xs font-bold text-gray-700">Workshop Buka Sekarang</span>
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hubForm.isActive}
+                    onChange={(e) => setHubForm({ ...hubForm, isActive: e.target.checked })}
+                    className="w-4 h-4 text-[#F97316] rounded-md border-gray-300 focus:ring-[#F97316]"
+                  />
+                  <span className="text-xs font-bold text-gray-700">Aktifkan Hub</span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsHubModalOpen(false)}
+                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-xs font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#F97316] text-white rounded-xl text-xs font-bold shadow-sm hover:bg-orange-600 transition-colors cursor-pointer"
+                >
+                  Simpan Data Hub
                 </button>
               </div>
             </form>
