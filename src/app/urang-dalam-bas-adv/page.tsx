@@ -818,20 +818,26 @@ export default function UrangDalamAdminPortal() {
       {/* TOP ADMIN HEADER */}
       <header className="bg-[#0B1E36] text-white sticky top-0 z-40 border-b border-white/10 px-4 sm:px-8 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#F97316] text-white flex items-center justify-center font-black text-lg shadow-sm">
-            UD
+          <div className="relative w-9 h-9 rounded-xl bg-white p-1 border border-white/20 shadow-sm flex items-center justify-center shrink-0">
+            <Image
+              src="/logo-icon.png"
+              alt="Cetak.inc"
+              width={28}
+              height={28}
+              className="object-contain"
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-extrabold text-sm sm:text-base tracking-tight">
-                Urang Dalam BAS ADV
+                Cetak.inc — Urang Dalam
               </h1>
               <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
                 LIVE DB ACTIVE
               </span>
             </div>
             <p className="text-[10px] text-gray-400 hidden sm:block">
-              Pusat Cetak Padang — Panel Kontrol Utama
+              Panel Kontrol Utama & Manajemen Katalog
             </p>
           </div>
         </div>

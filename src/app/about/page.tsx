@@ -35,7 +35,7 @@ export default function About() {
           >
             <Image 
               src="https://images.unsplash.com/photo-1562664377-709f2c337eb2?q=80&w=1000&auto=format&fit=crop" 
-              alt="Suasana workshop dan tim profesional Pusat Cetak Padang sedang memproduksi pesanan cetak berkualitas tinggi" 
+              alt="Suasana workshop dan tim profesional Cetak.inc sedang memproduksi pesanan cetak berkualitas tinggi" 
               fill
               className="object-cover"
             />

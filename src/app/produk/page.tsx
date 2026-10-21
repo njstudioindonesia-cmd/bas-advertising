@@ -101,7 +101,7 @@ function CatalogContent() {
         <div className="flex items-center justify-between mb-2">
           <div>
             <span className="text-[10px] font-bold text-[#F97316] uppercase tracking-wider block">
-              Pusat Cetak Padang
+              Cetak.inc
             </span>
             <h1 className="text-xl sm:text-3xl font-extrabold text-[#1E1B4B] tracking-tight">
               Katalog Produk Cetak

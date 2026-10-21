@@ -441,7 +441,7 @@ export default function Home() {
             <div className="lg:w-[40%] h-[300px] sm:h-[400px] lg:h-auto relative" style={{ maskImage: "linear-gradient(to right, transparent, black 25%)", WebkitMaskImage: "linear-gradient(to right, transparent, black 25%)" }}>
               <Image 
                 src="https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=1600&auto=format&fit=crop" 
-                alt="Fasilitas percetakan modern Pusat Cetak Padang" 
+                alt="Fasilitas percetakan modern Cetak.inc" 
                 fill 
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 className="object-cover object-right"

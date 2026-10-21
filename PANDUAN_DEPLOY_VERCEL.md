@@ -1,5 +1,5 @@
 # 🚀 PANDUAN DEPLOY KE VERCEL
-**Proyek:** Pusat Cetak Padang by BAS Advertising  
+**Proyek:** Cetak.inc — Modern Printing & Advertising Studio  
 **Framework:** Next.js 16 (App Router) + React 19 + Tailwind CSS v4 + SQLite Backend  
 
 ---

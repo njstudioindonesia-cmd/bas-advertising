@@ -16,19 +16,19 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Pusat Cetak Padang by BAS Advertising",
-  description: "Pusat Cetak Padang by BAS Advertising - Premium printing & advertising studio delivering precision and perfection.",
+  title: "Cetak.inc — Percetakan & Advertising Studio Modern",
+  description: "Cetak.inc — Solusi cetak cepat dan presisi untuk branding outlet, packaging UMKM, merchandise, dan advertising.",
   openGraph: {
-    title: "Pusat Cetak Padang by BAS Advertising",
+    title: "Cetak.inc — Percetakan & Advertising Studio Modern",
     description: "Spesialis cetak premium: Banner, Signage, Stiker, Kartu Nama, dan Custom Print.",
-    url: "https://pusatcetakpadang.com", // Placeholder URL
-    siteName: "Pusat Cetak Padang",
+    url: "https://cetakinc.com",
+    siteName: "Cetak.inc",
     images: [
       {
         url: "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=1200&auto=format&fit=crop", // OG Image
         width: 1200,
         height: 630,
-        alt: "Workshop Pusat Cetak Padang by BAS Advertising",
+        alt: "Workshop Cetak.inc Studio Modern",
       },
     ],
     locale: "id_ID",
@@ -41,20 +41,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "Pusat Cetak Padang by BAS Advertising",
+    "name": "Cetak.inc — Percetakan & Advertising Studio",
     "image": "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=1200&auto=format&fit=crop",
-    "description": "Premium printing & advertising studio di Padang. Melayani cetak banner, neon box, stiker, dan custom packaging.",
+    "description": "Premium printing & advertising studio modern. Melayani cetak banner, neon box, stiker, dan custom packaging.",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Jl. Percetakan Modern No.88",
-      "addressLocality": "Jakarta Selatan", // Nanti diganti sesuai kota klien (Padang)
-      "addressRegion": "DKI Jakarta",
-      "postalCode": "12345",
+      "addressLocality": "Kota Padang",
+      "addressRegion": "Sumatera Barat",
+      "postalCode": "25111",
       "addressCountry": "ID"
     },
     "telephone": "+6281234567890",
     "priceRange": "$$",
-    "url": "https://pusatcetakpadang.com"
+    "url": "https://cetakinc.com"
   };
 
   return (

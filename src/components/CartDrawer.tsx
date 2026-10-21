@@ -47,7 +47,7 @@ export default function CartDrawer() {
 
   const [settings, setSettings] = useState<Record<string, any>>({
     "contact.whatsapp": "6281234567890",
-    "checkout.waTemplate": "*HALO PUSAT CETAK PADANG, SAYA INGIN PESAN:*\n----------------------------------------\n*No. Pesanan:* {code}\n*Nama:* {nama}\n*WhatsApp:* {phone}\n*Metode:* {metode}\n*Alamat:* {alamat}\n*Pembayaran:* {pembayaran}\n*Catatan:* {catatan}\n----------------------------------------\n*RINCIAN PESANAN:*\n{items}\n----------------------------------------\n*TOTAL:* *{total}*\n----------------------------------------\nMohon diproses, terima kasih!"
+    "checkout.waTemplate": "*HALO CETAK.INC, SAYA INGIN PESAN:*\n----------------------------------------\n*No. Pesanan:* {code}\n*Nama:* {nama}\n*WhatsApp:* {phone}\n*Metode:* {metode}\n*Alamat:* {alamat}\n*Pembayaran:* {pembayaran}\n*Catatan:* {catatan}\n----------------------------------------\n*RINCIAN PESANAN:*\n{items}\n----------------------------------------\n*TOTAL:* *{total}*\n----------------------------------------\nMohon diproses, terima kasih!"
   });
 
   useEffect(() => {
@@ -190,7 +190,7 @@ export default function CartDrawer() {
                       {step === "checkout" ? "Konfirmasi Pesanan" : step === "success" ? "Pesanan Terkirim!" : "Keranjang Belanja"}
                     </h2>
                     <p className="text-[11px] text-gray-500">
-                      {step === "cart" ? `${totalItems} item dipilih` : "Pusat Cetak Padang"}
+                      {step === "cart" ? `${totalItems} item dipilih` : "Cetak.inc"}
                     </p>
                   </div>
                 </div>
@@ -427,7 +427,7 @@ export default function CartDrawer() {
                     </div>
                     <h3 className="font-bold text-[#1E1B4B] text-lg mb-1">Pesanan Dialihkan ke WhatsApp</h3>
                     <p className="text-xs text-gray-500 max-w-xs mb-6">
-                      Rincian pesanan resmi Anda telah terbuka di WhatsApp. Silakan tekan tombol kirim di WhatsApp untuk konfirmasi dengan tim Pusat Cetak Padang.
+                      Rincian pesanan resmi Anda telah terbuka di WhatsApp. Silakan tekan tombol kirim di WhatsApp untuk konfirmasi dengan tim Cetak.inc.
                     </p>
                     <button
                       onClick={handleClose}

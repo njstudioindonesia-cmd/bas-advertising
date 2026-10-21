@@ -35,7 +35,7 @@ export default function ProductDetailActions({ product }: { product: any }) {
     let cleanWa = whatsappNumber;
     if (cleanWa.startsWith("0")) cleanWa = "62" + cleanWa.slice(1);
 
-    let msg = `*HALO PUSAT CETAK PADANG, SAYA INGIN BELI PRODUK INI:*\n`;
+    let msg = `*HALO CETAK.INC, SAYA INGIN BELI PRODUK INI:*\n`;
     msg += `----------------------------------------\n`;
     msg += `📦 *Produk:* ${product.title || product.name}\n`;
     msg += `🏷️ *Kategori:* ${product.category}\n`;

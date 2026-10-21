@@ -1,4 +1,4 @@
-# 📘 DOKUMENTASI PROYEK: PUSAT CETAK PADANG by BAS ADVERTISING
+# 📘 DOKUMENTASI PROYEK: CETAK.INC by BAS ADVERTISING
 *Dokumentasi Lengkap Fitur, Arsitektur, Katalog Produk, E-Commerce, dan Portal Urang Dalam*
 
 ---
@@ -7,7 +7,7 @@
 
 | Informasi | Detail |
 | :--- | :--- |
-| **Nama Aplikasi** | Pusat Cetak Padang by BAS Advertising |
+| **Nama Aplikasi** | Cetak.inc — Modern Printing & Advertising Studio |
 | **Fokus Layanan** | Percetakan, Digital Printing, Apparel, Signage & Merchandise Usaha |
 | **Teknologi Utama** | Next.js 16.3.1 (Turbopack, App Router), React 19, Tailwind CSS v4, TypeScript |
 | **Animasi & Ikon** | Framer Motion, Lucide Icons |

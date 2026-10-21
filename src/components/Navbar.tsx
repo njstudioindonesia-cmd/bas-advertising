@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, ShoppingCart, Printer, Zap, X, MapPin, MessageCircle, Palette } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -65,13 +66,20 @@ export default function Navbar() {
         {/* Top App Header Row */}
         <div className="flex items-center justify-between px-3.5 py-2.5">
           {/* Logo & City Badge */}
-          <Link href="/" className="flex items-center gap-2 group min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#1E1B4B] to-[#0B1E36] flex items-center justify-center text-white shadow-xs shrink-0">
-              <Printer size={16} strokeWidth={2.5} />
+          <Link href="/" className="flex items-center gap-2.5 group min-w-0">
+            <div className="relative w-8 h-8 rounded-xl bg-white border border-gray-200/80 p-0.5 shadow-2xs shrink-0 overflow-hidden flex items-center justify-center">
+              <Image
+                src="/logo-icon.png"
+                alt="Cetak.inc"
+                width={32}
+                height={32}
+                className="object-contain"
+                priority
+              />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-display text-[15px] tracking-tight text-[#1E1B4B] leading-none truncate">
-                Pusat Cetak Padang
+              <span className="font-display font-black text-[16px] tracking-tight text-[#0B1E36] leading-none truncate">
+                Cetak.inc
               </span>
               <span className="text-[9px] font-semibold text-gray-500 flex items-center gap-1 mt-0.5 truncate">
                 <MapPin size={9} className="text-[#F97316] shrink-0" />
@@ -144,15 +152,22 @@ export default function Navbar() {
             
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group shrink-0">
-              <div className="bg-[#0B1E36] rounded-xl p-2 text-white group-hover:bg-[#F97316] transition-colors shadow-xs">
-                <Printer className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
+              <div className="relative w-11 h-11 rounded-2xl bg-white border border-gray-200/90 p-1 shadow-2xs group-hover:border-orange-300 transition-colors flex items-center justify-center shrink-0">
+                <Image
+                  src="/logo-icon.png"
+                  alt="Cetak.inc"
+                  width={38}
+                  height={38}
+                  className="object-contain"
+                  priority
+                />
               </div>
               <div className="flex flex-col">
-                <span className="font-display text-xl tracking-tight text-[#0B1E36] leading-none mb-0.5">
-                  Pusat Cetak Padang
+                <span className="font-display font-black text-2xl tracking-tight text-[#0B1E36] leading-none mb-0.5">
+                  Cetak.inc
                 </span>
-                <span className="text-[10px] font-semibold tracking-widest text-[#F97316] uppercase">
-                  by BAS Advertising
+                <span className="text-[10px] font-bold tracking-widest text-[#F97316] uppercase">
+                  Printing & Advertising Studio
                 </span>
               </div>
             </Link>

@@ -32,7 +32,7 @@ function exportFullDatabase() {
   return {
     version: "1.0",
     exportedAt: new Date().toISOString(),
-    system: "Pusat Cetak Padang by BAS Advertising",
+    system: "Cetak.inc — Printing & Advertising Studio",
     data: {
       categories,
       products,

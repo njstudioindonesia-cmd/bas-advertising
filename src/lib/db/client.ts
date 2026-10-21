@@ -288,8 +288,8 @@ function autoSeedIfEmpty(db: DatabaseSync) {
 
     // 4. Seed Settings
     const defaultSettings: Record<string, any> = {
-      "site.name": "Pusat Cetak Padang",
-      "site.tagline": "by BAS Advertising",
+      "site.name": "Cetak.inc",
+      "site.tagline": "Modern Printing & Advertising Studio",
       "site.description": "Premium printing & advertising studio delivering precision and perfection.",
       "contact.whatsapp": "6281234567890",
       "contact.email": "hello@basadvertising.com",
@@ -307,7 +307,7 @@ function autoSeedIfEmpty(db: DatabaseSync) {
         { id: "kirim", name: "Kirim ke Alamat", enabled: true, note: "Kurir lokal Padang & Ekspedisi" },
         { id: "pickup", name: "Ambil di Toko / Workshop", enabled: true, note: "Gratis tanpa ongkir" }
       ],
-      "checkout.waTemplate": "*HALO PUSAT CETAK PADANG, SAYA INGIN PESAN:*\n----------------------------------------\n*No. Pesanan:* {code}\n*Nama:* {nama}\n*WhatsApp:* {phone}\n*Metode:* {metode}\n*Alamat:* {alamat}\n*Pembayaran:* {pembayaran}\n*Catatan:* {catatan}\n----------------------------------------\n*RINCIAN PESANAN:*\n{items}\n----------------------------------------\n*TOTAL:* *{total}*\n----------------------------------------\nMohon diproses, terima kasih!",
+      "checkout.waTemplate": "*HALO CETAK.INC, SAYA INGIN PESAN:*\n----------------------------------------\n*No. Pesanan:* {code}\n*Nama:* {nama}\n*WhatsApp:* {phone}\n*Metode:* {metode}\n*Alamat:* {alamat}\n*Pembayaran:* {pembayaran}\n*Catatan:* {catatan}\n----------------------------------------\n*RINCIAN PESANAN:*\n{items}\n----------------------------------------\n*TOTAL:* *{total}*\n----------------------------------------\nMohon diproses, terima kasih!",
       "home.promoTitle": "Diskon 25% Hari Ini",
       "home.promoSubtitle": "Spesial Branding Cafe, Resto & Bisnis",
     };
