@@ -78,10 +78,10 @@ export default function Navbar() {
               />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-display font-black text-[16px] tracking-tight text-[#0B1E36] leading-none truncate">
-                Cetak.inc
+              <span className="font-bold text-[16px] tracking-tight text-gray-900 leading-none truncate">
+                Cetak<span className="text-[#00A3E0]">.</span>inc
               </span>
-              <span className="text-[9px] font-semibold text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+              <span className="text-[9px] font-medium text-gray-500 flex items-center gap-1 mt-0.5 truncate">
                 <MapPin size={9} className="text-[#F97316] shrink-0" />
                 <span className="truncate">{settings["location.chipLabel"] || "Kota Padang & Sekitarnya"}</span>
               </span>
@@ -163,10 +163,10 @@ export default function Navbar() {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-display font-black text-2xl tracking-tight text-[#0B1E36] leading-none mb-0.5">
-                  Cetak.inc
+                <span className="font-extrabold text-2xl tracking-tight text-gray-900 leading-none mb-1">
+                  Cetak<span className="text-[#00A3E0]">.</span>inc
                 </span>
-                <span className="text-[10px] font-bold tracking-widest text-[#F97316] uppercase">
+                <span className="text-[10px] font-semibold tracking-wider text-[#F97316] uppercase">
                   Printing & Advertising Studio
                 </span>
               </div>

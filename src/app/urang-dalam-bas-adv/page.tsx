@@ -830,7 +830,7 @@ export default function UrangDalamAdminPortal() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-extrabold text-sm sm:text-base tracking-tight">
-                Cetak.inc — Urang Dalam
+                Cetak<span className="text-[#00A3E0]">.</span>inc — Urang Dalam
               </h1>
               <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
                 LIVE DB ACTIVE

@@ -47,10 +47,10 @@ export default function Footer() {
                 />
               </div>
               <div>
-                <h3 className="font-display font-black text-xl lg:text-2xl tracking-tight leading-none text-white mb-1">
-                  Cetak.inc
+                <h3 className="font-extrabold text-xl lg:text-2xl tracking-tight leading-none text-white mb-1">
+                  Cetak<span className="text-[#00A3E0]">.</span>inc
                 </h3>
-                <span className="text-[10px] lg:text-xs font-bold tracking-widest text-[#F97316] uppercase">
+                <span className="text-[10px] lg:text-xs font-semibold tracking-wider text-[#F97316] uppercase">
                   Printing & Advertising
                 </span>
               </div>
