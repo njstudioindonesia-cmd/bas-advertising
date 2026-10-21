@@ -44,14 +44,24 @@ export async function GET(request: Request) {
           desc: "File desain sudah siap dan bahan sedang diproses pada mesin digital press / outdoor printer.",
         },
         SIAP: {
-          label: "Finishing & Siap Diambil / Dikirim",
+          label: "Finishing Selesai & Quality Control",
           step: 3,
           desc: "Pencetakan telah selesai dan melewati proses pemotongan, laminasi, dan QC keamanan packing.",
+        },
+        DIKIRIM: {
+          label: "Kurir Sedang Meluncur ke Alamat Anda",
+          step: 4,
+          desc: "Kurir sedang dalam perjalanan menuju lokasi Anda. Pantau rute pengantaran secara langsung pada peta.",
+        },
+        SHIPPED: {
+          label: "Kurir Sedang Meluncur ke Alamat Anda",
+          step: 4,
+          desc: "Kurir sedang dalam perjalanan menuju lokasi Anda. Pantau rute pengantaran secara langsung pada peta.",
         },
         SELESAI: {
           label: "Pesanan Selesai / Telah Diterima",
           step: 4,
-          desc: "Pesanan telah diserahkan kepada Anda atau kurir pengiriman. Terima kasih telah mencetak di Cetak.inc!",
+          desc: "Pesanan telah diserahkan dan diterima dengan baik. Terima kasih telah mencetak di Cetak.inc!",
         },
         BATAL: {
           label: "Pesanan Dibatalkan",
@@ -77,10 +87,10 @@ export async function GET(request: Request) {
         subtotal: Number(o.subtotal) || 0,
         createdAt: o.created_at,
         items: (o.order_items || []).map((it: any) => ({
-          name: it.product_name,
+          name: it.name_snapshot || it.product_name || "Item Cetak",
           qty: it.qty,
-          price: Number(it.product_price) || 0,
-          subtotal: Number(it.subtotal) || 0,
+          price: Number(it.price_snapshot || it.product_price) || 0,
+          subtotal: Number(it.total || it.subtotal) || 0,
           designNote: it.design_note,
         })),
       };
