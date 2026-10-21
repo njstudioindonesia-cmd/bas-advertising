@@ -4,6 +4,7 @@ import { ProductInputSchema } from "@/lib/validators";
 import { requireAdmin } from "@/lib/auth/guard";
 import { revalidateEntity } from "@/lib/cache-tags";
 import { logAudit } from "@/lib/db/queries/audit";
+import { deleteStorageFile, deleteStorageFiles } from "@/lib/storage-helper";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -58,9 +59,19 @@ export async function PUT(
       );
     }
 
+    const existing = await getProductById(id);
+    if (!existing) {
+      return NextResponse.json({ success: false, error: "Produk tidak ditemukan" }, { status: 404 });
+    }
+
     const updated = await updateProduct(id, parsed.data);
     if (!updated) {
       return NextResponse.json({ success: false, error: "Produk tidak ditemukan" }, { status: 404 });
+    }
+
+    // Jika gambar produk diganti, bersihkan gambar lama dari Supabase Storage untuk mencegah pembengkakan
+    if (parsed.data.imageUrl && existing.imageUrl && parsed.data.imageUrl !== existing.imageUrl) {
+      deleteStorageFile(existing.imageUrl).catch(() => {});
     }
 
     logAudit({
@@ -97,6 +108,15 @@ export async function DELETE(
     }
 
     await deleteProduct(id, !permanent);
+
+    // Jika dihapus permanen, bersihkan gambar utama & galeri dari Supabase Storage
+    if (permanent) {
+      const imagesToDelete = [existing.imageUrl, existing.img, ...(existing.gallery || []), ...(existing.images || [])]
+        .filter((url): url is string => Boolean(url && typeof url === "string"));
+      if (imagesToDelete.length > 0) {
+        deleteStorageFiles(imagesToDelete).catch(() => {});
+      }
+    }
 
     logAudit({
       actor: "admin",

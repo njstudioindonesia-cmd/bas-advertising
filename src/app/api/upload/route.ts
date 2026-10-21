@@ -1,18 +1,33 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { requireAdmin } from "@/lib/auth/guard";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { uploadOptimizedImage } from "@/lib/storage-helper";
 
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+  "image/heic",
+  "image/heif"
+];
+
+// Izinkan hingga 15 MB foto mentah dari kamera HP modern karena Sharp akan langsung memampatkannya
+const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
     const auth = await requireAdmin(request);
     if (!auth.authorized) return auth.response!;
 
+    const url = new URL(request.url);
+    const queryFolder = url.searchParams.get("folder");
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const formFolder = formData.get("folder") as string | null;
+
+    const targetFolder = formFolder || queryFolder || "products";
 
     if (!file) {
       return NextResponse.json({ success: false, error: "File gambar tidak ditemukan" }, { status: 400 });
@@ -27,7 +42,7 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { success: false, error: "Ukuran file terlalu besar. Maksimal ukuran gambar adalah 5 MB." },
+        { success: false, error: "Ukuran file terlalu besar. Maksimal ukuran gambar mentah adalah 15 MB." },
         { status: 400 }
       );
     }
@@ -35,46 +50,59 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    let ext = ".jpg";
-    if (file.type === "image/png") ext = ".png";
-    else if (file.type === "image/webp") ext = ".webp";
-    else if (file.type === "image/gif") ext = ".gif";
-    else if (file.type === "image/svg+xml") ext = ".svg";
+    // Konfigurasi batas dimensi berdasarkan jenis folder
+    let maxWidth = 1400;
+    let maxHeight = 1400;
+    let quality = 82;
 
-    const fileName = `uploads/${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`;
-
-    // 1. Unggah ke Cloud Supabase Storage Bucket 'assets'
-    try {
-      const { data, error } = await supabaseAdmin.storage
-        .from("assets")
-        .upload(fileName, buffer, {
-          contentType: file.type || "image/jpeg",
-          upsert: true,
-        });
-
-      if (!error && data) {
-        const { data: publicData } = supabaseAdmin.storage.from("assets").getPublicUrl(fileName);
-        return NextResponse.json({
-          success: true,
-          message: "Gambar berhasil diunggah ke Supabase Cloud Storage",
-          url: publicData.publicUrl,
-        });
-      }
-    } catch (storageErr) {
-      console.error("[STORAGE_UPLOAD_ERR] Gagal upload ke Supabase Storage, fallback ke Base64:", storageErr);
+    if (targetFolder === "banners") {
+      maxWidth = 1920;
+      maxHeight = 1080;
+      quality = 85;
+    } else if (targetFolder === "categories" || targetFolder === "icons") {
+      maxWidth = 600;
+      maxHeight = 600;
+      quality = 85;
     }
 
-    // 2. Fallback Base64 Data URL (Tetap aman & langsung tampil jika koneksi storage bermasalah)
-    const mime = file.type || "image/jpeg";
-    const base64Data = buffer.toString("base64");
-    return NextResponse.json({
-      success: true,
-      message: "Gambar berhasil diunggah (Base64)",
-      url: `data:${mime};base64,${base64Data}`,
-    });
+    // Jalankan optimasi Sharp & upload ke Supabase Storage (Cache 1 Tahun)
+    try {
+      const uploadResult = await uploadOptimizedImage(buffer, file.type, {
+        folder: targetFolder,
+        maxWidth,
+        maxHeight,
+        quality,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Gambar berhasil dioptimasi & diunggah (Hemat ${uploadResult.savingsPercent}%)`,
+        url: uploadResult.url,
+        path: uploadResult.path,
+        originalSize: uploadResult.originalSize,
+        optimizedSize: uploadResult.optimizedSize,
+        savingsPercent: uploadResult.savingsPercent,
+        format: uploadResult.contentType,
+        dimensions: {
+          width: uploadResult.width,
+          height: uploadResult.height,
+        },
+      });
+    } catch (storageErr: any) {
+      console.error("[STORAGE_UPLOAD_ERR] Gagal upload ke Supabase Storage:", storageErr);
+
+      // Fallback darurat jika koneksi bucket bermasalah
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Gagal mengunggah ke Cloud Storage: ${storageErr.message || "Koneksi terputus"}`,
+        },
+        { status: 502 }
+      );
+    }
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message || "Gagal mengunggah gambar" },
+      { success: false, error: error.message || "Gagal memproses gambar" },
       { status: 500 }
     );
   }

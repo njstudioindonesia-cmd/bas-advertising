@@ -4,6 +4,7 @@ import { BannerInputSchema } from "@/lib/validators";
 import { requireAdmin } from "@/lib/auth/guard";
 import { revalidateEntity } from "@/lib/cache-tags";
 import { logAudit } from "@/lib/db/queries/audit";
+import { deleteStorageFile } from "@/lib/storage-helper";
 
 export async function GET(
   request: Request,
@@ -40,9 +41,19 @@ export async function PUT(
       );
     }
 
+    const existing = await getBannerById(id);
+    if (!existing) {
+      return NextResponse.json({ success: false, error: "Banner tidak ditemukan" }, { status: 404 });
+    }
+
     const updated = await updateBanner(id, partial.data);
     if (!updated) {
       return NextResponse.json({ success: false, error: "Banner tidak ditemukan" }, { status: 404 });
+    }
+
+    // Jika gambar banner diganti, hapus gambar lama dari Supabase Storage
+    if (partial.data.imageUrl && existing.imageUrl && partial.data.imageUrl !== existing.imageUrl) {
+      deleteStorageFile(existing.imageUrl).catch(() => {});
     }
 
     logAudit({
@@ -76,6 +87,11 @@ export async function DELETE(
     }
 
     await deleteBanner(id);
+
+    // Hapus gambar banner dari Supabase Storage
+    if (existing.imageUrl) {
+      deleteStorageFile(existing.imageUrl).catch(() => {});
+    }
 
     logAudit({
       actor: "admin",
