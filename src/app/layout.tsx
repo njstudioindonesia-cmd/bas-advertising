@@ -7,6 +7,7 @@ import { CartProvider } from "@/context/CartContext";
 import CartDrawer from "@/components/CartDrawer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import FloatingCartBar from "@/components/FloatingCartBar";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -17,11 +18,27 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Cetak.inc — Percetakan & Advertising Studio Modern",
-  description: "Cetak.inc — Solusi cetak cepat dan presisi untuk branding outlet, packaging UMKM, merchandise, dan advertising.",
+  title: "Cetak.inc — Percetakan Cepat Padang",
+  description: "Cetak.inc — Solusi cetak cepat dan presisi untuk spanduk kilat, branding outlet, packaging UMKM, merchandise, dan advertising.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Cetak.inc",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
   openGraph: {
-    title: "Cetak.inc — Percetakan & Advertising Studio Modern",
-    description: "Spesialis cetak premium: Banner, Signage, Stiker, Kartu Nama, dan Custom Print.",
+    title: "Cetak.inc — Percetakan Cepat Padang",
+    description: "Spesialis cetak premium: Banner, Spanduk Kilat, Signage, Packaging, Stiker, dan Merchandise.",
     url: "https://cetakinc.com",
     siteName: "Cetak.inc",
     images: [
@@ -77,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
           <CartDrawer />
           <FloatingWhatsApp />
+          <PWAInstallPrompt />
         </CartProvider>
       </body>
     </html>

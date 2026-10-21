@@ -1,0 +1,118 @@
+const CACHE_NAME = "cetakinc-pwa-v1";
+const STATIC_ASSETS = [
+  "/",
+  "/produk",
+  "/lacak",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/logo.png",
+  "/manifest.webmanifest"
+];
+
+// Install: Cache essential static shell
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
+  self.skipWaiting();
+});
+
+// Activate: Clean up old caches
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+// Fetch: Network first with Cache fallback for HTML; Cache first with Network fallback for static assets
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Jangan cache API routes atau Admin portal
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/urang-dalam-bas-adv")) {
+    return;
+  }
+
+  // Khusus dokumen HTML: Network first, fallback ke cache jika offline
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cachedResponse = await caches.match(request);
+          if (cachedResponse) return cachedResponse;
+          const fallbackHome = await caches.match("/");
+          if (fallbackHome) return fallbackHome;
+          return new Response(
+            `<!DOCTYPE html>
+            <html lang="id">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>Offline — Cetak.inc</title>
+              <style>
+                body { font-family: -apple-system, sans-serif; text-align: center; padding: 40px 20px; background: #F8F9FA; color: #1E1B4B; }
+                .card { background: white; border-radius: 24px; padding: 32px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+                h1 { font-size: 20px; margin-bottom: 8px; }
+                p { font-size: 14px; color: #64748B; margin-bottom: 24px; }
+                button { background: #F97316; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <div style="font-size: 48px; margin-bottom: 16px;">📶</div>
+                <h1>Anda Sedang Offline</h1>
+                <p>Koneksi internet Anda terputus. Buka kembali halaman ini saat internet Anda sudah aktif kembali.</p>
+                <button onclick="window.location.reload()">Coba Muat Ulang</button>
+              </div>
+            </body>
+            </html>`,
+            { headers: { "Content-Type": "text/html; charset=utf-8" } }
+          );
+        })
+    );
+    return;
+  }
+
+  // Khusus Gambar, Font, Icon, CSS/JS: Stale-while-revalidate
+  if (
+    request.destination === "image" ||
+    request.destination === "font" ||
+    request.destination === "style" ||
+    request.destination === "script"
+  ) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        const fetchPromise = fetch(request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              const clone = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return networkResponse;
+          })
+          .catch(() => cachedResponse);
+
+        return cachedResponse || fetchPromise;
+      })
+    );
+  }
+});
