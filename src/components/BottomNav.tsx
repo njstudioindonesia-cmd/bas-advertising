@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, ShoppingCart, Palette, Briefcase } from "lucide-react";
+import { Home, LayoutGrid, ShoppingCart, Bike, MessageCircle } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 
 export default function BottomNav() {
@@ -14,12 +14,12 @@ export default function BottomNav() {
     return null;
   }
 
-  // Public customer-only mobile navigation tabs
+  // Public customer-only mobile navigation tabs ala Gojek/Astro
   const navItems = [
     { label: "Beranda", icon: Home, href: "/" },
     { label: "Katalog", icon: LayoutGrid, href: "/produk" },
-    { label: "Mockup", icon: Palette, href: "/mockup" },
-    { label: "Portofolio", icon: Briefcase, href: "/portofolio" },
+    { label: "Lacak", icon: Bike, href: "/lacak" },
+    { label: "Chat", icon: MessageCircle, href: "/hubungi" },
     { 
       label: "Keranjang", 
       icon: ShoppingCart, 

@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import { CartProvider } from "@/context/CartContext";
 import CartDrawer from "@/components/CartDrawer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import FloatingCartBar from "@/components/FloatingCartBar";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Navbar />
           <main className="flex-grow flex flex-col pb-20 md:pb-0">{children}</main>
           <BottomNav />
+          <FloatingCartBar />
           <Footer />
           <CartDrawer />
           <FloatingWhatsApp />

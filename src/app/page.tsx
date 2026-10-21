@@ -33,6 +33,8 @@ import {
 
 import { products } from "@/data/products";
 import { useCart } from "@/context/CartContext";
+import QuickProductCard from "@/components/QuickProductCard";
+import ProductBottomSheet from "@/components/ProductBottomSheet";
 
 export default function Home() {
   const [productList, setProductList] = useState<any[]>(products);
@@ -40,6 +42,8 @@ export default function Home() {
   const [banners, setBanners] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [sheetProduct, setSheetProduct] = useState<any | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const router = useRouter();
   const { addToCart } = useCart();
 
@@ -399,68 +403,14 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-2.5">
             {topSellingProducts.map((item) => (
-              <div
+              <QuickProductCard
                 key={item.id}
-                className="bg-white rounded-2xl overflow-hidden border border-gray-100/90 shadow-2xs flex flex-col justify-between relative group"
-              >
-                <Link href={`/produk/${item.id}`} className="block">
-                  <div className="relative aspect-square bg-gray-100 overflow-hidden">
-                    <Image
-                      src={item.img}
-                      alt={item.title}
-                      fill
-                      sizes="50vw"
-                      className="object-cover"
-                    />
-                    {item.isBestSeller && (
-                      <span className="absolute top-1.5 left-1.5 bg-[#FF3E6C] text-white text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shadow-2xs">
-                        Terlaris
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="p-2.5">
-                    <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">
-                      {item.category}
-                    </span>
-                    <h4 className="text-xs font-semibold text-gray-900 line-clamp-2 leading-snug mb-1.5">
-                      {item.title}
-                    </h4>
-
-                    {item.normalPrice && (
-                      <span className="text-[9px] text-gray-400 line-through block">
-                        {item.normalPrice}
-                      </span>
-                    )}
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xs font-black text-[#F97316]">{item.price}</span>
-                      <span className="text-[8px] text-gray-400">{item.unit}</span>
-                    </div>
-
-                    <div className="flex items-center text-[#F59E0B] text-[9px] mt-1">
-                      <Star size={10} fill="currentColor" />
-                      <span className="ml-1 text-gray-700 font-bold">{item.rating}</span>
-                      <span className="text-gray-300 mx-1">·</span>
-                      <span className="text-gray-400">{item.sold}</span>
-                    </div>
-                  </div>
-                </Link>
-
-                <div className="px-2.5 pb-2.5">
-                  <button
-                    type="button"
-                    onClick={(e) => handleQuickAdd(item, e)}
-                    className={`w-full py-1.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 shadow-2xs ${
-                      addedId === item.id
-                        ? "bg-green-600 text-white"
-                        : "bg-orange-50 text-[#F97316] hover:bg-[#F97316] hover:text-white border border-orange-200/50"
-                    }`}
-                  >
-                    {addedId === item.id ? <Check size={12} /> : <Plus size={12} />}
-                    <span>{addedId === item.id ? "Berhasil!" : "+ Keranjang"}</span>
-                  </button>
-                </div>
-              </div>
+                product={item}
+                onOpenDetail={(p) => {
+                  setSheetProduct(p);
+                  setIsSheetOpen(true);
+                }}
+              />
             ))}
           </div>
 
@@ -694,71 +644,14 @@ export default function Home() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {topSellingProducts.slice(0, 8).map((item) => (
-              <div
+              <QuickProductCard
                 key={item.id}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 flex flex-col group relative transition-all"
-              >
-                <Link href={`/produk/${item.id}`} className="flex-grow flex flex-col">
-                  <div className="absolute top-0 right-0 bg-[#EF4444] text-white text-xs font-bold px-3 py-1 rounded-bl-xl z-10 shadow-sm">
-                    Diskon 25%
-                  </div>
-
-                  <div className="relative aspect-square bg-gray-100 overflow-hidden">
-                    <Image 
-                      src={item.img || (item as any).imageUrl} 
-                      alt={item.title} 
-                      fill 
-                      sizes="25vw"
-                      unoptimized={Boolean((item.img || (item as any).imageUrl)?.startsWith("data:"))}
-                      className="object-cover group-hover:scale-105 transition-transform duration-700" 
-                    />
-                    {item.isBestSeller && (
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-[#FF3E6C] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm flex items-center gap-1 shadow-sm">
-                          <TrendingUp size={12} /> Terlaris
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="p-4 flex-grow flex flex-col">
-                    <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
-                      {item.category}
-                    </span>
-                    <h3 className="text-sm font-semibold text-[#1E1B4B] mb-2 line-clamp-2 group-hover:text-[#F97316] transition-colors">
-                      {item.title}
-                    </h3>
-                    
-                    <div className="mt-auto mb-2 flex flex-col">
-                      {item.normalPrice && (
-                        <span className="text-xs text-gray-400 line-through font-medium">{item.normalPrice}</span>
-                      )}
-                      <div className="flex items-end gap-1">
-                        <span className="text-xl font-bold text-[#F97316]">{item.price}</span>
-                        <span className="text-xs text-gray-500 mb-0.5">{item.unit}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center text-xs font-medium text-gray-500 pt-3 border-t border-gray-50">
-                      <div className="flex items-center text-[#F59E0B]">
-                        <Star size={14} fill="currentColor" />
-                        <span className="ml-1 text-gray-700 font-bold">{item.rating}</span>
-                      </div>
-                      <span>{item.sold}</span>
-                    </div>
-                  </div>
-                </Link>
-
-                <div className="p-3 pt-0">
-                  <button
-                    type="button"
-                    onClick={(e) => handleQuickAdd(item, e)}
-                    className="w-full py-2 bg-orange-50 hover:bg-[#F97316] text-[#F97316] hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    <Plus size={14} /> + Keranjang
-                  </button>
-                </div>
-              </div>
+                product={item}
+                onOpenDetail={(p) => {
+                  setSheetProduct(p);
+                  setIsSheetOpen(true);
+                }}
+              />
             ))}
           </div>
         </section>
@@ -798,6 +691,13 @@ export default function Home() {
         </section>
 
       </div>
+
+      {/* 📱 PRODUCT BOTTOM SHEET MODAL (ALA GOJEK / ASTRO) */}
+      <ProductBottomSheet
+        product={sheetProduct}
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+      />
 
     </div>
   );

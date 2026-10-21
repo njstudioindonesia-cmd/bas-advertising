@@ -11,9 +11,10 @@ export interface CartItem {
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: any, quantity?: number, notes?: string) => void;
+  addToCart: (product: any, quantity?: number, notes?: string, openDrawer?: boolean) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
+  getItemQuantity: (productId: string) => number;
   clearCart: () => void;
   validateCartWithServer: () => Promise<{ hasChanges: boolean; removedCount: number }>;
   totalItems: number;
@@ -131,7 +132,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isCartOpen, isLoaded, validateCartWithServer, cart.length]);
 
-  const addToCart = (product: any, quantity: number = 1, notes: string = "") => {
+  const addToCart = (product: any, quantity: number = 1, notes: string = "", openDrawer: boolean = false) => {
     setCart((prev) => {
       const existingIndex = prev.findIndex((item) => item.product.id === product.id);
       if (existingIndex > -1) {
@@ -142,7 +143,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, { product, quantity, notes }];
     });
-    setIsCartOpen(true);
+    if (openDrawer) {
+      setIsCartOpen(true);
+    }
+  };
+
+  const getItemQuantity = (productId: string): number => {
+    const item = cart.find((i) => i.product.id === productId);
+    return item ? item.quantity : 0;
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -182,6 +190,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addToCart,
         updateQuantity,
         removeFromCart,
+        getItemQuantity,
         clearCart,
         validateCartWithServer,
         totalItems,

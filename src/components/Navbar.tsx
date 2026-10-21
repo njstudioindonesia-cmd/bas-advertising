@@ -173,9 +173,12 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop Navigation Menu */}
-            <div className="flex items-center gap-8 font-medium text-sm text-gray-600">
+            <div className="flex items-center gap-7 font-semibold text-sm text-gray-600">
               <Link href="/" className="hover:text-[#F97316] transition-colors">Beranda</Link>
-              <Link href="/produk" className="hover:text-[#F97316] transition-colors">Semua Produk</Link>
+              <Link href="/produk" className="hover:text-[#F97316] transition-colors">Katalog Produk</Link>
+              <Link href="/lacak" className="hover:text-[#F97316] transition-colors flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                <Zap size={13} className="fill-emerald-500 text-emerald-500" /> Lacak Pesanan
+              </Link>
               <Link href="/mockup" className="hover:text-[#F97316] transition-colors flex items-center gap-1.5">
                 <Palette size={15} className="text-[#F97316]" /> Studio Mockup
               </Link>
