@@ -43,23 +43,38 @@ export default function Home() {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    fetch("/api/products")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-          setProductList(data.data);
-        }
-      })
-      .catch(() => {});
+    const loadData = () => {
+      fetch("/api/products", { cache: "no-store" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.data)) {
+            setProductList(data.data);
+          }
+        })
+        .catch(() => {});
 
-    fetch("/api/banners")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-          setBanners(data.data);
-        }
-      })
-      .catch(() => {});
+      fetch("/api/banners", { cache: "no-store" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.data)) {
+            setBanners(data.data);
+          }
+        })
+        .catch(() => {});
+    };
+
+    loadData();
+
+    // Listen for product catalog updates from admin in same window or across tabs
+    const handleUpdate = () => loadData();
+    window.addEventListener("bas_products_updated", handleUpdate);
+    window.addEventListener("storage", (e) => {
+      if (e.key === "bas_catalog_version") loadData();
+    });
+
+    return () => {
+      window.removeEventListener("bas_products_updated", handleUpdate);
+    };
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -476,7 +491,7 @@ export default function Home() {
               </p>
             </div>
             <Link href="/produk" className="text-[#F97316] font-semibold text-sm hover:underline flex items-center gap-1">
-              Buka Katalog Lengkap ({products.length} Produk) <ArrowRight size={16} />
+              Buka Katalog Lengkap ({productList.length} Produk) <ArrowRight size={16} />
             </Link>
           </div>
 

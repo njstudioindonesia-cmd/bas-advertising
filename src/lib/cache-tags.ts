@@ -12,7 +12,7 @@ export const CACHE_TAGS = {
 
 export function revalidateEntity(tag: keyof typeof CACHE_TAGS, paths: string[] = ["/", "/produk", "/portofolio", "/about", "/hubungi"]) {
   try {
-    (revalidateTag as any)(CACHE_TAGS[tag], "default");
+    revalidateTag(CACHE_TAGS[tag], "default");
   } catch (err) {
     // revalidateTag might fail in some client/isolated contexts, ignore gracefully
   }

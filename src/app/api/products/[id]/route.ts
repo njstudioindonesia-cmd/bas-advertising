@@ -5,6 +5,9 @@ import { requireAdmin } from "@/lib/auth/guard";
 import { revalidateEntity } from "@/lib/cache-tags";
 import { logAudit } from "@/lib/db/queries/audit";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -17,7 +20,14 @@ export async function GET(
       return NextResponse.json({ success: false, error: "Produk tidak ditemukan" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: product });
+    return NextResponse.json(
+      { success: true, data: product },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || "Gagal memuat produk" }, { status: 500 });
   }

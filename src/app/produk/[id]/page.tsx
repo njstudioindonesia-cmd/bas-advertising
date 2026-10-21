@@ -45,7 +45,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
           <div className="space-y-3">
             <div className="relative aspect-square rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-sm">
               <Image 
-                src={product.imageUrl || product.img || "/images/branding/dragon_cup.png"} 
+                src={product.imageUrl || product.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop"} 
                 alt={product.title}
                 fill
                 priority

@@ -1,5 +1,41 @@
+import fs from "node:fs";
+import path from "node:path";
 import { db } from "../client";
 import { ProductInput } from "@/lib/validators";
+
+export function syncProductsToJson(): void {
+  try {
+    const jsonPath = path.join(process.cwd(), "src", "data", "products.json");
+    const { products } = getProducts({ includeInactive: true });
+    
+    const serialized = products.map((p) => ({
+      id: p.id,
+      category: p.category,
+      categoryId: p.categoryId,
+      title: p.name,
+      name: p.name,
+      desc: p.description,
+      description: p.description,
+      price: p.price,
+      priceNumber: p.priceNumber,
+      normalPrice: p.normalPrice,
+      compareAtPrice: p.compareAtPrice,
+      unit: p.unit,
+      rating: p.rating,
+      sold: p.sold,
+      isBestSeller: p.isBestSeller,
+      isActive: p.isActive,
+      img: p.imageUrl,
+      imageUrl: p.imageUrl,
+      images: p.images,
+      specs: p.specs,
+    }));
+
+    fs.writeFileSync(jsonPath, JSON.stringify(serialized, null, 2), "utf-8");
+  } catch {
+    // Pada filesystem read-only (seperti Vercel Lambda /var/task), lewati sinkronisasi file lokal
+  }
+}
 
 export interface FormattedProduct {
   id: string;
@@ -190,7 +226,9 @@ export function createProduct(input: ProductInput): FormattedProduct {
     now
   );
 
-  return getProductById(id)!;
+  const created = getProductById(id)!;
+  syncProductsToJson();
+  return created;
 }
 
 export function updateProduct(id: string, input: Partial<ProductInput>): FormattedProduct | null {
@@ -226,14 +264,18 @@ export function updateProduct(id: string, input: Partial<ProductInput>): Formatt
     rating, sold, sortOrder, now, id
   );
 
-  return getProductById(id);
+  const updated = getProductById(id);
+  syncProductsToJson();
+  return updated;
 }
 
 export function deleteProduct(id: string, softDelete = true): boolean {
   if (softDelete) {
     db.prepare("UPDATE products SET is_active = 0, updated_at = ? WHERE id = ?").run(new Date().toISOString(), id);
+    syncProductsToJson();
     return true;
   }
   db.prepare("DELETE FROM products WHERE id = ?").run(id);
+  syncProductsToJson();
   return true;
 }

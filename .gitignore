@@ -34,10 +34,13 @@ yarn-error.log*
 .env*
 
 # database & backups
-data/*.db
-data/*.db*
+data/*.db-wal
+data/*.db-shm
 data/*.db-journal
 backups/
+
+# heavy binary assets (migrated to Cloud CDN)
+/public/images/
 
 # vercel
 .vercel

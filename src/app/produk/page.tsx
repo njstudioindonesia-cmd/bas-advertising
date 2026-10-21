@@ -35,19 +35,33 @@ function CatalogContent() {
 
   // Fetch categories & products from DB API
   useEffect(() => {
-    Promise.all([
-      fetch("/api/categories").then(res => res.json()).catch(() => ({ data: [] })),
-      fetch("/api/products").then(res => res.json()).catch(() => ({ data: [] }))
-    ]).then(([catData, prodData]) => {
-      if (catData.success && Array.isArray(catData.data)) {
-        const catNames = ["Semua", ...catData.data.map((c: any) => c.name)];
-        setCategories(catNames);
-      }
-      if (prodData.success && Array.isArray(prodData.data)) {
-        setProductList(prodData.data);
-      }
-      setLoading(false);
+    const loadCatalog = () => {
+      Promise.all([
+        fetch("/api/categories", { cache: "no-store" }).then(res => res.json()).catch(() => ({ data: [] })),
+        fetch("/api/products", { cache: "no-store" }).then(res => res.json()).catch(() => ({ data: [] }))
+      ]).then(([catData, prodData]) => {
+        if (catData.success && Array.isArray(catData.data)) {
+          const catNames = ["Semua", ...catData.data.map((c: any) => c.name)];
+          setCategories(catNames);
+        }
+        if (prodData.success && Array.isArray(prodData.data)) {
+          setProductList(prodData.data);
+        }
+        setLoading(false);
+      });
+    };
+
+    loadCatalog();
+
+    const handleUpdate = () => loadCatalog();
+    window.addEventListener("bas_products_updated", handleUpdate);
+    window.addEventListener("storage", (e) => {
+      if (e.key === "bas_catalog_version") loadCatalog();
     });
+
+    return () => {
+      window.removeEventListener("bas_products_updated", handleUpdate);
+    };
   }, []);
 
   // Update if URL parameter changes
@@ -180,7 +194,7 @@ function CatalogContent() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-5">
             <AnimatePresence mode="popLayout">
               {filteredProducts.map((item, idx) => {
-                const imgUrl = item.imageUrl || item.img || "/images/branding/dragon_cup.png";
+                const imgUrl = item.imageUrl || item.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop";
                 const hasDiscount = item.compareAtPrice && item.compareAtPrice > item.priceNumber;
 
                 return (

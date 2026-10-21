@@ -70,7 +70,21 @@ export default function UrangDalamAdminPortal() {
   // Product filters
   const [productSearch, setProductSearch] = useState("");
   const [productCatFilter, setProductCatFilter] = useState("Semua");
+  const [productStatusFilter, setProductStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [deleteConfirmProd, setDeleteConfirmProd] = useState<any | null>(null);
+
+  // Helper untuk broadcast update katalog ke seluruh tab/halaman
+  const notifyProductCatalogUpdated = () => {
+    try {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("bas_products_updated"));
+        localStorage.setItem("bas_catalog_version", Date.now().toString());
+      }
+    } catch {
+      // Abaikan jika di konteks terbatas
+    }
+  };
 
   // Product modal
   const [isProdModalOpen, setIsProdModalOpen] = useState(false);
@@ -82,7 +96,7 @@ export default function UrangDalamAdminPortal() {
     price: 0,
     compareAtPrice: "",
     unit: "/ pcs",
-    imageUrl: "/images/branding/dragon_cup.png",
+    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop",
     description: "",
     isBestSeller: false,
     isActive: true,
@@ -109,7 +123,7 @@ export default function UrangDalamAdminPortal() {
     id: "",
     title: "",
     subtitle: "",
-    imageUrl: "/images/hero_printing.jpg",
+    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop",
     ctaLabel: "Pesan Sekarang",
     ctaHref: "/produk",
     sortOrder: 1,
@@ -152,11 +166,11 @@ export default function UrangDalamAdminPortal() {
     setLoading(true);
     try {
       const [pRes, cRes, bRes, sRes, oRes] = await Promise.all([
-        fetch("/api/products?includeInactive=true").then((r) => r.json()),
-        fetch("/api/categories?includeInactive=true").then((r) => r.json()),
-        fetch("/api/banners?includeInactive=true").then((r) => r.json()),
-        fetch("/api/settings").then((r) => r.json()),
-        fetch("/api/orders").then((r) => r.json()),
+        fetch("/api/products?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
+        fetch("/api/categories?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
+        fetch("/api/banners?includeInactive=true", { cache: "no-store" }).then((r) => r.json()),
+        fetch("/api/settings", { cache: "no-store" }).then((r) => r.json()),
+        fetch("/api/orders", { cache: "no-store" }).then((r) => r.json()),
       ]);
 
       if (pRes.success) setProducts(pRes.data);
@@ -256,7 +270,7 @@ export default function UrangDalamAdminPortal() {
       price: 25000,
       compareAtPrice: "",
       unit: "/ pcs",
-      imageUrl: "/images/branding/dragon_cup.png",
+      imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop",
       description: "",
       isBestSeller: false,
       isActive: true,
@@ -268,17 +282,33 @@ export default function UrangDalamAdminPortal() {
   const openEditProductModal = (p: any) => {
     setProdModalMode("edit");
     setEditingProdId(p.id);
+
+    const matchedCat = categories.find(
+      (c) => c.id === p.categoryId || c.name === p.category || c.slug === p.category
+    );
+    const catId = matchedCat ? matchedCat.id : (categories[0]?.id || "cat-outlet");
+
+    let priceVal = p.priceNumber;
+    if (priceVal === undefined || priceVal === null) {
+      priceVal = typeof p.price === "number" ? p.price : parseInt(String(p.price || "").replace(/[^0-9]/g, ""), 10) || 0;
+    }
+
+    let compareVal = p.compareAtPrice;
+    if (compareVal === undefined || compareVal === null) {
+      compareVal = p.normalPrice ? parseInt(String(p.normalPrice).replace(/[^0-9]/g, ""), 10) : "";
+    }
+
     setProdForm({
-      name: p.name || p.title,
-      categoryId: p.categoryId,
-      price: p.priceNumber || 0,
-      compareAtPrice: p.compareAtPrice ? String(p.compareAtPrice) : "",
+      name: p.name || p.title || "",
+      categoryId: catId,
+      price: priceVal || 0,
+      compareAtPrice: compareVal ? String(compareVal) : "",
       unit: p.unit || "/ pcs",
-      imageUrl: p.imageUrl || p.img,
+      imageUrl: p.imageUrl || p.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop",
       description: p.description || p.desc || "",
       isBestSeller: Boolean(p.isBestSeller),
-      isActive: Boolean(p.isActive),
-      specsText: Array.isArray(p.specs) ? p.specs.join("\n") : "",
+      isActive: p.isActive !== undefined ? Boolean(p.isActive) : true,
+      specsText: Array.isArray(p.specs) ? p.specs.join("\n") : (p.specs || ""),
     });
     setIsProdModalOpen(true);
   };
@@ -296,10 +326,10 @@ export default function UrangDalamAdminPortal() {
       price: Number(prodForm.price),
       compareAtPrice: prodForm.compareAtPrice ? Number(prodForm.compareAtPrice) : null,
       unit: prodForm.unit.trim() || "/ pcs",
-      imageUrl: prodForm.imageUrl,
+      imageUrl: prodForm.imageUrl.trim() || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop",
       description: prodForm.description.trim(),
-      isBestSeller: prodForm.isBestSeller,
-      isActive: prodForm.isActive,
+      isBestSeller: Boolean(prodForm.isBestSeller),
+      isActive: Boolean(prodForm.isActive),
       specs: prodForm.specsText
         .split("\n")
         .map((s) => s.trim())
@@ -317,6 +347,7 @@ export default function UrangDalamAdminPortal() {
         if (data.success) {
           showToast("Produk baru berhasil ditambahkan", "success");
           setIsProdModalOpen(false);
+          notifyProductCatalogUpdated();
           refreshAllData();
         } else {
           showToast(data.error || "Gagal menambah produk", "error");
@@ -331,6 +362,7 @@ export default function UrangDalamAdminPortal() {
         if (data.success) {
           showToast("Produk berhasil diperbarui", "success");
           setIsProdModalOpen(false);
+          notifyProductCatalogUpdated();
           refreshAllData();
         } else {
           showToast(data.error || "Gagal mengupdate produk", "error");
@@ -341,19 +373,57 @@ export default function UrangDalamAdminPortal() {
     }
   };
 
-  const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`Yakin ingin menonaktifkan produk '${name}'? Produk tidak akan muncul di katalog publik.`)) return;
+  const handleToggleProductStatus = async (p: any) => {
+    const newStatus = !p.isActive;
     try {
-      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/products/${p.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: newStatus }),
+      });
       const data = await res.json();
       if (data.success) {
-        showToast(`Produk '${name}' berhasil dinonaktifkan`, "success");
+        showToast(`Produk '${p.name || p.title}' ${newStatus ? "diaktifkan" : "dinonaktifkan"}`, "success");
+        notifyProductCatalogUpdated();
+        refreshAllData();
+      } else {
+        showToast(data.error || "Gagal mengubah status produk", "error");
+      }
+    } catch {
+      showToast("Terjadi kesalahan koneksi", "error");
+    }
+  };
+
+  const handleExecuteDelete = async (id: string, name: string, permanent: boolean) => {
+    try {
+      const res = await fetch(`/api/products/${id}${permanent ? "?permanent=true" : ""}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          permanent
+            ? `Produk '${name}' berhasil dihapus permanen dari database`
+            : `Produk '${name}' berhasil dinonaktifkan dari katalog publik`,
+          "success"
+        );
+        setDeleteConfirmProd(null);
+        notifyProductCatalogUpdated();
         refreshAllData();
       } else {
         showToast(data.error || "Gagal menghapus produk", "error");
       }
     } catch {
       showToast("Gagal menghapus produk", "error");
+    }
+  };
+
+  const handleDeleteProduct = (id: string, name: string) => {
+    const target = products.find((p) => p.id === id);
+    if (target) {
+      setDeleteConfirmProd(target);
+    } else {
+      setDeleteConfirmProd({ id, name, title: name });
     }
   };
 
@@ -716,6 +786,8 @@ export default function UrangDalamAdminPortal() {
 
   // Filtered products calculation
   const filteredProducts = products.filter((p) => {
+    if (productStatusFilter === "active" && !p.isActive) return false;
+    if (productStatusFilter === "inactive" && p.isActive) return false;
     const matchCat = productCatFilter === "Semua" || p.category === productCatFilter || p.categoryId === productCatFilter;
     const q = productSearch.toLowerCase();
     const title = (p.name || p.title || "").toLowerCase();
@@ -965,6 +1037,40 @@ export default function UrangDalamAdminPortal() {
         {/* ========================================================= */}
         {activeTab === "products" && (
           <div className="space-y-4">
+            {/* Status Filter Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <button
+                onClick={() => setProductStatusFilter("all")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                  productStatusFilter === "all"
+                    ? "bg-[#0B1E36] text-white shadow-xs"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-100"
+                }`}
+              >
+                Semua Produk ({products.length})
+              </button>
+              <button
+                onClick={() => setProductStatusFilter("active")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                  productStatusFilter === "active"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100/70 border border-emerald-100"
+                }`}
+              >
+                Aktif Publik ({products.filter((p) => p.isActive).length})
+              </button>
+              <button
+                onClick={() => setProductStatusFilter("inactive")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                  productStatusFilter === "inactive"
+                    ? "bg-rose-600 text-white shadow-xs"
+                    : "bg-rose-50/70 text-rose-700 hover:bg-rose-100/70 border border-rose-100"
+                }`}
+              >
+                Nonaktif ({products.filter((p) => !p.isActive).length})
+              </button>
+            </div>
+
             {/* Action Bar */}
             <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-2xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
               <div className="flex flex-1 gap-2">
@@ -1067,7 +1173,7 @@ export default function UrangDalamAdminPortal() {
                               <div className="flex items-center gap-3">
                                 <div className="relative w-12 h-12 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
                                   <Image
-                                    src={p.imageUrl || p.img || "/images/branding/dragon_cup.png"}
+                                    src={p.imageUrl || p.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop"}
                                     alt={p.name || p.title}
                                     fill
                                     sizes="48px"
@@ -1094,15 +1200,18 @@ export default function UrangDalamAdminPortal() {
                               {p.price} <span className="text-[10px] text-gray-400 font-normal">{p.unit}</span>
                             </td>
                             <td className="p-3.5 text-center">
-                              <span
-                                className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              <button
+                                onClick={() => handleToggleProductStatus(p)}
+                                title={p.isActive ? "Klik untuk Nonaktifkan dari katalog" : "Klik untuk Aktifkan ke katalog"}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 ${
                                   p.isActive
-                                    ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                                    : "bg-gray-100 text-gray-400"
+                                    ? "bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100"
+                                    : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
                                 }`}
                               >
+                                <span className={`w-1.5 h-1.5 rounded-full ${p.isActive ? "bg-emerald-500" : "bg-gray-400"}`} />
                                 {p.isActive ? "Aktif" : "Nonaktif"}
-                              </span>
+                              </button>
                             </td>
                             <td className="p-3.5 text-right sticky right-0 bg-white">
                               <div className="flex items-center justify-end gap-1.5">
@@ -1122,7 +1231,7 @@ export default function UrangDalamAdminPortal() {
                                 </button>
                                 <button
                                   onClick={() => handleDeleteProduct(p.id, p.name || p.title)}
-                                  title="Nonaktifkan Produk"
+                                  title="Hapus / Nonaktifkan Produk"
                                   className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600"
                                 >
                                   <Trash2 size={14} />
@@ -1838,6 +1947,98 @@ export default function UrangDalamAdminPortal() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: KONFIRMASI HAPUS / NONAKTIFKAN PRODUK */}
+      {/* ========================================================= */}
+      {deleteConfirmProd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-red-600 pb-2 border-b border-gray-100">
+              <div className="p-2.5 bg-red-50 rounded-2xl">
+                <Trash2 size={22} />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-base text-gray-900">Kelola Produk</h3>
+                <p className="text-xs text-gray-400">Pilih tindakan untuk produk ini</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-3.5 rounded-2xl flex items-center gap-3">
+              <div className="relative w-12 h-12 rounded-xl bg-gray-200 overflow-hidden shrink-0 border border-gray-100">
+                <Image
+                  src={deleteConfirmProd.imageUrl || deleteConfirmProd.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop"}
+                  alt={deleteConfirmProd.name || deleteConfirmProd.title}
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                />
+              </div>
+              <div className="min-w-0">
+                <div className="font-bold text-xs text-gray-900 truncate">
+                  {deleteConfirmProd.name || deleteConfirmProd.title}
+                </div>
+                <div className="text-[10px] text-gray-400">
+                  {deleteConfirmProd.category} • {deleteConfirmProd.price}
+                </div>
+                <span
+                  className={`inline-block px-2 py-0.2 rounded-full text-[9px] font-bold mt-1 ${
+                    deleteConfirmProd.isActive
+                      ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {deleteConfirmProd.isActive ? "Sedang Aktif Publik" : "Sedang Nonaktif"}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={() => handleExecuteDelete(deleteConfirmProd.id, deleteConfirmProd.name || deleteConfirmProd.title, false)}
+                className="w-full p-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl text-left flex items-start gap-3 transition-all cursor-pointer"
+              >
+                <div className="p-1.5 bg-amber-100 text-amber-700 rounded-xl mt-0.5 shrink-0">
+                  <AlertCircle size={16} />
+                </div>
+                <div>
+                  <div className="font-bold text-xs text-amber-900">Nonaktifkan Sementara (Rekomendasi)</div>
+                  <div className="text-[10px] text-amber-700 leading-tight mt-0.5">
+                    Produk disembunyikan dari katalog publik dan homepage, tetapi data tetap tersimpan di admin dan bisa diaktifkan kembali kapan saja.
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleExecuteDelete(deleteConfirmProd.id, deleteConfirmProd.name || deleteConfirmProd.title, true)}
+                className="w-full p-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-2xl text-left flex items-start gap-3 transition-all cursor-pointer"
+              >
+                <div className="p-1.5 bg-red-100 text-red-700 rounded-xl mt-0.5 shrink-0">
+                  <Trash2 size={16} />
+                </div>
+                <div>
+                  <div className="font-bold text-xs text-red-900">Hapus Permanen dari Database</div>
+                  <div className="text-[10px] text-red-700 leading-tight mt-0.5">
+                    Hapus produk sepenuhnya dari sistem database SQLite dan JSON. Data tidak dapat dipulihkan.
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmProd(null)}
+                className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-50 transition-colors"
+              >
+                Batal
+              </button>
+            </div>
           </div>
         </div>
       )}

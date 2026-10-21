@@ -223,7 +223,7 @@ export default function KeranjangPage() {
                   {cart.map((item) => {
                     const unitPrice = parsePriceToNumber(item.product.price);
                     const itemTotal = unitPrice * item.quantity;
-                    const img = item.product.imageUrl || item.product.img || "/images/branding/dragon_cup.png";
+                    const img = item.product.imageUrl || item.product.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop";
 
                     return (
                       <div key={item.product.id} className="py-3 sm:py-4 flex gap-3 sm:gap-4 items-center">

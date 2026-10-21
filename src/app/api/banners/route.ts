@@ -5,12 +5,22 @@ import { requireAdmin } from "@/lib/auth/guard";
 import { revalidateEntity } from "@/lib/cache-tags";
 import { logAudit } from "@/lib/db/queries/audit";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get("includeInactive") === "true";
     const banners = getBanners(includeInactive);
-    return NextResponse.json({ success: true, data: banners });
+    return NextResponse.json(
+      { success: true, data: banners },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || "Gagal mengambil banner" }, { status: 500 });
   }
