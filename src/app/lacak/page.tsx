@@ -21,6 +21,7 @@ import {
   Bike
 } from "lucide-react";
 import LiveOrderTrackingMap from "@/components/LiveOrderTrackingMap";
+import PushNotificationOptIn from "@/components/PushNotificationOptIn";
 
 function TrackOrderContent() {
   const searchParams = useSearchParams();
@@ -219,6 +220,9 @@ function TrackOrderContent() {
                   <span>{order.statusDesc}</span>
                 </div>
               </div>
+
+              {/* 🔔 NOTIFIKASI PUSH ALA ASTRO / GOJEK */}
+              <PushNotificationOptIn orderCode={order.code} />
 
               {/* 🗺️ LIVE GOOGLE MAPS TRACKING ALA GOJEK / ASTRO */}
               <LiveOrderTrackingMap order={order} />

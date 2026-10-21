@@ -116,3 +116,66 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+// ==========================================
+// PUSH NOTIFICATION ENGINE (ALA GOJEK / ASTRO)
+// ==========================================
+self.addEventListener("push", (event) => {
+  let data = {
+    title: "Cetak.inc Update Pesanan",
+    body: "Ada pembaruan status pesanan cetak Anda.",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    url: "/lacak",
+    orderCode: "",
+  };
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || "/icon-192.png",
+    badge: data.badge || "/icon-192.png",
+    vibrate: [200, 100, 200, 100, 200],
+    tag: data.orderCode || "cetakinc-order-status",
+    renotify: true,
+    data: {
+      url: data.url || (data.orderCode ? `/lacak?code=${data.orderCode}` : "/lacak"),
+    },
+    actions: [
+      { action: "track", title: "🗺️ Buka Peta Live" },
+      { action: "close", title: "Tutup" },
+    ],
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  if (event.action === "close") return;
+
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/lacak";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes("/lacak") && "focus" in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
