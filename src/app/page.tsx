@@ -275,7 +275,7 @@ export default function Home() {
   });
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen pt-20 md:pt-36 pb-20 md:pb-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-26 sm:pt-28 md:pt-36 pb-20 md:pb-24">
 
       {/* ======================================================== */}
       {/* 📱 MOBILE APP HOME EXPERIENCE (POTRAIT NATIVE APP FEEL) */}
@@ -374,7 +374,7 @@ export default function Home() {
             <div className="grid grid-cols-4 gap-3 text-center">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                 <div key={n} className="flex flex-col items-center animate-pulse">
-                  <div className="w-13 h-13 rounded-2xl bg-gray-200 mb-1.5" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gray-200 mb-1.5" />
                   <div className="w-12 h-2.5 bg-gray-200 rounded" />
                 </div>
               ))}
@@ -400,7 +400,7 @@ export default function Home() {
                     className="flex flex-col items-center group active:scale-90 transition-transform"
                   >
                     <div className="relative mb-1.5">
-                      <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr ${item.gradient} text-white flex items-center justify-center shadow-md ${item.shadow} group-hover:scale-105 transition-all duration-200 border border-white/20`}>
+                      <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr ${item.gradient} text-white flex items-center justify-center shadow-md ${item.shadow} group-hover:scale-105 transition-all duration-200 border border-white/20`}>
                         <Icon size={24} strokeWidth={2.2} />
                       </div>
 
@@ -567,7 +567,7 @@ export default function Home() {
               </a>
             </div>
           ) : (
-            <div id="home-product-feed" className="scroll-mt-24">
+            <div id="home-product-feed" className="scroll-mt-28">
               {/* Astro-Style Sticky Horizontal Category Chips Rail */}
               <div className="flex items-center justify-between mb-2 px-1">
                 <div className="flex items-center gap-1.5">
