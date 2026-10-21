@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const banner = getBannerById(id);
+    const banner = await getBannerById(id);
     if (!banner) {
       return NextResponse.json({ success: false, error: "Banner tidak ditemukan" }, { status: 404 });
     }
@@ -40,7 +40,7 @@ export async function PUT(
       );
     }
 
-    const updated = updateBanner(id, partial.data);
+    const updated = await updateBanner(id, partial.data);
     if (!updated) {
       return NextResponse.json({ success: false, error: "Banner tidak ditemukan" }, { status: 404 });
     }
@@ -70,12 +70,12 @@ export async function DELETE(
     if (!auth.authorized) return auth.response!;
 
     const { id } = await params;
-    const existing = getBannerById(id);
+    const existing = await getBannerById(id);
     if (!existing) {
       return NextResponse.json({ success: false, error: "Banner tidak ditemukan" }, { status: 404 });
     }
 
-    deleteBanner(id);
+    await deleteBanner(id);
 
     logAudit({
       actor: "admin",

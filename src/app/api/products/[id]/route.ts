@@ -14,7 +14,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const product = getProductById(id);
+    const product = await getProductById(id);
 
     if (!product) {
       return NextResponse.json({ success: false, error: "Produk tidak ditemukan" }, { status: 404 });
@@ -58,7 +58,7 @@ export async function PUT(
       );
     }
 
-    const updated = updateProduct(id, parsed.data);
+    const updated = await updateProduct(id, parsed.data);
     if (!updated) {
       return NextResponse.json({ success: false, error: "Produk tidak ditemukan" }, { status: 404 });
     }
@@ -91,12 +91,12 @@ export async function DELETE(
     const { searchParams } = new URL(request.url);
     const permanent = searchParams.get("permanent") === "true";
 
-    const existing = getProductById(id);
+    const existing = await getProductById(id);
     if (!existing) {
       return NextResponse.json({ success: false, error: "Produk tidak ditemukan" }, { status: 404 });
     }
 
-    deleteProduct(id, !permanent);
+    await deleteProduct(id, !permanent);
 
     logAudit({
       actor: "admin",

@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const offset = searchParams.get("offset") ? parseInt(searchParams.get("offset")!, 10) : undefined;
     const includeInactive = searchParams.get("includeInactive") === "true";
 
-    const result = getProducts({
+    const result = await getProducts({
       category,
       search: query,
       isBestSeller,
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const created = createProduct(parsed.data);
+    const created = await createProduct(parsed.data);
 
     logAudit({
       actor: "admin",

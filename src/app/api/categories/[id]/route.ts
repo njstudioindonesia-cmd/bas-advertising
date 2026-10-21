@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const cat = getCategoryById(id);
+    const cat = await getCategoryById(id);
     if (!cat) {
       return NextResponse.json({ success: false, error: "Kategori tidak ditemukan" }, { status: 404 });
     }
@@ -40,7 +40,7 @@ export async function PUT(
       );
     }
 
-    const updated = updateCategory(id, partial.data);
+    const updated = await updateCategory(id, partial.data);
     if (!updated) {
       return NextResponse.json({ success: false, error: "Kategori tidak ditemukan" }, { status: 404 });
     }
@@ -70,12 +70,12 @@ export async function DELETE(
     if (!auth.authorized) return auth.response!;
 
     const { id } = await params;
-    const existing = getCategoryById(id);
+    const existing = await getCategoryById(id);
     if (!existing) {
       return NextResponse.json({ success: false, error: "Kategori tidak ditemukan" }, { status: 404 });
     }
 
-    const res = deleteCategory(id);
+    const res = await deleteCategory(id);
     if (!res.success) {
       return NextResponse.json({ success: false, error: res.error }, { status: 400 });
     }

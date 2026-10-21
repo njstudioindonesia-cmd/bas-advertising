@@ -6,7 +6,7 @@ import { logAudit } from "@/lib/db/queries/audit";
 
 export async function GET() {
   try {
-    const settings = getSettings();
+    const settings = await getSettings();
     return NextResponse.json({ success: true, data: settings });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || "Gagal memuat pengaturan" }, { status: 500 });
@@ -23,7 +23,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, error: "Data pengaturan harus berupa objek." }, { status: 400 });
     }
 
-    setMultipleSettings(body);
+    await setMultipleSettings(body);
 
     logAudit({
       actor: "admin",
@@ -34,7 +34,7 @@ export async function PUT(request: Request) {
 
     revalidateEntity("settings", ["/", "/produk", "/keranjang", "/about", "/hubungi"]);
 
-    const updated = getSettings();
+    const updated = await getSettings();
     return NextResponse.json({ success: true, message: "Pengaturan berhasil diperbarui", data: updated });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || "Gagal memperbarui pengaturan" }, { status: 500 });

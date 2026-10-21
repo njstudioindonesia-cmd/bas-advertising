@@ -1,41 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
-import { db } from "../client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ProductInput } from "@/lib/validators";
-
-export function syncProductsToJson(): void {
-  try {
-    const jsonPath = path.join(process.cwd(), "src", "data", "products.json");
-    const { products } = getProducts({ includeInactive: true });
-    
-    const serialized = products.map((p) => ({
-      id: p.id,
-      category: p.category,
-      categoryId: p.categoryId,
-      title: p.name,
-      name: p.name,
-      desc: p.description,
-      description: p.description,
-      price: p.price,
-      priceNumber: p.priceNumber,
-      normalPrice: p.normalPrice,
-      compareAtPrice: p.compareAtPrice,
-      unit: p.unit,
-      rating: p.rating,
-      sold: p.sold,
-      isBestSeller: p.isBestSeller,
-      isActive: p.isActive,
-      img: p.imageUrl,
-      imageUrl: p.imageUrl,
-      images: p.images,
-      specs: p.specs,
-    }));
-
-    fs.writeFileSync(jsonPath, JSON.stringify(serialized, null, 2), "utf-8");
-  } catch {
-    // Pada filesystem read-only (seperti Vercel Lambda /var/task), lewati sinkronisasi file lokal
-  }
-}
 
 export interface FormattedProduct {
   id: string;
@@ -69,31 +33,45 @@ export function formatRupiah(amount: number): string {
   return "Rp " + Math.round(amount).toLocaleString("id-ID");
 }
 
-function mapRowToProduct(r: any): FormattedProduct {
+export function syncProductsToJson(): void {
+  // Cloud Supabase replaces local JSON sync
+}
+
+export function mapRowToProduct(r: any): FormattedProduct {
   const priceNum = Number(r.price) || 0;
   const compareAtNum = r.compare_at_price ? Number(r.compare_at_price) : null;
-  
+
   let gallery: string[] = [];
-  try {
-    if (r.gallery) gallery = JSON.parse(r.gallery);
-  } catch {
-    gallery = [];
+  if (Array.isArray(r.gallery)) {
+    gallery = r.gallery;
+  } else if (typeof r.gallery === "string") {
+    try {
+      gallery = JSON.parse(r.gallery);
+    } catch {
+      gallery = [];
+    }
   }
 
   let specs: string[] = [];
-  try {
-    if (r.specs) specs = JSON.parse(r.specs);
-  } catch {
-    specs = [];
+  if (Array.isArray(r.specs)) {
+    specs = r.specs;
+  } else if (typeof r.specs === "string") {
+    try {
+      specs = JSON.parse(r.specs);
+    } catch {
+      specs = [];
+    }
   }
+
+  const categoryName = r.categories?.name || r.category_name || "Lainnya";
 
   return {
     id: r.id,
-    slug: r.slug,
+    slug: r.slug || r.id,
     name: r.name,
     title: r.name,
-    categoryId: r.category_id,
-    category: r.category_name || "Lainnya",
+    categoryId: r.category_id || "",
+    category: categoryName,
     description: r.description || "",
     desc: r.description || "",
     price: formatRupiah(priceNum),
@@ -101,199 +79,208 @@ function mapRowToProduct(r: any): FormattedProduct {
     normalPrice: compareAtNum ? formatRupiah(compareAtNum) : undefined,
     compareAtPrice: compareAtNum,
     unit: r.unit || "/ pcs",
-    imageUrl: r.image_url,
-    img: r.image_url,
+    imageUrl: r.image_url || "",
+    img: r.image_url || "",
     gallery,
-    images: gallery.length > 0 ? gallery : [r.image_url],
+    images: gallery.length > 0 ? gallery : [r.image_url || ""],
     specs,
     isBestSeller: Boolean(r.is_best_seller),
     isActive: Boolean(r.is_active),
     rating: r.rating || "5.0",
     sold: r.sold || "0",
-    sortOrder: r.sort_order || 0,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
+    sortOrder: Number(r.sort_order) || 0,
+    createdAt: r.created_at || new Date().toISOString(),
+    updatedAt: r.updated_at || new Date().toISOString(),
   };
 }
 
-export function getProducts(options?: {
+export async function getProducts(options?: {
   category?: string;
   search?: string;
   includeInactive?: boolean;
   isBestSeller?: boolean;
   limit?: number;
   offset?: number;
-}): { products: FormattedProduct[]; total: number } {
-  const whereClauses: string[] = [];
-  const params: any[] = [];
+}): Promise<{ products: FormattedProduct[]; total: number }> {
+  try {
+    let query = supabaseAdmin
+      .from("products")
+      .select("*, categories(name, slug)", { count: "exact" });
 
-  if (!options?.includeInactive) {
-    whereClauses.push("p.is_active = 1");
+    if (!options?.includeInactive) {
+      query = query.eq("is_active", true);
+    }
+
+    if (options?.category && options.category !== "Semua") {
+      if (options.category.startsWith("cat-")) {
+        query = query.eq("category_id", options.category);
+      } else {
+        // Filter by category name via Supabase inner join or ilike
+        query = query.ilike("categories.name", options.category);
+      }
+    }
+
+    if (options?.search && options.search.trim()) {
+      const q = options.search.trim();
+      query = query.or(`name.ilike.%${q}%,description.ilike.%${q}%`);
+    }
+
+    if (options?.isBestSeller !== undefined) {
+      query = query.eq("is_best_seller", options.isBestSeller);
+    }
+
+    query = query.order("sort_order", { ascending: true }).order("created_at", { ascending: false });
+
+    if (options?.limit) {
+      const start = options.offset || 0;
+      query = query.range(start, start + options.limit - 1);
+    }
+
+    const { data, count, error } = await query;
+
+    if (error) {
+      console.error("[SUPABASE] Gagal mengambil daftar produk:", error.message);
+      return { products: [], total: 0 };
+    }
+
+    const products = (data || []).map(mapRowToProduct);
+    return {
+      products,
+      total: count !== null ? count : products.length,
+    };
+  } catch (err: any) {
+    console.error("[SUPABASE_ERR] Error getProducts:", err);
+    return { products: [], total: 0 };
   }
-
-  if (options?.category && options.category !== "Semua") {
-    whereClauses.push("(c.name = ? OR c.id = ? OR c.slug = ?)");
-    params.push(options.category, options.category, options.category);
-  }
-
-  if (options?.search) {
-    const q = `%${options.search.toLowerCase()}%`;
-    whereClauses.push("(LOWER(p.name) LIKE ? OR LOWER(p.description) LIKE ? OR LOWER(c.name) LIKE ?)");
-    params.push(q, q, q);
-  }
-
-  if (options?.isBestSeller !== undefined) {
-    whereClauses.push("p.is_best_seller = ?");
-    params.push(options.isBestSeller ? 1 : 0);
-  }
-
-  const whereSql = whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : "";
-
-  // Count total
-  const countStmt = db.prepare(`
-    SELECT COUNT(*) as total 
-    FROM products p 
-    LEFT JOIN categories c ON p.category_id = c.id
-    ${whereSql}
-  `);
-  const totalRow = countStmt.get(...params) as any;
-  const total = totalRow ? Number(totalRow.total) : 0;
-
-  // Query products
-  let query = `
-    SELECT p.*, c.name as category_name
-    FROM products p
-    LEFT JOIN categories c ON p.category_id = c.id
-    ${whereSql}
-    ORDER BY p.sort_order ASC, p.created_at DESC
-  `;
-
-  if (options?.limit) {
-    query += ` LIMIT ? OFFSET ?`;
-    params.push(options.limit, options.offset || 0);
-  }
-
-  const rows = db.prepare(query).all(...params) as any[];
-  return {
-    products: rows.map(mapRowToProduct),
-    total,
-  };
 }
 
-export function getProductById(id: string): FormattedProduct | null {
-  const query = `
-    SELECT p.*, c.name as category_name
-    FROM products p
-    LEFT JOIN categories c ON p.category_id = c.id
-    WHERE p.id = ? OR p.slug = ?
-  `;
-  const r = db.prepare(query).get(id, id) as any;
-  if (!r) return null;
-  return mapRowToProduct(r);
+export async function getProductById(id: string): Promise<FormattedProduct | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .select("*, categories(name, slug)")
+      .or(`id.eq.${id},slug.eq.${id}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return mapRowToProduct(data);
+  } catch (err: any) {
+    console.error("[SUPABASE_ERR] Error getProductById:", err);
+    return null;
+  }
 }
 
-export function createProduct(input: ProductInput): FormattedProduct {
-  const rawSlug = (input.slug && input.slug.trim()) || input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+export async function createProduct(input: ProductInput): Promise<FormattedProduct> {
+  const rawSlug =
+    (input.slug && input.slug.trim()) ||
+    input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   let slug = rawSlug || "produk";
   const id = input.id || slug + "-" + Date.now().toString(36);
 
-  // Prevent UNIQUE constraint failed: products.slug
-  let counter = 1;
-  while (db.prepare("SELECT 1 FROM products WHERE slug = ?").get(slug)) {
-    slug = `${rawSlug || "produk"}-${counter}`;
-    counter++;
+  // Check unique slug
+  const { data: existingSlug } = await supabaseAdmin
+    .from("products")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (existingSlug) {
+    slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
   }
 
   const now = new Date().toISOString();
-
-  const stmt = db.prepare(`
-    INSERT INTO products (
-      id, slug, category_id, name, description, price, compare_at_price,
-      unit, image_url, gallery, specs, is_best_seller, is_active,
-      rating, sold, sort_order, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(
+  const payload = {
     id,
     slug,
-    input.categoryId,
-    input.name,
-    input.description || "",
-    input.price,
-    input.compareAtPrice || null,
-    input.unit || "/ pcs",
-    input.imageUrl,
-    JSON.stringify(input.gallery || []),
-    JSON.stringify(input.specs || []),
-    input.isBestSeller ? 1 : 0,
-    input.isActive !== undefined ? (input.isActive ? 1 : 0) : 1,
-    input.rating || "5.0",
-    input.sold || "0",
-    input.sortOrder || 0,
-    now,
-    now
-  );
+    category_id: input.categoryId,
+    name: input.name,
+    description: input.description || "",
+    price: input.price,
+    compare_at_price: input.compareAtPrice || null,
+    unit: input.unit || "/ pcs",
+    image_url: input.imageUrl,
+    gallery: input.gallery || [],
+    specs: input.specs || [],
+    is_best_seller: Boolean(input.isBestSeller),
+    is_active: input.isActive !== undefined ? Boolean(input.isActive) : true,
+    rating: input.rating || "5.0",
+    sold: input.sold || "0",
+    sort_order: input.sortOrder || 0,
+    created_at: now,
+    updated_at: now,
+  };
 
-  const created = getProductById(id)!;
-  syncProductsToJson();
-  return created;
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .insert(payload)
+    .select("*, categories(name, slug)")
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message || "Gagal menyimpan produk ke Supabase");
+  }
+
+  return mapRowToProduct(data);
 }
 
-export function updateProduct(id: string, input: Partial<ProductInput>): FormattedProduct | null {
-  const existing = getProductById(id);
+export async function updateProduct(
+  id: string,
+  input: Partial<ProductInput>
+): Promise<FormattedProduct | null> {
+  const existing = await getProductById(id);
   if (!existing) return null;
 
   const now = new Date().toISOString();
-  const name = input.name ?? existing.name;
-  let slug = existing.slug;
-  if (input.slug && input.slug.trim()) {
-    const rawSlug = input.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    slug = rawSlug || "produk";
-    let counter = 1;
-    while (db.prepare("SELECT 1 FROM products WHERE slug = ? AND id != ?").get(slug, id)) {
-      slug = `${rawSlug || "produk"}-${counter}`;
-      counter++;
-    }
+  const updates: Record<string, any> = {
+    updated_at: now,
+  };
+
+  if (input.name !== undefined) updates.name = input.name;
+  if (input.slug !== undefined && input.slug.trim()) {
+    updates.slug = input.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
-  const categoryId = input.categoryId ?? existing.categoryId;
-  const description = input.description ?? existing.description;
-  const price = input.price !== undefined ? input.price : existing.priceNumber;
-  const compareAtPrice = input.compareAtPrice !== undefined ? input.compareAtPrice : existing.compareAtPrice;
-  const unit = input.unit ?? existing.unit;
-  const imageUrl = input.imageUrl ?? existing.imageUrl;
-  const gallery = input.gallery ? JSON.stringify(input.gallery) : JSON.stringify(existing.gallery);
-  const specs = input.specs ? JSON.stringify(input.specs) : JSON.stringify(existing.specs);
-  const isBestSeller = input.isBestSeller !== undefined ? (input.isBestSeller ? 1 : 0) : (existing.isBestSeller ? 1 : 0);
-  const isActive = input.isActive !== undefined ? (input.isActive ? 1 : 0) : (existing.isActive ? 1 : 0);
-  const rating = input.rating ?? existing.rating;
-  const sold = input.sold ?? existing.sold;
-  const sortOrder = input.sortOrder !== undefined ? input.sortOrder : existing.sortOrder;
+  if (input.categoryId !== undefined) updates.category_id = input.categoryId;
+  if (input.description !== undefined) updates.description = input.description;
+  if (input.price !== undefined) updates.price = input.price;
+  if (input.compareAtPrice !== undefined) updates.compare_at_price = input.compareAtPrice;
+  if (input.unit !== undefined) updates.unit = input.unit;
+  if (input.imageUrl !== undefined) updates.image_url = input.imageUrl;
+  if (input.gallery !== undefined) updates.gallery = input.gallery;
+  if (input.specs !== undefined) updates.specs = input.specs;
+  if (input.isBestSeller !== undefined) updates.is_best_seller = Boolean(input.isBestSeller);
+  if (input.isActive !== undefined) updates.is_active = Boolean(input.isActive);
+  if (input.rating !== undefined) updates.rating = input.rating;
+  if (input.sold !== undefined) updates.sold = input.sold;
+  if (input.sortOrder !== undefined) updates.sort_order = input.sortOrder;
 
-  db.prepare(`
-    UPDATE products SET
-      name = ?, slug = ?, category_id = ?, description = ?, price = ?, compare_at_price = ?,
-      unit = ?, image_url = ?, gallery = ?, specs = ?, is_best_seller = ?, is_active = ?,
-      rating = ?, sold = ?, sort_order = ?, updated_at = ?
-    WHERE id = ?
-  `).run(
-    name, slug, categoryId, description, price, compareAtPrice,
-    unit, imageUrl, gallery, specs, isBestSeller, isActive,
-    rating, sold, sortOrder, now, id
-  );
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .update(updates)
+    .eq("id", id)
+    .select("*, categories(name, slug)")
+    .single();
 
-  const updated = getProductById(id);
-  syncProductsToJson();
-  return updated;
+  if (error || !data) {
+    throw new Error(error?.message || "Gagal memperbarui produk di Supabase");
+  }
+
+  return mapRowToProduct(data);
 }
 
-export function deleteProduct(id: string, softDelete = true): boolean {
+export async function deleteProduct(id: string, softDelete = true): Promise<boolean> {
   if (softDelete) {
-    db.prepare("UPDATE products SET is_active = 0, updated_at = ? WHERE id = ?").run(new Date().toISOString(), id);
-    syncProductsToJson();
-    return true;
+    const { error } = await supabaseAdmin
+      .from("products")
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    return !error;
   }
-  db.prepare("DELETE FROM products WHERE id = ?").run(id);
-  syncProductsToJson();
-  return true;
+
+  const { error } = await supabaseAdmin
+    .from("products")
+    .delete()
+    .eq("id", id);
+
+  return !error;
 }

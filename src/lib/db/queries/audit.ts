@@ -1,4 +1,4 @@
-import { db } from "../client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export interface AuditLogInput {
   actor: string;
@@ -15,40 +15,54 @@ export function logAudit(
   entityId?: string | null,
   diff?: any
 ): void {
-  try {
-    let act: string;
-    let actn: string;
-    let ent: string;
-    let eid: string | null = null;
-    let df: any = null;
+  // Jalankan asinkron tanpa memblokir respon
+  (async () => {
+    try {
+      let act: string;
+      let actn: string;
+      let ent: string;
+      let eid: string | null = null;
+      let df: any = null;
 
-    if (typeof actorOrInput === "object" && actorOrInput !== null) {
-      act = actorOrInput.actor;
-      actn = actorOrInput.action;
-      ent = actorOrInput.entity;
-      eid = actorOrInput.entityId || null;
-      df = actorOrInput.diff || null;
-    } else {
-      act = actorOrInput;
-      actn = action || "UNKNOWN";
-      ent = entity || "system";
-      eid = entityId || null;
-      df = diff || null;
+      if (typeof actorOrInput === "object" && actorOrInput !== null) {
+        act = actorOrInput.actor;
+        actn = actorOrInput.action;
+        ent = actorOrInput.entity;
+        eid = actorOrInput.entityId || null;
+        df = actorOrInput.diff || null;
+      } else {
+        act = actorOrInput;
+        actn = action || "UNKNOWN";
+        ent = entity || "system";
+        eid = entityId || null;
+        df = diff || null;
+      }
+
+      await supabaseAdmin.from("audit_logs").insert({
+        actor: act,
+        action: actn,
+        entity: ent,
+        entity_id: eid,
+        diff: df || null,
+        created_at: new Date().toISOString(),
+      });
+    } catch {
+      // Abaikan error logging audit agar alur utama tidak gagal
     }
-
-    const id = "aud-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-    const now = new Date().toISOString();
-    const diffStr = df ? (typeof df === "string" ? df : JSON.stringify(df)) : null;
-
-    db.prepare(`
-      INSERT INTO audit_log (id, actor, action, entity, entity_id, diff, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(id, act, actn, ent, eid, diffStr, now);
-  } catch (err) {
-    console.error("Gagal mencatat audit log:", err);
-  }
+  })();
 }
 
-export function getAuditLogs(limit = 50): any[] {
-  return db.prepare("SELECT * FROM audit_log ORDER BY created_at DESC LIMIT ?").all(limit) as any[];
+export async function getAuditLogs(limit = 50): Promise<any[]> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("audit_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
 }

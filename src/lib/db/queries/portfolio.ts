@@ -1,4 +1,4 @@
-import { db } from "../client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export interface PortfolioRecord {
   id: string;
@@ -12,26 +12,69 @@ export interface PortfolioRecord {
   createdAt: string;
 }
 
-export function getPortfolio(includeInactive = false): PortfolioRecord[] {
-  const query = includeInactive
-    ? "SELECT * FROM portfolio ORDER BY sort_order ASC, created_at DESC"
-    : "SELECT * FROM portfolio WHERE is_active = 1 ORDER BY sort_order ASC, created_at DESC";
+export async function getPortfolio(includeInactive = false): Promise<PortfolioRecord[]> {
+  try {
+    let query = supabaseAdmin
+      .from("portfolio")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
-  const rows = db.prepare(query).all() as any[];
-  return rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    client: r.client,
-    category: r.category || "All Work",
-    imageUrl: r.image_url,
-    description: r.description,
-    sortOrder: r.sort_order,
-    isActive: Boolean(r.is_active),
-    createdAt: r.created_at,
-  }));
+    if (!includeInactive) {
+      query = query.eq("is_active", true);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) {
+      console.error("[SUPABASE] Gagal memuat portofolio:", error?.message);
+      return [];
+    }
+
+    return data.map((r: any) => ({
+      id: r.id,
+      title: r.title,
+      client: r.client,
+      category: r.category || "All Work",
+      imageUrl: r.image_url,
+      description: r.description,
+      sortOrder: Number(r.sort_order) || 0,
+      isActive: Boolean(r.is_active),
+      createdAt: r.created_at,
+    }));
+  } catch (err: any) {
+    console.error("[SUPABASE_ERR] Error getPortfolio:", err);
+    return [];
+  }
 }
 
-export function createPortfolioItem(input: {
+export async function getPortfolioById(id: string): Promise<PortfolioRecord | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("portfolio")
+      .select("*")
+      .eq("id", id)
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      title: data.title,
+      client: data.client,
+      category: data.category || "All Work",
+      imageUrl: data.image_url,
+      description: data.description,
+      sortOrder: Number(data.sort_order) || 0,
+      isActive: Boolean(data.is_active),
+      createdAt: data.created_at,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function createPortfolioItem(input: {
   title: string;
   client?: string | null;
   category?: string | null;
@@ -39,61 +82,98 @@ export function createPortfolioItem(input: {
   description?: string | null;
   sortOrder?: number;
   isActive?: boolean;
-}): PortfolioRecord {
+}): Promise<PortfolioRecord> {
   const id = "port-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
   const now = new Date().toISOString();
 
-  db.prepare(`
-    INSERT INTO portfolio (id, title, client, category, image_url, description, sort_order, is_active, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
+  const payload = {
     id,
-    input.title,
-    input.client || null,
-    input.category || "All Work",
-    input.imageUrl,
-    input.description || null,
-    input.sortOrder || 0,
-    input.isActive !== undefined ? (input.isActive ? 1 : 0) : 1,
-    now
-  );
+    title: input.title,
+    client: input.client || null,
+    category: input.category || "All Work",
+    image_url: input.imageUrl,
+    description: input.description || null,
+    sort_order: input.sortOrder || 0,
+    is_active: input.isActive !== undefined ? Boolean(input.isActive) : true,
+    created_at: now,
+    updated_at: now,
+  };
 
-  const r = db.prepare("SELECT * FROM portfolio WHERE id = ?").get(id) as any;
+  const { data, error } = await supabaseAdmin
+    .from("portfolio")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message || "Gagal membuat item portofolio di Supabase");
+  }
+
   return {
-    id: r.id,
-    title: r.title,
-    client: r.client,
-    category: r.category,
-    imageUrl: r.image_url,
-    description: r.description,
-    sortOrder: r.sort_order,
-    isActive: Boolean(r.is_active),
-    createdAt: r.created_at,
+    id: data.id,
+    title: data.title,
+    client: data.client,
+    category: data.category || "All Work",
+    imageUrl: data.image_url,
+    description: data.description,
+    sortOrder: Number(data.sort_order) || 0,
+    isActive: Boolean(data.is_active),
+    createdAt: data.created_at,
   };
 }
 
-export function updatePortfolioItem(id: string, input: any): PortfolioRecord | null {
-  const existing = db.prepare("SELECT * FROM portfolio WHERE id = ?").get(id) as any;
+export async function updatePortfolioItem(
+  id: string,
+  input: Partial<{
+    title: string;
+    client?: string | null;
+    category?: string | null;
+    imageUrl?: string;
+    description?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+  }>
+): Promise<PortfolioRecord | null> {
+  const existing = await getPortfolioById(id);
   if (!existing) return null;
 
-  const title = input.title ?? existing.title;
-  const client = input.client !== undefined ? input.client : existing.client;
-  const category = input.category ?? existing.category;
-  const imageUrl = input.imageUrl ?? existing.image_url;
-  const description = input.description !== undefined ? input.description : existing.description;
-  const sortOrder = input.sortOrder !== undefined ? input.sortOrder : existing.sort_order;
-  const isActive = input.isActive !== undefined ? (input.isActive ? 1 : 0) : existing.is_active;
+  const updates: Record<string, any> = {
+    updated_at: new Date().toISOString(),
+  };
 
-  db.prepare(`
-    UPDATE portfolio SET
-      title = ?, client = ?, category = ?, image_url = ?, description = ?, sort_order = ?, is_active = ?
-    WHERE id = ?
-  `).run(title, client, category, imageUrl, description, sortOrder, isActive, id);
+  if (input.title !== undefined) updates.title = input.title;
+  if (input.client !== undefined) updates.client = input.client;
+  if (input.category !== undefined) updates.category = input.category;
+  if (input.imageUrl !== undefined) updates.image_url = input.imageUrl;
+  if (input.description !== undefined) updates.description = input.description;
+  if (input.sortOrder !== undefined) updates.sort_order = input.sortOrder;
+  if (input.isActive !== undefined) updates.is_active = Boolean(input.isActive);
 
-  return db.prepare("SELECT * FROM portfolio WHERE id = ?").get(id) as any;
+  const { data, error } = await supabaseAdmin
+    .from("portfolio")
+    .update(updates)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message || "Gagal memperbarui portofolio di Supabase");
+  }
+
+  return {
+    id: data.id,
+    title: data.title,
+    client: data.client,
+    category: data.category || "All Work",
+    imageUrl: data.image_url,
+    description: data.description,
+    sortOrder: Number(data.sort_order) || 0,
+    isActive: Boolean(data.is_active),
+    createdAt: data.created_at,
+  };
 }
 
-export function deletePortfolioItem(id: string): boolean {
-  db.prepare("DELETE FROM portfolio WHERE id = ?").run(id);
-  return true;
+export async function deletePortfolioItem(id: string): Promise<boolean> {
+  const { error } = await supabaseAdmin.from("portfolio").delete().eq("id", id);
+  return !error;
 }

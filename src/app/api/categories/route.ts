@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get("includeInactive") === "true";
-    const categories = getCategories(includeInactive);
+    const categories = await getCategories(includeInactive);
 
     return NextResponse.json(
       { success: true, data: categories },
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const created = createCategory(parsed.data);
+    const created = await createCategory(parsed.data);
 
     logAudit({
       actor: "admin",

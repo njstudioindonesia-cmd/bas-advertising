@@ -1,4 +1,4 @@
-import { db } from "../client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export interface PageRecord {
   slug: string;
@@ -7,31 +7,35 @@ export interface PageRecord {
   updatedAt: string;
 }
 
-export function getPage(slug: string): PageRecord | null {
-  const r = db.prepare("SELECT * FROM pages WHERE slug = ?").get(slug) as any;
-  if (!r) return null;
-  let content = r.content;
+export async function getPage(slug: string): Promise<PageRecord | null> {
   try {
-    content = JSON.parse(r.content);
+    const { data } = await supabaseAdmin
+      .from("settings")
+      .select("value")
+      .eq("key", `page.${slug}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (!data?.value) return null;
+    return data.value as PageRecord;
   } catch {
-    content = r.content;
+    return null;
   }
-  return {
-    slug: r.slug,
-    title: r.title,
-    content,
-    updatedAt: r.updated_at,
-  };
 }
 
-export function setPage(slug: string, title: string, content: any): PageRecord {
-  const now = new Date().toISOString();
-  const contentStr = typeof content === "string" ? content : JSON.stringify(content);
-  db.prepare(`
-    INSERT INTO pages (slug, title, content, updated_at)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(slug) DO UPDATE SET title = excluded.title, content = excluded.content, updated_at = excluded.updated_at
-  `).run(slug, title, contentStr, now);
+export async function setPage(slug: string, title: string, content: any): Promise<PageRecord> {
+  const record: PageRecord = {
+    slug,
+    title,
+    content,
+    updatedAt: new Date().toISOString(),
+  };
 
-  return getPage(slug)!;
+  await supabaseAdmin.from("settings").upsert({
+    key: `page.${slug}`,
+    value: record,
+    updated_at: record.updatedAt,
+  });
+
+  return record;
 }

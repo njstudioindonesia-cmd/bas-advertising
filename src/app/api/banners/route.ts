@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get("includeInactive") === "true";
-    const banners = getBanners(includeInactive);
+    const banners = await getBanners(includeInactive);
     return NextResponse.json(
       { success: true, data: banners },
       {
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const created = createBanner(parsed.data);
+    const created = await createBanner(parsed.data);
 
     logAudit({
       actor: "admin",

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { order, error } = createOrder(parsed.data);
+    const { order, error } = await createOrder(parsed.data);
     if (error || !order) {
       return NextResponse.json({ success: false, error: error || "Gagal membuat pesanan" }, { status: 400 });
     }
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
     const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!, 10) : undefined;
     const offset = searchParams.get("offset") ? parseInt(searchParams.get("offset")!, 10) : undefined;
 
-    const result = getOrders({ status, limit, offset });
+    const result = await getOrders({ status, limit, offset });
 
     return NextResponse.json({
       success: true,

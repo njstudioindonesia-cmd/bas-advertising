@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { updatePortfolioItem, deletePortfolioItem } from "@/lib/db/queries/portfolio";
+import { getPortfolioById, updatePortfolioItem, deletePortfolioItem } from "@/lib/db/queries/portfolio";
 import { PortfolioInputSchema } from "@/lib/validators";
 import { requireAdmin } from "@/lib/auth/guard";
 import { revalidateEntity } from "@/lib/cache-tags";
 import { logAudit } from "@/lib/db/queries/audit";
-import { db } from "@/lib/db/client";
 
 export async function PUT(
   request: Request,
@@ -25,7 +24,7 @@ export async function PUT(
       );
     }
 
-    const updated = updatePortfolioItem(id, partial.data);
+    const updated = await updatePortfolioItem(id, partial.data);
     if (!updated) {
       return NextResponse.json({ success: false, error: "Portofolio tidak ditemukan" }, { status: 404 });
     }
@@ -55,12 +54,12 @@ export async function DELETE(
     if (!auth.authorized) return auth.response!;
 
     const { id } = await params;
-    const existing = db.prepare("SELECT * FROM portfolio WHERE id = ?").get(id) as any;
+    const existing = await getPortfolioById(id);
     if (!existing) {
       return NextResponse.json({ success: false, error: "Portofolio tidak ditemukan" }, { status: 404 });
     }
 
-    deletePortfolioItem(id);
+    await deletePortfolioItem(id);
 
     logAudit({
       actor: "admin",

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     const { username, password } = parsed.data;
-    const result = authenticateAdmin(username, password);
+    const result = await authenticateAdmin(username, password);
 
     if (!result.success || !result.token) {
       return NextResponse.json(

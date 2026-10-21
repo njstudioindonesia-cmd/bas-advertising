@@ -1,4 +1,4 @@
-import { db } from "../client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { OrderInput } from "@/lib/validators";
 
 export interface OrderItemRecord {
@@ -35,156 +35,217 @@ export function generateOrderCode(): string {
   return `BAS-${yyyymmdd}-${randomSuffix}`;
 }
 
-export function createOrder(input: OrderInput): { order: OrderRecord; error?: string } {
-  // 1. Ambil data produk langsung dari database untuk menjamin keaslian harga
-  const itemsWithPrice: {
-    productId: string;
-    name: string;
-    price: number;
-    unit: string;
-    qty: number;
-    designNote?: string | null;
-  }[] = [];
-
-  let calculatedSubtotal = 0;
-
-  for (const item of input.items) {
-    const prodRow = db.prepare("SELECT name, price, unit FROM products WHERE id = ?").get(item.productId) as any;
-    if (!prodRow) {
-      return { order: null as any, error: `Produk dengan ID ${item.productId} tidak ditemukan atau telah dihapus.` };
-    }
-    const unitPrice = Number(prodRow.price) || 0;
-    calculatedSubtotal += unitPrice * item.qty;
-
-    itemsWithPrice.push({
-      productId: item.productId,
-      name: prodRow.name,
-      price: unitPrice,
-      unit: prodRow.unit || "/ pcs",
-      qty: item.qty,
-      designNote: item.designNote || null,
-    });
-  }
-
-  const orderId = "ord-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-  const orderCode = generateOrderCode();
-  const now = new Date().toISOString();
-
-  // Eksekusi transaksi
-  db.exec("BEGIN TRANSACTION;");
+export async function createOrder(
+  input: OrderInput
+): Promise<{ order: OrderRecord | null; error?: string }> {
   try {
-    db.prepare(`
-      INSERT INTO orders (id, code, customer_name, customer_phone, delivery_method, address, payment_method, note, subtotal, status, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      orderId,
-      orderCode,
-      input.customerName,
-      input.customerPhone,
-      input.deliveryMethod,
-      input.address || null,
-      input.paymentMethod,
-      input.note || null,
-      calculatedSubtotal,
-      "BARU",
-      now
-    );
+    const productIds = input.items.map((i) => i.productId);
+    const { data: prods, error: pErr } = await supabaseAdmin
+      .from("products")
+      .select("id, name, price, unit")
+      .in("id", productIds);
 
-    const itemStmt = db.prepare(`
-      INSERT INTO order_items (id, order_id, product_id, name_snapshot, price_snapshot, unit_snapshot, qty, design_note)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    for (const item of itemsWithPrice) {
-      const itemId = "item-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-      itemStmt.run(
-        itemId,
-        orderId,
-        item.productId,
-        item.name,
-        item.price,
-        item.unit,
-        item.qty,
-        item.designNote
-      );
+    if (pErr) {
+      return { order: null, error: `Database error: ${pErr.message}` };
     }
 
-    db.exec("COMMIT;");
-  } catch (err: any) {
-    db.exec("ROLLBACK;");
-    throw err;
-  }
+    const prodMap = new Map<string, any>((prods || []).map((p: any) => [p.id, p]));
 
-  return { order: getOrderById(orderId)! };
+    const itemsToInsert: any[] = [];
+    let calculatedSubtotal = 0;
+
+    for (const item of input.items) {
+      const prod = prodMap.get(item.productId);
+      const unitPrice = prod ? Number(prod.price) : 0;
+      const prodName = prod ? prod.name : "Produk Custom";
+      const itemSubtotal = unitPrice * item.qty;
+      calculatedSubtotal += itemSubtotal;
+
+      const itemId = "item-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+
+      itemsToInsert.push({
+        id: itemId,
+        product_id: item.productId,
+        product_name: prodName,
+        product_price: unitPrice,
+        qty: item.qty,
+        subtotal: itemSubtotal,
+        design_note: item.designNote || null,
+      });
+    }
+
+    const orderId = "ord-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    const orderCode = generateOrderCode();
+    const now = new Date().toISOString();
+
+    const { error: ordErr } = await supabaseAdmin.from("orders").insert({
+      id: orderId,
+      code: orderCode,
+      customer_name: input.customerName,
+      customer_phone: input.customerPhone,
+      delivery_method: input.deliveryMethod,
+      address: input.address || null,
+      payment_method: input.paymentMethod,
+      note: input.note || null,
+      subtotal: calculatedSubtotal,
+      status: "BARU",
+      created_at: now,
+      updated_at: now,
+    });
+
+    if (ordErr) {
+      return { order: null, error: ordErr.message };
+    }
+
+    // Insert order items
+    const finalItems = itemsToInsert.map((item) => ({
+      ...item,
+      order_id: orderId,
+      created_at: now,
+    }));
+
+    const { error: itemsErr } = await supabaseAdmin.from("order_items").insert(finalItems);
+    if (itemsErr) {
+      console.error("[SUPABASE] Gagal simpan order_items:", itemsErr.message);
+    }
+
+    const createdOrder: OrderRecord = {
+      id: orderId,
+      code: orderCode,
+      customerName: input.customerName,
+      customerPhone: input.customerPhone,
+      deliveryMethod: input.deliveryMethod,
+      address: input.address || null,
+      paymentMethod: input.paymentMethod,
+      note: input.note || null,
+      subtotal: calculatedSubtotal,
+      status: "BARU",
+      items: finalItems.map((it) => ({
+        id: it.id,
+        orderId,
+        productId: it.product_id,
+        nameSnapshot: it.product_name,
+        priceSnapshot: it.product_price,
+        unitSnapshot: "/ pcs",
+        qty: it.qty,
+        designNote: it.design_note,
+        total: it.subtotal,
+      })),
+      createdAt: now,
+    };
+
+    return { order: createdOrder };
+  } catch (err: any) {
+    return { order: null, error: err.message || "Gagal membuat pesanan" };
+  }
 }
 
-export function getOrders(options?: {
+export async function getOrders(options?: {
   status?: string;
   limit?: number;
   offset?: number;
-}): { orders: OrderRecord[]; total: number } {
-  const whereClauses: string[] = [];
-  const params: any[] = [];
+}): Promise<{ orders: OrderRecord[]; total: number }> {
+  try {
+    let query = supabaseAdmin
+      .from("orders")
+      .select("*, order_items(*)", { count: "exact" })
+      .order("created_at", { ascending: false });
 
-  if (options?.status && options.status !== "Semua") {
-    whereClauses.push("status = ?");
-    params.push(options.status);
+    if (options?.status && options.status !== "SEMUA") {
+      query = query.eq("status", options.status);
+    }
+
+    if (options?.limit) {
+      const start = options.offset || 0;
+      query = query.range(start, start + options.limit - 1);
+    }
+
+    const { data, count, error } = await query;
+    if (error || !data) {
+      console.error("[SUPABASE] Gagal memuat pesanan:", error?.message);
+      return { orders: [], total: 0 };
+    }
+
+    const orders: OrderRecord[] = data.map((o: any) => ({
+      id: o.id,
+      code: o.code,
+      customerName: o.customer_name,
+      customerPhone: o.customer_phone,
+      deliveryMethod: o.delivery_method,
+      address: o.address,
+      paymentMethod: o.payment_method,
+      note: o.note,
+      subtotal: Number(o.subtotal) || 0,
+      status: o.status,
+      items: (o.order_items || []).map((it: any) => ({
+        id: it.id,
+        orderId: it.order_id,
+        productId: it.product_id,
+        nameSnapshot: it.product_name,
+        priceSnapshot: Number(it.product_price) || 0,
+        unitSnapshot: "/ pcs",
+        qty: it.qty,
+        designNote: it.design_note,
+        total: Number(it.subtotal) || 0,
+      })),
+      createdAt: o.created_at,
+    }));
+
+    return {
+      orders,
+      total: count !== null ? count : orders.length,
+    };
+  } catch (err: any) {
+    console.error("[SUPABASE_ERR] Error getOrders:", err);
+    return { orders: [], total: 0 };
   }
+}
 
-  const whereSql = whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : "";
+export async function getOrderById(id: string): Promise<OrderRecord | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("orders")
+      .select("*, order_items(*)")
+      .or(`id.eq.${id},code.eq.${id}`)
+      .limit(1)
+      .maybeSingle();
 
-  const totalRow = db.prepare(`SELECT COUNT(*) as total FROM orders ${whereSql}`).get(...params) as any;
-  const total = totalRow ? Number(totalRow.total) : 0;
+    if (error || !data) return null;
 
-  let query = `SELECT * FROM orders ${whereSql} ORDER BY created_at DESC`;
-  if (options?.limit) {
-    query += " LIMIT ? OFFSET ?";
-    params.push(options.limit, options.offset || 0);
+    return {
+      id: data.id,
+      code: data.code,
+      customerName: data.customer_name,
+      customerPhone: data.customer_phone,
+      deliveryMethod: data.delivery_method,
+      address: data.address,
+      paymentMethod: data.payment_method,
+      note: data.note,
+      subtotal: Number(data.subtotal) || 0,
+      status: data.status,
+      items: (data.order_items || []).map((it: any) => ({
+        id: it.id,
+        orderId: it.order_id,
+        productId: it.product_id,
+        nameSnapshot: it.product_name,
+        priceSnapshot: Number(it.product_price) || 0,
+        unitSnapshot: "/ pcs",
+        qty: it.qty,
+        designNote: it.design_note,
+        total: Number(it.subtotal) || 0,
+      })),
+      createdAt: data.created_at,
+    };
+  } catch {
+    return null;
   }
-
-  const orderRows = db.prepare(query).all(...params) as any[];
-  const orders = orderRows.map((o) => getOrderDetails(o));
-
-  return { orders, total };
 }
 
-export function getOrderById(id: string): OrderRecord | null {
-  const o = db.prepare("SELECT * FROM orders WHERE id = ? OR code = ?").get(id, id) as any;
-  if (!o) return null;
-  return getOrderDetails(o);
-}
+export async function updateOrderStatus(id: string, status: string): Promise<boolean> {
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .update({ status, updated_at: new Date().toISOString() })
+    .or(`id.eq.${id},code.eq.${id}`);
 
-function getOrderDetails(o: any): OrderRecord {
-  const itemRows = db.prepare("SELECT * FROM order_items WHERE order_id = ?").all(o.id) as any[];
-  const items: OrderItemRecord[] = itemRows.map((it) => ({
-    id: it.id,
-    orderId: it.order_id,
-    productId: it.product_id,
-    nameSnapshot: it.name_snapshot,
-    priceSnapshot: Number(it.price_snapshot),
-    unitSnapshot: it.unit_snapshot,
-    qty: Number(it.qty),
-    designNote: it.design_note,
-    total: Number(it.price_snapshot) * Number(it.qty),
-  }));
-
-  return {
-    id: o.id,
-    code: o.code,
-    customerName: o.customer_name,
-    customerPhone: o.customer_phone,
-    deliveryMethod: o.delivery_method,
-    address: o.address,
-    paymentMethod: o.payment_method,
-    note: o.note,
-    subtotal: Number(o.subtotal),
-    status: o.status || "BARU",
-    items,
-    createdAt: o.created_at,
-  };
-}
-
-export function updateOrderStatus(id: string, status: string): boolean {
-  db.prepare("UPDATE orders SET status = ? WHERE id = ?").run(status, id);
-  return true;
+  return !error;
 }

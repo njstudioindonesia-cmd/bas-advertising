@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 
 export default async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const product = getProductById(resolvedParams.id);
+  const product = await getProductById(resolvedParams.id);
 
   if (!product || !product.isActive) {
     notFound();
   }
 
   // Related products from same category
-  const relatedResult = getProducts({ category: product.category, limit: 6 });
+  const relatedResult = await getProducts({ category: product.category, limit: 6 });
   const related = relatedResult.products
     .filter(p => p.id !== product.id)
     .slice(0, 4);

@@ -12,7 +12,7 @@ export async function GET(
     if (!auth.authorized) return auth.response!;
 
     const { id } = await params;
-    const order = getOrderById(id);
+    const order = await getOrderById(id);
 
     if (!order) {
       return NextResponse.json({ success: false, error: "Pesanan tidak ditemukan" }, { status: 404 });
@@ -44,12 +44,12 @@ export async function PATCH(
       );
     }
 
-    const order = getOrderById(id);
+    const order = await getOrderById(id);
     if (!order) {
       return NextResponse.json({ success: false, error: "Pesanan tidak ditemukan" }, { status: 404 });
     }
 
-    updateOrderStatus(order.id, status);
+    await updateOrderStatus(order.id, status);
 
     logAudit({
       actor: "admin",

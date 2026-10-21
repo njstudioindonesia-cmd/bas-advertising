@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+Rahasia.txt
+*.secret
 
 # debug
 npm-debug.log*

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get("includeInactive") === "true";
-    const items = getPortfolio(includeInactive);
+    const items = await getPortfolio(includeInactive);
     return NextResponse.json({ success: true, data: items });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || "Gagal memuat portofolio" }, { status: 500 });
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const created = createPortfolioItem(parsed.data);
+    const created = await createPortfolioItem(parsed.data);
 
     logAudit({
       actor: "admin",

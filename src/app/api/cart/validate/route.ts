@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db/client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { formatRupiah } from "@/lib/db/queries/products";
 
 interface CartValidateItemRequest {
@@ -25,20 +25,27 @@ export async function POST(request: Request) {
       });
     }
 
+    const productIds = items.map((i) => i.productId);
+    const { data: products, error } = await supabaseAdmin
+      .from("products")
+      .select("*, categories(name)")
+      .in("id", productIds);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const prodMap = new Map<string, any>((products || []).map((p: any) => [p.id, p]));
+
     const validItems: any[] = [];
     const unavailableItems: any[] = [];
     let hasChanges = false;
     let subtotal = 0;
 
     for (const item of items) {
-      const p = db.prepare(`
-        SELECT p.*, c.name as category_name
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        WHERE p.id = ?
-      `).get(item.productId) as any;
+      const p = prodMap.get(item.productId);
 
-      if (!p || p.is_active === 0) {
+      if (!p || !p.is_active) {
         unavailableItems.push({
           productId: item.productId,
           reason: !p ? "Produk sudah dihapus" : "Produk sedang tidak aktif",
@@ -55,19 +62,12 @@ export async function POST(request: Request) {
       const itemTotal = currentPrice * item.qty;
       subtotal += itemTotal;
 
-      let gallery: string[] = [];
-      try {
-        if (p.gallery) gallery = JSON.parse(p.gallery);
-      } catch {
-        gallery = [];
-      }
-
       validItems.push({
         productId: p.id,
         id: p.id,
         name: p.name,
         title: p.name,
-        category: p.category_name || "Lainnya",
+        category: p.categories?.name || "Lainnya",
         price: formatRupiah(currentPrice),
         priceNumber: currentPrice,
         normalPrice: p.compare_at_price ? formatRupiah(Number(p.compare_at_price)) : undefined,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
 import { revalidateEntity } from "@/lib/cache-tags";
-import { db } from "@/lib/db/client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/db/queries/audit";
 
 export async function PATCH(request: Request) {
@@ -16,15 +16,26 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: "Daftar ID produk wajib disertakan." }, { status: 400 });
     }
 
-    const placeholders = ids.map(() => "?").join(",");
     const now = new Date().toISOString();
 
     if (action === "activate") {
-      db.prepare(`UPDATE products SET is_active = 1, updated_at = ? WHERE id IN (${placeholders})`).run(now, ...ids);
+      const { error } = await supabaseAdmin
+        .from("products")
+        .update({ is_active: true, updated_at: now })
+        .in("id", ids);
+      if (error) throw new Error(error.message);
     } else if (action === "deactivate") {
-      db.prepare(`UPDATE products SET is_active = 0, updated_at = ? WHERE id IN (${placeholders})`).run(now, ...ids);
+      const { error } = await supabaseAdmin
+        .from("products")
+        .update({ is_active: false, updated_at: now })
+        .in("id", ids);
+      if (error) throw new Error(error.message);
     } else if (action === "delete") {
-      db.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).run(...ids);
+      const { error } = await supabaseAdmin
+        .from("products")
+        .delete()
+        .in("id", ids);
+      if (error) throw new Error(error.message);
     } else {
       return NextResponse.json({ success: false, error: "Aksi tidak dikenal" }, { status: 400 });
     }
@@ -40,7 +51,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Aksi ${action} berhasil diterapkan pada ${ids.length} produk.`,
+      message: `Aksi ${action} berhasil diterapkan pada ${ids.length} produk di database Supabase.`,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || "Gagal memproses aksi massal" }, { status: 500 });

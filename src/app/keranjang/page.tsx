@@ -48,7 +48,7 @@ export default function KeranjangPage() {
     "contact.whatsapp": "6281234567890",
     "checkout.paymentMethods": [
       { id: "QRIS", name: "QRIS Instant", enabled: true, details: "Scan QRIS via GoPay, OVO, Dana, BCA, Livin" },
-      { id: "Transfer Bank", name: "Transfer Bank", enabled: true, details: "BCA 1234-567-890 a/n BAS Advertising" },
+      { id: "Transfer Bank", name: "Transfer Bank", enabled: true, details: "BCA / Mandiri / BNI a/n Cetak.inc" },
       { id: "COD / Kasir", name: "Bayar di Workshop / Kasir", enabled: true, details: "Pembayaran langsung saat ambil pesanan" }
     ],
     "checkout.deliveryMethods": [
@@ -164,7 +164,7 @@ export default function KeranjangPage() {
     ? settings["checkout.paymentMethods"].filter((p: any) => p.enabled)
     : [
         { id: "QRIS", name: "QRIS Instant", details: "Scan QRIS via GoPay, OVO, Dana, BCA, Livin" },
-        { id: "Transfer Bank", name: "Transfer Bank", details: "BCA 1234-567-890 a/n BAS Advertising" },
+        { id: "Transfer Bank", name: "Transfer Bank", details: "BCA / Mandiri / BNI a/n Cetak.inc" },
         { id: "COD / Kasir", name: "Bayar di Workshop / Kasir", details: "Pembayaran langsung saat ambil pesanan" }
       ];
 

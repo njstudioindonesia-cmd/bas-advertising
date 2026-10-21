@@ -1,4 +1,4 @@
-import { db } from "../client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { CategoryInput } from "@/lib/validators";
 
 export interface CategoryRecord {
@@ -13,131 +13,190 @@ export interface CategoryRecord {
   updatedAt: string;
 }
 
-export function getCategories(includeInactive = false): CategoryRecord[] {
-  const query = includeInactive
-    ? `SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.is_active = 1) as product_count 
-       FROM categories c ORDER BY c.sort_order ASC, c.name ASC`
-    : `SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.is_active = 1) as product_count 
-       FROM categories c WHERE c.is_active = 1 ORDER BY c.sort_order ASC, c.name ASC`;
+export async function getCategories(includeInactive = false): Promise<CategoryRecord[]> {
+  try {
+    let query = supabaseAdmin
+      .from("categories")
+      .select("*, products(id, is_active)")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
 
-  const rows = db.prepare(query).all() as any[];
-  return rows.map((r) => ({
-    id: r.id,
-    slug: r.slug,
-    name: r.name,
-    icon: r.icon,
-    sortOrder: r.sort_order,
-    isActive: Boolean(r.is_active),
-    productCount: Number(r.product_count || 0),
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  }));
+    if (!includeInactive) {
+      query = query.eq("is_active", true);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) {
+      console.error("[SUPABASE] Gagal mengambil kategori:", error?.message);
+      return [];
+    }
+
+    return data.map((r: any) => {
+      const activeProducts = (r.products || []).filter((p: any) => p.is_active);
+      return {
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        icon: r.icon || "Package",
+        sortOrder: Number(r.sort_order) || 0,
+        isActive: Boolean(r.is_active),
+        productCount: activeProducts.length,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      };
+    });
+  } catch (err: any) {
+    console.error("[SUPABASE_ERR] Error getCategories:", err);
+    return [];
+  }
 }
 
-export function getCategoryById(id: string): CategoryRecord | null {
-  const r = db.prepare("SELECT * FROM categories WHERE id = ?").get(id) as any;
-  if (!r) return null;
-  return {
-    id: r.id,
-    slug: r.slug,
-    name: r.name,
-    icon: r.icon,
-    sortOrder: r.sort_order,
-    isActive: Boolean(r.is_active),
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
+export async function getCategoryById(id: string): Promise<CategoryRecord | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("categories")
+      .select("*")
+      .or(`id.eq.${id},slug.eq.${id}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      slug: data.slug,
+      name: data.name,
+      icon: data.icon,
+      sortOrder: Number(data.sort_order) || 0,
+      isActive: Boolean(data.is_active),
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  } catch {
+    return null;
+  }
 }
 
-export function getCategoryBySlug(slug: string): CategoryRecord | null {
-  const r = db.prepare("SELECT * FROM categories WHERE slug = ?").get(slug) as any;
-  if (!r) return null;
-  return {
-    id: r.id,
-    slug: r.slug,
-    name: r.name,
-    icon: r.icon,
-    sortOrder: r.sort_order,
-    isActive: Boolean(r.is_active),
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
+export async function getCategoryBySlug(slug: string): Promise<CategoryRecord | null> {
+  return getCategoryById(slug);
 }
 
-export function createCategory(input: CategoryInput): CategoryRecord {
-  const id = input.id || "cat-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-  const rawSlug = (input.slug && input.slug.trim()) || input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+export async function createCategory(input: CategoryInput): Promise<CategoryRecord> {
+  const rawSlug =
+    (input.slug && input.slug.trim()) ||
+    input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   let slug = rawSlug || "kategori";
-  
-  // Prevent UNIQUE constraint failed: categories.slug
-  let counter = 1;
-  while (db.prepare("SELECT 1 FROM categories WHERE slug = ?").get(slug)) {
-    slug = `${rawSlug || "kategori"}-${counter}`;
-    counter++;
+  const id = input.id || "cat-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+
+  // Check unique slug
+  const { data: existing } = await supabaseAdmin
+    .from("categories")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (existing) {
+    slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
   }
 
   const now = new Date().toISOString();
-
-  const stmt = db.prepare(`
-    INSERT INTO categories (id, slug, name, icon, sort_order, is_active, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(
+  const payload = {
     id,
     slug,
-    input.name,
-    input.icon || null,
-    input.sortOrder || 0,
-    input.isActive !== undefined ? (input.isActive ? 1 : 0) : 1,
-    now,
-    now
-  );
+    name: input.name,
+    icon: input.icon || "Package",
+    sort_order: input.sortOrder || 0,
+    is_active: input.isActive !== undefined ? Boolean(input.isActive) : true,
+    created_at: now,
+    updated_at: now,
+  };
 
-  return getCategoryById(id)!;
-}
+  const { data, error } = await supabaseAdmin
+    .from("categories")
+    .insert(payload)
+    .select("*")
+    .single();
 
-export function updateCategory(id: string, input: Partial<CategoryInput>): CategoryRecord | null {
-  const existing = getCategoryById(id);
-  if (!existing) return null;
-
-  const now = new Date().toISOString();
-  const name = input.name ?? existing.name;
-  
-  let slug = existing.slug;
-  if (input.slug && input.slug.trim()) {
-    const rawSlug = input.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    slug = rawSlug || "kategori";
-    let counter = 1;
-    while (db.prepare("SELECT 1 FROM categories WHERE slug = ? AND id != ?").get(slug, id)) {
-      slug = `${rawSlug || "kategori"}-${counter}`;
-      counter++;
-    }
+  if (error || !data) {
+    throw new Error(error?.message || "Gagal membuat kategori di Supabase");
   }
 
-  const icon = input.icon !== undefined ? input.icon : existing.icon;
-  const sortOrder = input.sortOrder !== undefined ? input.sortOrder : existing.sortOrder;
-  const isActive = input.isActive !== undefined ? (input.isActive ? 1 : 0) : (existing.isActive ? 1 : 0);
-
-  db.prepare(`
-    UPDATE categories 
-    SET name = ?, slug = ?, icon = ?, sort_order = ?, is_active = ?, updated_at = ?
-    WHERE id = ?
-  `).run(name, slug, icon, sortOrder, isActive, now, id);
-
-  return getCategoryById(id);
+  return {
+    id: data.id,
+    slug: data.slug,
+    name: data.name,
+    icon: data.icon,
+    sortOrder: Number(data.sort_order) || 0,
+    isActive: Boolean(data.is_active),
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
 }
 
-export function deleteCategory(id: string): { success: boolean; error?: string } {
+export async function updateCategory(
+  id: string,
+  input: Partial<CategoryInput>
+): Promise<CategoryRecord | null> {
+  const existing = await getCategoryById(id);
+  if (!existing) return null;
+
+  const updates: Record<string, any> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (input.name !== undefined) updates.name = input.name;
+  if (input.slug !== undefined && input.slug.trim()) {
+    updates.slug = input.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+  if (input.icon !== undefined) updates.icon = input.icon;
+  if (input.sortOrder !== undefined) updates.sort_order = input.sortOrder;
+  if (input.isActive !== undefined) updates.is_active = Boolean(input.isActive);
+
+  const { data, error } = await supabaseAdmin
+    .from("categories")
+    .update(updates)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message || "Gagal memperbarui kategori di Supabase");
+  }
+
+  return {
+    id: data.id,
+    slug: data.slug,
+    name: data.name,
+    icon: data.icon,
+    sortOrder: Number(data.sort_order) || 0,
+    isActive: Boolean(data.is_active),
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+}
+
+export async function deleteCategory(id: string): Promise<{ success: boolean; error?: string }> {
   // Cek apakah masih ada produk di kategori ini (RESTRICT rule)
-  const productCount = db.prepare("SELECT COUNT(*) as count FROM products WHERE category_id = ?").get(id) as any;
-  if (productCount && productCount.count > 0) {
+  const { count } = await supabaseAdmin
+    .from("products")
+    .select("*", { count: "exact", head: true })
+    .eq("category_id", id);
+
+  if (count && count > 0) {
     return {
       success: false,
-      error: `Tidak dapat menghapus kategori ini karena masih berisi ${productCount.count} produk. Silakan pindahkan atau hapus produk terlebih dahulu.`,
+      error: `Tidak dapat menghapus kategori ini karena masih berisi ${count} produk. Silakan pindahkan atau hapus produk terlebih dahulu.`,
     };
   }
 
-  db.prepare("DELETE FROM categories WHERE id = ?").run(id);
+  const { error } = await supabaseAdmin
+    .from("categories")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
   return { success: true };
 }

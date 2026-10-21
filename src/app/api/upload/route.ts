@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs";
-import path from "node:path";
 import crypto from "node:crypto";
 import { requireAdmin } from "@/lib/auth/guard";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3 MB
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(request: Request) {
   try {
@@ -28,7 +27,7 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { success: false, error: "Ukuran file terlalu besar. Maksimal ukuran gambar adalah 3 MB." },
+        { success: false, error: "Ukuran file terlalu besar. Maksimal ukuran gambar adalah 5 MB." },
         { status: 400 }
       );
     }
@@ -36,53 +35,47 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Jika di Vercel atau read-only environment: gunakan Base64 Data URL aman yang bisa disimpan langsung di DB
-    const isVercel = Boolean(process.env.VERCEL);
-    if (isVercel) {
-      const mime = file.type || "image/jpeg";
-      const base64Data = buffer.toString("base64");
-      return NextResponse.json({
-        success: true,
-        message: "Gambar berhasil diunggah (Serverless Storage)",
-        url: `data:${mime};base64,${base64Data}`,
-      });
-    }
+    let ext = ".jpg";
+    if (file.type === "image/png") ext = ".png";
+    else if (file.type === "image/webp") ext = ".webp";
+    else if (file.type === "image/gif") ext = ".gif";
+    else if (file.type === "image/svg+xml") ext = ".svg";
 
-    // Untuk lingkungan lokal / VPS tradisional: simpan ke public/uploads/
+    const fileName = `uploads/${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`;
+
+    // 1. Unggah ke Cloud Supabase Storage Bucket 'assets'
     try {
-      const uploadDir = path.join(process.cwd(), "public", "uploads");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+      const { data, error } = await supabaseAdmin.storage
+        .from("assets")
+        .upload(fileName, buffer, {
+          contentType: file.type || "image/jpeg",
+          upsert: true,
+        });
+
+      if (!error && data) {
+        const { data: publicData } = supabaseAdmin.storage.from("assets").getPublicUrl(fileName);
+        return NextResponse.json({
+          success: true,
+          message: "Gambar berhasil diunggah ke Supabase Cloud Storage",
+          url: publicData.publicUrl,
+        });
       }
-
-      let ext = ".jpg";
-      if (file.type === "image/png") ext = ".png";
-      else if (file.type === "image/webp") ext = ".webp";
-      else if (file.type === "image/gif") ext = ".gif";
-
-      const hashName = crypto.randomBytes(16).toString("hex") + ext;
-      const filePath = path.join(uploadDir, hashName);
-
-      fs.writeFileSync(filePath, buffer);
-
-      const publicUrl = `/uploads/${hashName}`;
-
-      return NextResponse.json({
-        success: true,
-        message: "Gambar berhasil diunggah",
-        url: publicUrl,
-      });
-    } catch {
-      // Fallback otomatis ke Base64 jika filesystem read-only
-      const mime = file.type || "image/jpeg";
-      const base64Data = buffer.toString("base64");
-      return NextResponse.json({
-        success: true,
-        message: "Gambar berhasil diunggah",
-        url: `data:${mime};base64,${base64Data}`,
-      });
+    } catch (storageErr) {
+      console.error("[STORAGE_UPLOAD_ERR] Gagal upload ke Supabase Storage, fallback ke Base64:", storageErr);
     }
+
+    // 2. Fallback Base64 Data URL (Tetap aman & langsung tampil jika koneksi storage bermasalah)
+    const mime = file.type || "image/jpeg";
+    const base64Data = buffer.toString("base64");
+    return NextResponse.json({
+      success: true,
+      message: "Gambar berhasil diunggah (Base64)",
+      url: `data:${mime};base64,${base64Data}`,
+    });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message || "Gagal mengunggah gambar" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal mengunggah gambar" },
+      { status: 500 }
+    );
   }
 }

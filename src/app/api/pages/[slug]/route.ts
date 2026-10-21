@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const page = getPage(slug);
+    const page = await getPage(slug);
     if (!page) {
       return NextResponse.json({ success: false, error: "Halaman tidak ditemukan" }, { status: 404 });
     }
@@ -40,7 +40,7 @@ export async function PUT(
       );
     }
 
-    const updated = setPage(slug, parsed.data.title, parsed.data.content);
+    const updated = await setPage(slug, parsed.data.title, parsed.data.content);
 
     logAudit({
       actor: "admin",

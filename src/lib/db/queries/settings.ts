@@ -1,4 +1,4 @@
-import { db } from "../client";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export const DEFAULT_SETTINGS: Record<string, any> = {
   "site.name": "Cetak.inc",
@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS: Record<string, any> = {
   "social.tiktok": "@basadvpadang",
   "checkout.paymentMethods": [
     { id: "QRIS", name: "QRIS Instant", enabled: true, details: "Scan QRIS via GoPay, OVO, Dana, BCA, Livin" },
-    { id: "Transfer Bank", name: "Transfer Bank", enabled: true, details: "BCA 1234-567-890 a/n BAS Advertising" },
+    { id: "Transfer Bank", name: "Transfer Bank", enabled: true, details: "BCA / Mandiri / BNI a/n Cetak.inc" },
     { id: "COD / Kasir", name: "Bayar di Workshop / Kasir", enabled: true, details: "Pembayaran langsung saat ambil pesanan" }
   ],
   "checkout.deliveryMethods": [
@@ -25,50 +25,62 @@ export const DEFAULT_SETTINGS: Record<string, any> = {
   "home.promoSubtitle": "Spesial Branding Cafe, Resto & Bisnis",
 };
 
-export function getSettings(): Record<string, any> {
-  const rows = db.prepare("SELECT key, value FROM settings").all() as any[];
-  const result = { ...DEFAULT_SETTINGS };
-
-  for (const row of rows) {
-    try {
-      result[row.key] = JSON.parse(row.value);
-    } catch {
-      result[row.key] = row.value;
-    }
-  }
-
-  return result;
-}
-
-export function getSetting<T = any>(key: string, defaultValue?: T): T {
-  const row = db.prepare("SELECT value FROM settings WHERE key = ?").get(key) as any;
-  if (!row) return (defaultValue !== undefined ? defaultValue : DEFAULT_SETTINGS[key]) as T;
+export async function getSettings(): Promise<Record<string, any>> {
   try {
-    return JSON.parse(row.value) as T;
-  } catch {
-    return row.value as T;
+    const { data, error } = await supabaseAdmin.from("settings").select("key, value");
+    const result = { ...DEFAULT_SETTINGS };
+
+    if (!error && Array.isArray(data)) {
+      for (const row of data) {
+        result[row.key] = row.value;
+      }
+    }
+
+    return result;
+  } catch (err: any) {
+    console.error("[SUPABASE_ERR] Error getSettings:", err);
+    return { ...DEFAULT_SETTINGS };
   }
 }
 
-export function setSetting(key: string, value: any): void {
-  const now = new Date().toISOString();
-  const valString = typeof value === "string" ? JSON.stringify(value) : JSON.stringify(value);
-  db.prepare(`
-    INSERT INTO settings (key, value, updated_at) 
-    VALUES (?, ?, ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-  `).run(key, valString, now);
+export async function getSetting<T = any>(key: string, defaultValue?: T): Promise<T> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("settings")
+      .select("value")
+      .eq("key", key)
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) {
+      return (defaultValue !== undefined ? defaultValue : DEFAULT_SETTINGS[key]) as T;
+    }
+
+    return data.value as T;
+  } catch {
+    return (defaultValue !== undefined ? defaultValue : DEFAULT_SETTINGS[key]) as T;
+  }
 }
 
-export function setMultipleSettings(settingsMap: Record<string, any>): void {
+export async function setSetting(key: string, value: any): Promise<void> {
   const now = new Date().toISOString();
-  const stmt = db.prepare(`
-    INSERT INTO settings (key, value, updated_at) 
-    VALUES (?, ?, ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-  `);
+  await supabaseAdmin.from("settings").upsert({
+    key,
+    value,
+    updated_at: now,
+  });
+}
 
-  for (const [k, v] of Object.entries(settingsMap)) {
-    stmt.run(k, JSON.stringify(v), now);
+export async function setMultipleSettings(entries: Record<string, any>): Promise<void> {
+  const now = new Date().toISOString();
+  const rows = Object.entries(entries).map(([key, value]) => ({
+    key,
+    value,
+    updated_at: now,
+  }));
+
+  const { error } = await supabaseAdmin.from("settings").upsert(rows);
+  if (error) {
+    throw new Error(error.message);
   }
 }

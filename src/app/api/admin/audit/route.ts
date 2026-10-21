@@ -9,7 +9,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!, 10) : 50;
-    const logs = getAuditLogs(limit);
+    const logs = await getAuditLogs(limit);
 
     return NextResponse.json({ success: true, data: logs });
   } catch (error: any) {
