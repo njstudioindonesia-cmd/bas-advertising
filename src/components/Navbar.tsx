@@ -125,7 +125,7 @@ export default function Navbar() {
             </div>
             <input
               type="text"
-              placeholder="Cari produk cetak, cup, jersey, spanduk..."
+              placeholder="Mau cetak apa hari ini? Cari spanduk, stiker, kaos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-9 py-2 bg-gray-100/80 focus:bg-white text-xs font-medium rounded-full border border-gray-200/60 focus:border-[#F97316] focus:ring-2 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-400"

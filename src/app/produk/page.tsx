@@ -58,7 +58,9 @@ function CatalogContent() {
     const matchesCategory =
       activeCategory === "Semua" ||
       item.category === activeCategory ||
-      item.categoryName === activeCategory;
+      item.categoryName === activeCategory ||
+      (item.category && item.category.toLowerCase() === activeCategory.toLowerCase()) ||
+      (item.category && item.category.toLowerCase().includes(activeCategory.toLowerCase()));
     const matchesSearch =
       (item.name || item.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (item.description || item.desc || "").toLowerCase().includes(searchQuery.toLowerCase());

@@ -27,7 +27,10 @@ import {
   Sparkles,
   Flame,
   Clock,
-  MessageCircle
+  MessageCircle,
+  Bike,
+  Layers,
+  MapPin
 } from "lucide-react";
 
 import { useCart } from "@/context/CartContext";
@@ -140,32 +143,113 @@ export default function Home() {
     setTimeout(() => setAddedId(null), 1500);
   };
 
+  const [homeCategory, setHomeCategory] = useState<string>("Semua");
+
   const bestSellers = productList.filter(p => p.isBestSeller);
   const recommendedList = bestSellers.length > 0 ? bestSellers : productList;
   const flashSaleProducts = productList.slice(0, 6);
 
-  // Dynamic Categories for Mobile App Grid
-  const dynamicMobileCategories = categories.length > 0
-    ? [
-        ...categories.slice(0, 7).map((c) => {
-          const conf = getCategoryIconConfig(c.name);
-          return {
-            id: c.id,
-            name: c.name.length > 10 ? c.name.slice(0, 9) + "…" : c.name,
-            icon: conf.icon,
-            bg: conf.bg,
-            text: conf.text,
-            link: `/produk?category=${encodeURIComponent(c.name)}`,
-          };
-        }),
-        { id: "mockup-3d", name: "Studio 3D", icon: Palette, bg: "bg-indigo-600", text: "text-white", link: "/mockup" }
-      ]
-    : [
-        { id: "mockup-3d", name: "Studio 3D", icon: Palette, bg: "bg-indigo-600", text: "text-white", link: "/mockup" },
-        { id: "semua-produk", name: "Katalog", icon: Package, bg: "bg-orange-500", text: "text-white", link: "/produk" }
-      ];
+  // Filter feed produk di halaman Home
+  const displayFeed = productList.filter((p) => {
+    if (homeCategory === "Semua") return true;
+    return (
+      p.category === homeCategory ||
+      p.categoryId === homeCategory ||
+      (p.category && p.category.toLowerCase().includes(homeCategory.toLowerCase()))
+    );
+  });
+
+  // 8 Grid Categories Mobile Ala Gojek & Astro
+  const mobileGridCategories = [
+    {
+      id: "cat-spanduk",
+      name: "Spanduk & Banner",
+      icon: Sparkles,
+      gradient: "from-amber-500 to-orange-500",
+      shadow: "shadow-orange-500/25",
+      badge: "P×L",
+      categoryName: "Spanduk & Banner",
+      href: "/produk?category=Spanduk%20%26%20Banner",
+    },
+    {
+      id: "cat-stiker",
+      name: "Stiker & Label",
+      icon: Layers,
+      gradient: "from-rose-500 to-pink-500",
+      shadow: "shadow-rose-500/25",
+      badge: "A3+",
+      categoryName: "Stiker & Label Kemasan",
+      href: "/produk?category=Stiker%20%26%20Label%20Kemasan",
+    },
+    {
+      id: "cat-promosi",
+      name: "Brosur & Nota",
+      icon: FileText,
+      gradient: "from-blue-600 to-indigo-600",
+      shadow: "shadow-blue-500/25",
+      badge: null,
+      categoryName: "Media Promosi & Kantor",
+      href: "/produk?category=Media%20Promosi%20%26%20Kantor",
+    },
+    {
+      id: "cat-merch",
+      name: "Kaos & Sablon",
+      icon: Shirt,
+      gradient: "from-purple-600 to-violet-600",
+      shadow: "shadow-purple-500/25",
+      badge: "DTF",
+      categoryName: "Merchandise & Sablon",
+      href: "/produk?category=Merchandise%20%26%20Sablon",
+    },
+    {
+      id: "cat-signage",
+      name: "Neon Box Akrilik",
+      icon: Store,
+      gradient: "from-emerald-600 to-teal-500",
+      shadow: "shadow-emerald-500/25",
+      badge: "LED",
+      categoryName: "Signage & Akrilik",
+      href: "/produk?category=Signage%20%26%20Akrilik",
+    },
+    {
+      id: "cat-mockup",
+      name: "Studio 3D",
+      icon: Palette,
+      gradient: "from-fuchsia-600 to-pink-600",
+      shadow: "shadow-fuchsia-500/25",
+      badge: "3D",
+      categoryName: null,
+      href: "/mockup",
+    },
+    {
+      id: "cat-lacak",
+      name: "Lacak Live",
+      icon: Bike,
+      gradient: "from-sky-500 to-blue-600",
+      shadow: "shadow-sky-500/25",
+      badge: "LIVE",
+      isLive: true,
+      categoryName: null,
+      href: "/lacak",
+    },
+    {
+      id: "cat-all",
+      name: "Semua Produk",
+      icon: Package,
+      gradient: "from-slate-800 to-slate-950",
+      shadow: "shadow-slate-900/25",
+      badge: productList.length > 0 ? `${productList.length}` : null,
+      categoryName: null,
+      href: "/produk",
+    },
+  ];
 
   const CATEGORY_DESCS: Record<string, string> = {
+    "Spanduk & Banner": "Spanduk flexi Korea, baliho, X-banner, roll up banner kilat",
+    "Stiker & Label Kemasan": "Stiker vinyl waterproof, stiker chromo, stiker bening botol",
+    "Media Promosi & Kantor": "Kartu nama exclusive, brosur art paper A5, nota NCR",
+    "Merchandise & Sablon": "Kaos sablon DTF 30s, totebag kanvas, mug keramik",
+    "Signage & Akrilik": "Neon box bulat LED dua sisi, plakat akrilik laser cutting",
     "Branding Outlet": "Sticker kaca, wall graphic, X-banner, signage toko",
     "Branding Meja": "Table number, table tent, buku menu, coaster",
     "Packaging": "Paper cup, plastic cup, food box, paper bag kustom",
@@ -284,31 +368,56 @@ export default function Home() {
           )}
         </div>
 
-        {/* 8 Mobile App Category Icons Grid */}
-        <div className="bg-white rounded-2xl p-3.5 border border-gray-100/90 shadow-2xs">
+        {/* 8 Mobile App Category Icons Grid Ala Gojek / Astro */}
+        <div className="bg-white rounded-3xl p-3.5 sm:p-4 border border-gray-100/90 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
           {loading ? (
             <div className="grid grid-cols-4 gap-3 text-center">
-              {[1, 2, 3, 4].map((n) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                 <div key={n} className="flex flex-col items-center animate-pulse">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-200 mb-1.5" />
+                  <div className="w-13 h-13 rounded-2xl bg-gray-200 mb-1.5" />
                   <div className="w-12 h-2.5 bg-gray-200 rounded" />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-3 text-center">
-              {dynamicMobileCategories.map((item, idx) => {
+            <div className="grid grid-cols-4 gap-y-3.5 gap-x-2 text-center">
+              {mobileGridCategories.map((item) => {
                 const Icon = item.icon;
+                const handleClick = (e: React.MouseEvent) => {
+                  if (item.categoryName) {
+                    e.preventDefault();
+                    setHomeCategory(item.categoryName);
+                    const el = document.getElementById("home-product-feed");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }
+                };
+
                 return (
                   <Link 
-                    key={item.id || idx} 
-                    href={item.link}
+                    key={item.id} 
+                    href={item.href}
+                    onClick={handleClick}
                     className="flex flex-col items-center group active:scale-90 transition-transform"
                   >
-                    <div className={`w-12 h-12 rounded-2xl ${item.bg} ${item.text} flex items-center justify-center shadow-xs mb-1.5 transition-shadow`}>
-                      <Icon size={22} strokeWidth={2.2} />
+                    <div className="relative mb-1.5">
+                      <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr ${item.gradient} text-white flex items-center justify-center shadow-md ${item.shadow} group-hover:scale-105 transition-all duration-200 border border-white/20`}>
+                        <Icon size={24} strokeWidth={2.2} />
+                      </div>
+
+                      {item.badge && (
+                        <span className={`absolute -top-1 -right-1 text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full shadow-xs ring-1 ring-white ${
+                          item.isLive
+                            ? "bg-emerald-500 text-white flex items-center gap-0.5 animate-pulse"
+                            : item.badge === "3D"
+                            ? "bg-amber-400 text-slate-900"
+                            : "bg-[#1E1B4B] text-white"
+                        }`}>
+                          {item.isLive && <span className="w-1 h-1 rounded-full bg-white animate-ping" />}
+                          {item.badge}
+                        </span>
+                      )}
                     </div>
-                    <span className="text-[11px] font-bold text-gray-700 leading-tight">
+                    <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-800 leading-tight tracking-tight line-clamp-2 h-6 flex items-center justify-center px-0.5">
                       {item.name}
                     </span>
                   </Link>
@@ -439,7 +548,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          ) : recommendedList.length === 0 ? (
+          ) : displayFeed.length === 0 ? (
             <div className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-2xs space-y-2">
               <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F97316] flex items-center justify-center mx-auto">
                 <Package size={24} />
@@ -458,18 +567,65 @@ export default function Home() {
               </a>
             </div>
           ) : (
-            <div>
-              <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="font-extrabold text-sm text-[#1E1B4B]">
-                  Rekomendasi Pilihan
-                </h3>
-                <span className="text-[10px] text-gray-400">
-                  {recommendedList.length} Produk Populer
+            <div id="home-product-feed" className="scroll-mt-24">
+              {/* Astro-Style Sticky Horizontal Category Chips Rail */}
+              <div className="flex items-center justify-between mb-2 px-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
+                  <h3 className="font-extrabold text-xs sm:text-sm text-[#1E1B4B]">
+                    {homeCategory === "Semua" ? "Katalog Produk Unggulan" : homeCategory}
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold text-gray-400 bg-white border border-gray-100 px-2.5 py-1 rounded-full shadow-2xs">
+                  {displayFeed.length} Produk
                 </span>
               </div>
 
+              {/* Swipeable Chips Rail */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3.5 px-3.5 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setHomeCategory("Semua")}
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all duration-200 shrink-0 active:scale-95 flex items-center gap-1.5 ${
+                    homeCategory === "Semua"
+                      ? "bg-[#1E1B4B] text-white shadow-xs"
+                      : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 shadow-2xs"
+                  }`}
+                >
+                  <span>Semua</span>
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${homeCategory === "Semua" ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"}`}>
+                    {productList.length}
+                  </span>
+                </button>
+
+                {categories.map((c: any) => {
+                  const cName = typeof c === "string" ? c : c.name;
+                  const count = productList.filter((p) => p.category === cName || p.categoryId === c.id).length;
+                  const isSelected = homeCategory === cName;
+
+                  return (
+                    <button
+                      key={c.id || cName}
+                      type="button"
+                      onClick={() => setHomeCategory(cName)}
+                      className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all duration-200 shrink-0 active:scale-95 flex items-center gap-1.5 ${
+                        isSelected
+                          ? "bg-[#1E1B4B] text-white shadow-xs"
+                          : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 shadow-2xs"
+                      }`}
+                    >
+                      <span>{cName}</span>
+                      <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${isSelected ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 2-Column Mobile Grid Feed */}
               <div className="grid grid-cols-2 gap-2.5">
-                {recommendedList.map((item) => (
+                {displayFeed.map((item) => (
                   <QuickProductCard
                     key={item.id}
                     product={item}
