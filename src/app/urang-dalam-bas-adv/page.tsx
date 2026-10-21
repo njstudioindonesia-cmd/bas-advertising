@@ -1177,6 +1177,7 @@ export default function UrangDalamAdminPortal() {
                                     alt={p.name || p.title}
                                     fill
                                     sizes="48px"
+                                    unoptimized={Boolean((p.imageUrl || p.img)?.startsWith("data:"))}
                                     className="object-cover"
                                   />
                                 </div>
@@ -1730,12 +1731,24 @@ export default function UrangDalamAdminPortal() {
               {/* Upload Gambar */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Foto / URL Gambar Produk *</label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  {prodForm.imageUrl ? (
+                    <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
+                      <Image
+                        src={prodForm.imageUrl}
+                        alt="Preview"
+                        fill
+                        unoptimized={prodForm.imageUrl.startsWith("data:")}
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : null}
                   <input
                     type="text"
                     required
                     value={prodForm.imageUrl}
                     onChange={(e) => setProdForm({ ...prodForm, imageUrl: e.target.value })}
+                    placeholder="Masukkan URL gambar atau klik Upload Foto..."
                     className="flex-1 px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
                   />
                   <input
@@ -1974,6 +1987,7 @@ export default function UrangDalamAdminPortal() {
                   alt={deleteConfirmProd.name || deleteConfirmProd.title}
                   fill
                   sizes="48px"
+                  unoptimized={Boolean((deleteConfirmProd.imageUrl || deleteConfirmProd.img)?.startsWith("data:"))}
                   className="object-cover"
                 />
               </div>

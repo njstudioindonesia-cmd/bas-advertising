@@ -557,10 +557,11 @@ export default function Home() {
 
                   <div className="relative aspect-square bg-gray-100 overflow-hidden">
                     <Image 
-                      src={item.img} 
+                      src={item.img || (item as any).imageUrl} 
                       alt={item.title} 
                       fill 
                       sizes="25vw"
+                      unoptimized={Boolean((item.img || (item as any).imageUrl)?.startsWith("data:"))}
                       className="object-cover group-hover:scale-105 transition-transform duration-700" 
                     />
                     {item.isBestSeller && (

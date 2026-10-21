@@ -50,6 +50,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"
+                unoptimized={Boolean((product.imageUrl || product.img)?.startsWith("data:"))}
                 className="object-cover"
               />
               {product.isBestSeller && (

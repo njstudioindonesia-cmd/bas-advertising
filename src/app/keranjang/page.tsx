@@ -233,6 +233,7 @@ export default function KeranjangPage() {
                             alt={item.product.title} 
                             fill 
                             sizes="80px"
+                            unoptimized={Boolean(img?.startsWith("data:"))}
                             className="object-cover"
                           />
                         </div>
