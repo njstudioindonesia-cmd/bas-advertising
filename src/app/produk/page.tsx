@@ -68,30 +68,28 @@ function CatalogContent() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-26 sm:pt-28 md:pt-36 pb-28 md:pb-32">
+    <div className="w-full max-w-lg md:max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-36 pb-24 md:pb-32 overflow-x-hidden">
       
       {/* 📱 TOP APP BAR ALA GOJEK/ASTRO */}
-      <div className="sticky top-[86px] sm:top-[90px] md:top-20 z-20 bg-[#F8F9FA]/95 backdrop-blur-md pt-1 pb-2.5 mb-3 -mx-3 px-3 sm:mx-0 sm:px-0 border-b border-gray-100/60">
+      <div className="sticky top-[88px] sm:top-[92px] md:top-20 z-20 bg-[#F8F9FA]/95 backdrop-blur-md pt-2 pb-2.5 mb-3 border-b border-gray-100/60 w-full max-w-full overflow-hidden">
         <div className="flex items-center justify-between gap-2 mb-2">
-          <div>
-            <span className="text-[9px] sm:text-[10px] font-black tracking-widest uppercase text-[#F97316] flex items-center gap-1">
-              <Zap size={10} className="fill-[#F97316]" /> Menu Cetak Cepat
-            </span>
-            <h1 className="text-base sm:text-2xl font-black text-gray-900 tracking-tight">
-              Katalog Cetak.inc
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
+            <h1 className="text-xs sm:text-sm font-extrabold text-[#1E1B4B]">
+              {activeCategory === "Semua" ? "Katalog Produk Unggulan" : activeCategory}
             </h1>
           </div>
-          <span className="text-[10px] sm:text-xs font-bold text-gray-500 bg-white border border-gray-200/80 px-2.5 py-1 rounded-full shadow-2xs shrink-0">
+          <span className="text-[10px] sm:text-xs font-bold text-gray-400 bg-white border border-gray-200/80 px-2.5 py-1 rounded-full shadow-2xs shrink-0">
             {filteredProducts.length} Produk
           </span>
         </div>
 
         {/* 📱 HORIZONTAL TOUCH SWIPEABLE CATEGORY CHIPS */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 w-full max-w-full">
           {loading ? (
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="h-7 w-20 bg-gray-200 rounded-full animate-pulse" />
+                <div key={n} className="h-7 w-20 bg-gray-200 rounded-full animate-pulse shrink-0" />
               ))}
             </div>
           ) : (
@@ -103,7 +101,7 @@ function CatalogContent() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 shrink-0 active:scale-95 ${
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all duration-200 flex items-center gap-1.5 shrink-0 active:scale-95 ${
                     isSelected 
                       ? "bg-[#1E1B4B] text-white shadow-xs" 
                       : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 shadow-2xs"
@@ -123,10 +121,10 @@ function CatalogContent() {
       </div>
 
       {/* 🛍️ PRODUCT GRID (ALA ASTRO: 2-KOLOM MOBILE, 4-KOLOM DESKTOP) */}
-      <section className="min-h-[50vh]">
+      <section className="min-h-[50vh] w-full max-w-full">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-6 w-full min-w-0">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 w-full min-w-0">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
               <div key={n} className="bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-100 animate-pulse space-y-2">
                 <div className="aspect-square bg-gray-100 rounded-xl" />
                 <div className="h-3 bg-gray-100 rounded w-2/3" />
@@ -164,7 +162,7 @@ function CatalogContent() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-6 w-full min-w-0">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 w-full min-w-0">
             {filteredProducts.map((item) => (
               <QuickProductCard
                 key={item.id}
