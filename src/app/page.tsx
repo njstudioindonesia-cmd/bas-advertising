@@ -36,6 +36,7 @@ import { useCart } from "@/context/CartContext";
 
 export default function Home() {
   const [productList, setProductList] = useState<any[]>(products);
+  const [categories, setCategories] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [addedId, setAddedId] = useState<string | null>(null);
@@ -44,18 +45,28 @@ export default function Home() {
 
   useEffect(() => {
     const loadData = () => {
-      fetch("/api/products", { cache: "no-store" })
-        .then(res => res.json())
-        .then(data => {
+      const t = Date.now();
+      fetch(`/api/products?t=${t}`, { cache: "no-store" })
+        .then((res) => res.json())
+        .then((data) => {
           if (data.success && Array.isArray(data.data)) {
             setProductList(data.data);
           }
         })
         .catch(() => {});
 
-      fetch("/api/banners", { cache: "no-store" })
-        .then(res => res.json())
-        .then(data => {
+      fetch(`/api/categories?t=${t}`, { cache: "no-store" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.data)) {
+            setCategories(data.data);
+          }
+        })
+        .catch(() => {});
+
+      fetch(`/api/banners?t=${t}`, { cache: "no-store" })
+        .then((res) => res.json())
+        .then((data) => {
           if (data.success && Array.isArray(data.data)) {
             setBanners(data.data);
           }
@@ -65,15 +76,30 @@ export default function Home() {
 
     loadData();
 
-    // Listen for product catalog updates from admin in same window or across tabs
+    // Listen for product & catalog updates from admin in same window or across tabs
     const handleUpdate = () => loadData();
     window.addEventListener("bas_products_updated", handleUpdate);
     window.addEventListener("storage", (e) => {
       if (e.key === "bas_catalog_version") loadData();
     });
 
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("bas_catalog_sync");
+      bc.onmessage = () => loadData();
+    } catch {
+      // ignore
+    }
+
     return () => {
       window.removeEventListener("bas_products_updated", handleUpdate);
+      if (bc) {
+        try {
+          bc.close();
+        } catch {
+          // ignore
+        }
+      }
     };
   }, []);
 
@@ -107,6 +133,66 @@ export default function Home() {
     { name: "Studio 3D", icon: Palette, bg: "bg-indigo-600", text: "text-white", link: "/mockup" }
   ];
 
+  const categoryIconMap: Record<string, any> = {
+    "Branding Outlet": { icon: Store, bg: "bg-blue-500" },
+    "Branding Meja": { icon: Utensils, bg: "bg-amber-500" },
+    "Packaging": { icon: Package, bg: "bg-emerald-500" },
+    "Crew": { icon: Shirt, bg: "bg-purple-500" },
+    "Marketing": { icon: Megaphone, bg: "bg-rose-500" },
+    "Barang Cetak Pendukung": { icon: FileText, bg: "bg-slate-700" },
+    "Merchandise": { icon: Gift, bg: "bg-orange-500" },
+    "Outdoor & Signage": { icon: Sparkles, bg: "bg-cyan-600" },
+  };
+
+  const dynamicMobileCategories = categories.length > 0
+    ? [
+        ...categories.slice(0, 7).map((c) => {
+          const conf = categoryIconMap[c.name] || { icon: Package, bg: "bg-orange-500" };
+          return {
+            name: c.name.length > 10 ? c.name.slice(0, 9) + "…" : c.name,
+            icon: conf.icon,
+            bg: conf.bg,
+            text: "text-white",
+            link: `/produk?category=${encodeURIComponent(c.name)}`,
+          };
+        }),
+        { name: "Studio 3D", icon: Palette, bg: "bg-indigo-600", text: "text-white", link: "/mockup" }
+      ]
+    : mobileAppCategories;
+
+  const CATEGORY_DESCS: Record<string, string> = {
+    "Branding Outlet": "Sticker kaca, wall graphic, X-banner, signage toko",
+    "Branding Meja": "Table number, table tent, buku menu, coaster",
+    "Packaging": "Paper cup, plastic cup, food box, paper bag kustom",
+    "Crew": "Kaos seragam, apron barista, polo shirt, name tag",
+    "Marketing": "Flyer, brosur promosi, voucher diskon, kartu nama",
+    "Barang Cetak Pendukung": "Nota NCR, kop surat resmi, amplop, map invoice",
+    "Merchandise": "Tote bag kanvas, tumbler grafir, topi bordir, gantungan kunci",
+    "Outdoor & Signage": "Spanduk flexi Korea, neon box, huruf timbul akrilik",
+  };
+
+  const displayCategories = categories.length > 0 
+    ? categories.map((c) => {
+        const prodCount = productList.filter((p) => p.categoryId === c.id || p.category === c.name).length;
+        return {
+          id: c.id,
+          title: c.name,
+          count: `${prodCount || c.productCount || 0} Produk`,
+          link: `/produk?category=${encodeURIComponent(c.name)}`,
+          desc: CATEGORY_DESCS[c.name] || `Koleksi produk cetak kategori ${c.name}`,
+        };
+      })
+    : [
+        { id: "cat-outlet", title: "Branding Outlet", count: `${productList.filter(p => p.category === "Branding Outlet").length || 9} Produk`, link: "/produk?category=Branding+Outlet", desc: "Sticker kaca, wall graphic, X-banner, signage" },
+        { id: "cat-meja", title: "Branding Meja", count: `${productList.filter(p => p.category === "Branding Meja").length || 7} Produk`, link: "/produk?category=Branding+Meja", desc: "Table number, table tent, menu cetak, coaster" },
+        { id: "cat-packaging", title: "Packaging", count: `${productList.filter(p => p.category === "Packaging").length || 14} Produk`, link: "/produk?category=Packaging", desc: "Paper cup, plastic cup, food box, paper bag" },
+        { id: "cat-crew", title: "Crew", count: `${productList.filter(p => p.category === "Crew").length || 6} Produk`, link: "/produk?category=Crew", desc: "Kaos crew, hoodie, apron barista, name tag" },
+        { id: "cat-marketing", title: "Marketing", count: `${productList.filter(p => p.category === "Marketing").length || 11} Produk`, link: "/produk?category=Marketing", desc: "Flyer, brosur, voucher, member card, tiket" },
+        { id: "cat-pendukung", title: "Barang Cetak Pendukung", count: `${productList.filter(p => p.category === "Barang Cetak Pendukung").length || 8} Produk`, link: "/produk?category=Barang+Cetak+Pendukung", desc: "Nota NCR, kop surat, amplop, kartu nama" },
+        { id: "cat-merchandise", title: "Merchandise", count: `${productList.filter(p => p.category === "Merchandise").length || 29} Produk`, link: "/produk?category=Merchandise", desc: "Tote bag, tumbler, topi, mug, cardholder" },
+        { id: "cat-outdoor", title: "Outdoor & Signage", count: `${productList.filter(p => p.category === "Outdoor & Signage").length || 5} Produk`, link: "/produk?category=Outdoor+%26+Signage", desc: "Spanduk flexi Korea, neon box, huruf timbul" }
+      ];
+
   return (
     <div className="bg-[#F8F9FA] min-h-screen pt-20 md:pt-36 pb-20 md:pb-24">
 
@@ -117,87 +203,92 @@ export default function Home() {
         
         {/* Mobile App Promo Banners (Horizontal Touch Swipe) */}
         <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pt-1 pb-1">
-          {/* Banner 1 */}
-          <div className="min-w-[88%] snap-center rounded-2xl bg-gradient-to-r from-[#1E1B4B] via-[#0B1E36] to-orange-950 p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between h-36">
-            <div className="relative z-10">
-              <span className="bg-[#F97316] text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mb-1.5 shadow-2xs">
-                🔥 Promo Spesial BAS ADV
-              </span>
-              <h2 className="font-extrabold text-base leading-tight">
-                Branding Cafe & Resto <br />
-                <span className="text-amber-400">Diskon Spesial 25%</span>
-              </h2>
-              <p className="text-[10px] text-gray-300 mt-1 line-clamp-1">
-                Cup, kemasan makanan, seragam crew & merchandise.
-              </p>
+          {banners.length > 0 ? (
+            banners
+              .filter((b) => b.isActive !== false)
+              .map((b, idx) => {
+                const gradients = [
+                  "from-[#1E1B4B] via-[#0B1E36] to-orange-950",
+                  "from-orange-600 to-amber-500",
+                  "from-emerald-700 to-teal-800",
+                  "from-indigo-900 to-blue-800",
+                ];
+                const grad = gradients[idx % gradients.length];
+                const imgUrl = b.imageUrl || b.image_url;
+                return (
+                  <div
+                    key={b.id || idx}
+                    className={`min-w-[88%] snap-center rounded-2xl bg-gradient-to-r ${grad} p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between h-36`}
+                  >
+                    {imgUrl && (
+                      <div className="absolute inset-0 z-0 opacity-25">
+                        <Image
+                          src={imgUrl}
+                          alt={b.title}
+                          fill
+                          unoptimized={imgUrl.startsWith("data:")}
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="relative z-10">
+                      <span className="bg-[#F97316] text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mb-1.5 shadow-2xs">
+                        🔥 Promo Cetak.inc
+                      </span>
+                      <h2 className="font-extrabold text-base leading-tight drop-shadow-xs">
+                        {b.title}
+                      </h2>
+                      {b.subtitle && (
+                        <p className="text-[10px] text-gray-200 mt-1 line-clamp-1 drop-shadow-xs">
+                          {b.subtitle}
+                        </p>
+                      )}
+                    </div>
+                    <div className="relative z-10 flex items-center justify-between">
+                      <Link
+                        href={b.ctaHref || b.cta_href || "/produk"}
+                        className="bg-white text-[#1E1B4B] text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
+                      >
+                        {b.ctaLabel || b.cta_label || "Pesan Sekarang"} <ArrowRight size={12} />
+                      </Link>
+                      <span className="text-[9px] text-gray-300">Kirim Seluruh Padang</span>
+                    </div>
+                    <div className="absolute right-0 bottom-0 w-28 h-28 opacity-20 pointer-events-none bg-orange-400 rounded-full blur-2xl" />
+                  </div>
+                );
+              })
+          ) : (
+            <div className="min-w-[88%] snap-center rounded-2xl bg-gradient-to-r from-[#1E1B4B] via-[#0B1E36] to-orange-950 p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between h-36">
+              <div className="relative z-10">
+                <span className="bg-[#F97316] text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mb-1.5 shadow-2xs">
+                  🔥 Promo Spesial Cetak.inc
+                </span>
+                <h2 className="font-extrabold text-base leading-tight">
+                  Branding Cafe & Resto <br />
+                  <span className="text-amber-400">Diskon Spesial 25%</span>
+                </h2>
+                <p className="text-[10px] text-gray-300 mt-1 line-clamp-1">
+                  Cup, kemasan makanan, seragam crew & merchandise.
+                </p>
+              </div>
+              <div className="relative z-10 flex items-center justify-between">
+                <Link 
+                  href="/produk?category=Packaging" 
+                  className="bg-white text-[#1E1B4B] text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
+                >
+                  Pesan Sekarang <ArrowRight size={12} />
+                </Link>
+                <span className="text-[9px] text-gray-400">Kirim Seluruh Padang</span>
+              </div>
+              <div className="absolute right-0 bottom-0 w-28 h-28 opacity-20 pointer-events-none bg-orange-400 rounded-full blur-2xl" />
             </div>
-            <div className="relative z-10 flex items-center justify-between">
-              <Link 
-                href="/produk?category=Packaging" 
-                className="bg-white text-[#1E1B4B] text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
-              >
-                Pesan Sekarang <ArrowRight size={12} />
-              </Link>
-              <span className="text-[9px] text-gray-400">Kirim Seluruh Padang</span>
-            </div>
-            <div className="absolute right-0 bottom-0 w-28 h-28 opacity-20 pointer-events-none bg-orange-400 rounded-full blur-2xl" />
-          </div>
-
-          {/* Banner 2 */}
-          <div className="min-w-[88%] snap-center rounded-2xl bg-gradient-to-r from-orange-600 to-amber-500 p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between h-36">
-            <div className="relative z-10">
-              <span className="bg-white text-orange-600 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mb-1.5 shadow-2xs">
-                ⚡ Kilat 24 Jam
-              </span>
-              <h2 className="font-extrabold text-base leading-tight">
-                Cetak Banner & Spanduk <br />
-                <span className="text-yellow-200">Selesai Hari Ini</span>
-              </h2>
-              <p className="text-[10px] text-orange-100 mt-1 line-clamp-1">
-                Bahan Flexi Korea High Resolution anti pudar.
-              </p>
-            </div>
-            <div className="relative z-10 flex items-center justify-between">
-              <Link 
-                href="/produk?q=Banner" 
-                className="bg-[#1E1B4B] text-white text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 active:scale-95 transition-transform"
-              >
-                Cetak Kilat <ArrowRight size={12} />
-              </Link>
-              <span className="text-[9px] text-orange-100">Bisa Ditunggu</span>
-            </div>
-          </div>
-
-          {/* Banner 3 */}
-          <div className="min-w-[88%] snap-center rounded-2xl bg-gradient-to-r from-emerald-700 to-teal-800 p-4 text-white relative overflow-hidden shadow-sm flex flex-col justify-between h-36">
-            <div className="relative z-10">
-              <span className="bg-amber-400 text-slate-900 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full inline-block mb-1.5 shadow-2xs">
-                🎨 Studio Preview
-              </span>
-              <h2 className="font-extrabold text-base leading-tight">
-                Lihat Mockup Desain <br />
-                <span className="text-emerald-300">Sebelum Dicetak</span>
-              </h2>
-              <p className="text-[10px] text-emerald-100 mt-1 line-clamp-1">
-                Visualisasi 3D cup, totebag & packaging interaktif.
-              </p>
-            </div>
-            <div className="relative z-10 flex items-center justify-between">
-              <Link 
-                href="/mockup" 
-                className="bg-white text-emerald-900 text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 active:scale-95 transition-transform"
-              >
-                Buka Studio <ArrowRight size={12} />
-              </Link>
-              <span className="text-[9px] text-emerald-200">Gratis Simulasi</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* 8 Mobile App Category Icons Grid */}
         <div className="bg-white rounded-2xl p-3.5 border border-gray-100/90 shadow-2xs">
           <div className="grid grid-cols-4 gap-3 text-center">
-            {mobileAppCategories.map((item, idx) => {
+            {dynamicMobileCategories.map((item, idx) => {
               const Icon = item.icon;
               return (
                 <Link 
@@ -476,6 +567,72 @@ export default function Home() {
           </div>
         </section>
 
+        {/* DESKTOP PROMO BANNERS SHOWCASE */}
+        {banners.length > 0 && (
+          <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <span className="text-xs font-bold text-[#F97316] uppercase tracking-wider block mb-1">
+                  PENAWARAN & PROMOSI PILIHAN
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B4B]">
+                  Promo Spesial & Layanan Kilat Cetak.inc
+                </h2>
+              </div>
+              <Link href="/produk" className="text-xs font-bold text-[#F97316] hover:underline flex items-center gap-1">
+                Katalog Lengkap <ArrowRight size={13} />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {banners
+                .filter((b) => b.isActive !== false)
+                .slice(0, 3)
+                .map((b, idx) => {
+                  const imgUrl = b.imageUrl || b.image_url;
+                  return (
+                    <div
+                      key={b.id || idx}
+                      className="relative rounded-3xl overflow-hidden bg-[#0B1E36] text-white p-6 flex flex-col justify-between min-h-[220px] border border-gray-100 shadow-md group"
+                    >
+                      {imgUrl && (
+                        <div className="absolute inset-0 z-0 opacity-30 group-hover:scale-105 group-hover:opacity-40 transition-all duration-500">
+                          <Image
+                            src={imgUrl}
+                            alt={b.title}
+                            fill
+                            sizes="(max-width: 1024px) 50vw, 33vw"
+                            unoptimized={Boolean(imgUrl.startsWith("data:"))}
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="relative z-10">
+                        <span className="bg-[#F97316] text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full inline-block mb-3 shadow-xs">
+                          🔥 Promo Pilihan
+                        </span>
+                        <h3 className="text-lg font-black leading-snug drop-shadow-xs">{b.title}</h3>
+                        {b.subtitle && (
+                          <p className="text-xs text-gray-200 mt-2 line-clamp-2 leading-relaxed drop-shadow-xs">
+                            {b.subtitle}
+                          </p>
+                        )}
+                      </div>
+                      <div className="relative z-10 pt-4 flex items-center justify-between border-t border-white/10 mt-4">
+                        <Link
+                          href={b.ctaHref || b.cta_href || "/produk"}
+                          className="bg-white hover:bg-orange-50 text-[#0B1E36] text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1.5 transition-colors shadow-sm"
+                        >
+                          {b.ctaLabel || b.cta_label || "Lihat Promo"} <ArrowRight size={13} />
+                        </Link>
+                        <span className="text-[11px] text-gray-300">Cetak.inc</span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </section>
+        )}
+
         {/* CATEGORIES GRID SHOWCASE */}
         <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
@@ -496,18 +653,9 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[
-              { title: "Branding Outlet", count: "9 Produk", link: "/produk?category=Branding+Outlet", desc: "Sticker kaca, wall graphic, X-banner, signage" },
-              { title: "Branding Meja", count: "7 Produk", link: "/produk?category=Branding+Meja", desc: "Table number, table tent, menu cetak, coaster" },
-              { title: "Packaging Makanan", count: "14 Produk", link: "/produk?category=Packaging", desc: "Paper cup, plastic cup, food box, paper bag" },
-              { title: "Crew Uniform & ID", count: "6 Produk", link: "/produk?category=Crew", desc: "Kaos crew, hoodie, apron barista, name tag" },
-              { title: "Marketing & Promosi", count: "11 Produk", link: "/produk?category=Marketing", desc: "Flyer, brosur, voucher, member card, tiket" },
-              { title: "Barang Cetak Kantor", count: "8 Produk", link: "/produk?category=Barang+Cetak+Pendukung", desc: "Nota NCR, kop surat, amplop, kartu nama" },
-              { title: "Merchandise & Aksesoris", count: "29 Produk", link: "/produk?category=Merchandise", desc: "Tote bag, tumbler, topi, mug, cardholder" },
-              { title: "Outdoor & Signage", count: "5 Produk", link: "/produk?category=Outdoor+%26+Signage", desc: "Spanduk flexi Korea, neon box, huruf timbul" }
-            ].map((cat, idx) => (
+            {displayCategories.map((cat, idx) => (
               <Link
-                key={idx}
+                key={cat.id || idx}
                 href={cat.link}
                 className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-orange-300 hover:shadow-lg transition-all flex flex-col justify-between group"
               >

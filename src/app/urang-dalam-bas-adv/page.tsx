@@ -80,6 +80,13 @@ export default function UrangDalamAdminPortal() {
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("bas_products_updated"));
         localStorage.setItem("bas_catalog_version", Date.now().toString());
+        try {
+          const bc = new BroadcastChannel("bas_catalog_sync");
+          bc.postMessage({ type: "catalog_updated", timestamp: Date.now() });
+          bc.close();
+        } catch {
+          // ignore
+        }
       }
     } catch {
       // Abaikan jika di konteks terbatas
@@ -119,16 +126,19 @@ export default function UrangDalamAdminPortal() {
 
   // Banner modal
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [bannerModalMode, setBannerModalMode] = useState<"add" | "edit">("add");
+  const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
   const [bannerForm, setBannerForm] = useState({
-    id: "",
     title: "",
     subtitle: "",
-    imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop",
+    imageUrl: "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=1600&auto=format&fit=crop",
     ctaLabel: "Pesan Sekarang",
     ctaHref: "/produk",
     sortOrder: 1,
     isActive: true,
   });
+  const [uploadingBannerImage, setUploadingBannerImage] = useState(false);
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
   // Order modal / detail
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -373,6 +383,9 @@ export default function UrangDalamAdminPortal() {
         if (data.success) {
           showToast("Produk baru berhasil ditambahkan", "success");
           setIsProdModalOpen(false);
+          if (data.data) {
+            setProducts((prev) => [data.data, ...prev]);
+          }
           notifyProductCatalogUpdated();
           refreshAllData();
         } else {
@@ -388,6 +401,9 @@ export default function UrangDalamAdminPortal() {
         if (data.success) {
           showToast("Produk berhasil diperbarui", "success");
           setIsProdModalOpen(false);
+          if (data.data) {
+            setProducts((prev) => prev.map((p) => p.id === editingProdId ? data.data : p));
+          }
           notifyProductCatalogUpdated();
           refreshAllData();
         } else {
@@ -401,6 +417,10 @@ export default function UrangDalamAdminPortal() {
 
   const handleToggleProductStatus = async (p: any) => {
     const newStatus = !p.isActive;
+    // Optimistic UI update
+    setProducts((prev) =>
+      prev.map((item) => (item.id === p.id ? { ...item, isActive: newStatus } : item))
+    );
     try {
       const res = await adminFetch(`/api/products/${p.id}`, {
         method: "PUT",
@@ -414,13 +434,23 @@ export default function UrangDalamAdminPortal() {
         refreshAllData();
       } else {
         showToast(data.error || "Gagal mengubah status produk", "error");
+        refreshAllData();
       }
     } catch {
       showToast("Terjadi kesalahan koneksi", "error");
+      refreshAllData();
     }
   };
 
   const handleExecuteDelete = async (id: string, name: string, permanent: boolean) => {
+    // Optimistic UI update
+    if (permanent) {
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } else {
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isActive: false } : p));
+    }
+    setDeleteConfirmProd(null);
+
     try {
       const res = await adminFetch(`/api/products/${id}${permanent ? "?permanent=true" : ""}`, {
         method: "DELETE",
@@ -433,14 +463,15 @@ export default function UrangDalamAdminPortal() {
             : `Produk '${name}' berhasil dinonaktifkan dari katalog publik`,
           "success"
         );
-        setDeleteConfirmProd(null);
         notifyProductCatalogUpdated();
         refreshAllData();
       } else {
         showToast(data.error || "Gagal menghapus produk", "error");
+        refreshAllData();
       }
     } catch {
       showToast("Gagal menghapus produk", "error");
+      refreshAllData();
     }
   };
 
@@ -550,9 +581,13 @@ export default function UrangDalamAdminPortal() {
         if (data.success) {
           showToast("Kategori baru berhasil ditambahkan", "success");
           setIsCatModalOpen(false);
+          if (data.data) {
+            setCategories((prev) => [...prev, data.data]);
+          }
+          notifyProductCatalogUpdated();
           refreshAllData();
         } else {
-          showToast(data.error, "error");
+          showToast(data.error || "Gagal menambahkan kategori", "error");
         }
       } else {
         const res = await adminFetch(`/api/categories/${editingCatId}`, {
@@ -564,9 +599,13 @@ export default function UrangDalamAdminPortal() {
         if (data.success) {
           showToast("Kategori berhasil diperbarui", "success");
           setIsCatModalOpen(false);
+          if (data.data) {
+            setCategories((prev) => prev.map((c) => c.id === editingCatId ? data.data : c));
+          }
+          notifyProductCatalogUpdated();
           refreshAllData();
         } else {
-          showToast(data.error, "error");
+          showToast(data.error || "Gagal memperbarui kategori", "error");
         }
       }
     } catch {
@@ -577,16 +616,193 @@ export default function UrangDalamAdminPortal() {
   const handleDeleteCategory = async (id: string, name: string) => {
     if (!confirm(`Hapus kategori '${name}'?`)) return;
     try {
+      setCategories((prev) => prev.filter((c) => c.id !== id));
       const res = await adminFetch(`/api/categories/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         showToast(`Kategori '${name}' berhasil dihapus`, "success");
+        notifyProductCatalogUpdated();
         refreshAllData();
       } else {
         showToast(data.error || "Gagal menghapus kategori", "error");
+        refreshAllData();
       }
     } catch {
       showToast("Gagal menghapus kategori", "error");
+      refreshAllData();
+    }
+  };
+
+  // ==========================================
+  // BANNER PROMO ACTIONS
+  // ==========================================
+  const openAddBannerModal = () => {
+    setBannerModalMode("add");
+    setEditingBannerId(null);
+    setBannerForm({
+      title: "",
+      subtitle: "",
+      imageUrl: "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=1600&auto=format&fit=crop",
+      ctaLabel: "Pesan Sekarang",
+      ctaHref: "/produk",
+      sortOrder: banners.length + 1,
+      isActive: true,
+    });
+    setIsBannerModalOpen(true);
+  };
+
+  const openEditBannerModal = (b: any) => {
+    setBannerModalMode("edit");
+    setEditingBannerId(b.id);
+    setBannerForm({
+      title: b.title || "",
+      subtitle: b.subtitle || "",
+      imageUrl: b.imageUrl || b.image_url || "",
+      ctaLabel: b.ctaLabel || b.cta_label || "Pesan Sekarang",
+      ctaHref: b.ctaHref || b.cta_href || "/produk",
+      sortOrder: b.sortOrder || b.sort_order || 1,
+      isActive: b.isActive !== undefined ? b.isActive : Boolean(b.is_active),
+    });
+    setIsBannerModalOpen(true);
+  };
+
+  const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBannerImage(true);
+    const fd = new FormData();
+    fd.append("file", file);
+
+    try {
+      const res = await adminFetch("/api/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setBannerForm((prev) => ({ ...prev, imageUrl: data.url }));
+        showToast("Gambar banner berhasil diunggah", "success");
+      } else {
+        showToast(data.error || "Gagal upload gambar banner", "error");
+      }
+    } catch {
+      showToast("Gagal upload gambar banner ke server", "error");
+    } finally {
+      setUploadingBannerImage(false);
+    }
+  };
+
+  const handleBannerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bannerForm.title.trim()) {
+      showToast("Judul banner wajib diisi", "error");
+      return;
+    }
+    if (!bannerForm.imageUrl.trim()) {
+      showToast("URL / Gambar banner wajib diisi", "error");
+      return;
+    }
+
+    const payload = {
+      title: bannerForm.title.trim(),
+      subtitle: bannerForm.subtitle.trim() || null,
+      imageUrl: bannerForm.imageUrl.trim(),
+      ctaLabel: bannerForm.ctaLabel.trim() || null,
+      ctaHref: bannerForm.ctaHref.trim() || null,
+      sortOrder: Number(bannerForm.sortOrder) || 0,
+      isActive: Boolean(bannerForm.isActive),
+    };
+
+    try {
+      if (bannerModalMode === "add") {
+        const res = await adminFetch("/api/banners", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Banner promo baru berhasil ditambahkan", "success");
+          setIsBannerModalOpen(false);
+          if (data.data) {
+            setBanners((prev) => [...prev, data.data]);
+          }
+          notifyProductCatalogUpdated();
+          refreshAllData();
+        } else {
+          showToast(data.error || "Gagal menambah banner", "error");
+        }
+      } else {
+        const res = await adminFetch(`/api/banners/${editingBannerId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Banner promo berhasil diperbarui", "success");
+          setIsBannerModalOpen(false);
+          if (data.data) {
+            setBanners((prev) => prev.map((b) => b.id === editingBannerId ? data.data : b));
+          }
+          notifyProductCatalogUpdated();
+          refreshAllData();
+        } else {
+          showToast(data.error || "Gagal mengupdate banner", "error");
+        }
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat menyimpan banner promo", "error");
+    }
+  };
+
+  const handleToggleBannerStatus = async (b: any) => {
+    const currentStatus = b.isActive !== undefined ? b.isActive : Boolean(b.is_active);
+    const newStatus = !currentStatus;
+    setBanners((prev) =>
+      prev.map((item) => (item.id === b.id ? { ...item, isActive: newStatus, is_active: newStatus ? 1 : 0 } : item))
+    );
+    try {
+      const res = await adminFetch(`/api/banners/${b.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: newStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Banner '${b.title}' ${newStatus ? "diaktifkan" : "dinonaktifkan"}`, "success");
+        notifyProductCatalogUpdated();
+        refreshAllData();
+      } else {
+        showToast(data.error || "Gagal mengubah status banner", "error");
+        refreshAllData();
+      }
+    } catch {
+      showToast("Terjadi kesalahan koneksi", "error");
+      refreshAllData();
+    }
+  };
+
+  const handleDeleteBanner = async (id: string, title: string) => {
+    if (!confirm(`Hapus banner promo '${title}'?`)) return;
+    try {
+      setBanners((prev) => prev.filter((b) => b.id !== id));
+      const res = await adminFetch(`/api/banners/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Banner '${title}' berhasil dihapus`, "success");
+        notifyProductCatalogUpdated();
+        refreshAllData();
+      } else {
+        showToast(data.error || "Gagal menghapus banner", "error");
+        refreshAllData();
+      }
+    } catch {
+      showToast("Gagal menghapus banner", "error");
+      refreshAllData();
     }
   };
 
@@ -1468,6 +1684,136 @@ export default function UrangDalamAdminPortal() {
         )}
 
         {/* ========================================================= */}
+        {/* TAB: BANNER PROMO */}
+        {/* ========================================================= */}
+        {activeTab === "banners" && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-5 rounded-3xl border border-gray-100 shadow-2xs">
+              <div>
+                <h2 className="font-extrabold text-base text-gray-900">Banner Promo & Flash Sale</h2>
+                <p className="text-xs text-gray-500">
+                  Kelola banner promosi dan penawaran kilat yang tampil di halaman beranda (mobile touch swipe & desktop).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={openAddBannerModal}
+                className="px-4 py-2 bg-[#F97316] text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 shadow-sm hover:bg-orange-600 transition-colors cursor-pointer"
+              >
+                <Plus size={14} /> Tambah Banner Baru
+              </button>
+            </div>
+
+            {banners.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 shadow-2xs">
+                <ImageIcon size={40} className="mx-auto text-gray-300 mb-3" />
+                <h3 className="font-bold text-sm text-gray-700">Belum Ada Banner Promo</h3>
+                <p className="text-xs text-gray-400 mt-1">Tambahkan banner promosi pertama Anda untuk memikat calon pembeli.</p>
+                <button
+                  type="button"
+                  onClick={openAddBannerModal}
+                  className="mt-4 px-4 py-2 bg-[#F97316] text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Plus size={14} /> Buat Banner Sekarang
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {banners.map((b) => {
+                  const isActive = b.isActive !== undefined ? b.isActive : Boolean(b.is_active);
+                  const imgUrl = b.imageUrl || b.image_url;
+                  return (
+                    <div
+                      key={b.id}
+                      className="bg-white rounded-3xl border border-gray-100 shadow-2xs overflow-hidden flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* Image Preview */}
+                        <div className="relative aspect-16/9 bg-gray-100 overflow-hidden group">
+                          {imgUrl ? (
+                            <Image
+                              src={imgUrl}
+                              alt={b.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                              unoptimized={Boolean(imgUrl.startsWith("data:"))}
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <ImageIcon size={32} />
+                            </div>
+                          )}
+                          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                            <span className="bg-black/60 backdrop-blur-xs text-white text-[10px] font-mono px-2 py-0.5 rounded-lg">
+                              #{b.sortOrder || b.sort_order || 1}
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-lg backdrop-blur-xs ${
+                                isActive
+                                  ? "bg-emerald-600/90 text-white"
+                                  : "bg-gray-800/80 text-gray-300"
+                              }`}
+                            >
+                              {isActive ? "Aktif Publik" : "Nonaktif"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-4 space-y-2">
+                          <h3 className="font-bold text-sm text-[#0B1E36] line-clamp-1">{b.title}</h3>
+                          {b.subtitle && (
+                            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{b.subtitle}</p>
+                          )}
+                          <div className="pt-2 flex items-center justify-between text-[11px] text-gray-400 border-t border-gray-100">
+                            <span>Tombol: <strong>{b.ctaLabel || b.cta_label || "Buka"}</strong></span>
+                            <span className="truncate max-w-[150px] font-mono text-[10px]">{b.ctaHref || b.cta_href || "/produk"}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="p-4 pt-0 flex items-center justify-between gap-2 border-t border-gray-50 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleBannerStatus(b)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                            isActive
+                              ? "bg-amber-50 hover:bg-amber-100 text-amber-700"
+                              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {isActive ? "Nonaktifkan" : "Aktifkan"}
+                        </button>
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEditBannerModal(b)}
+                            className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors cursor-pointer"
+                            title="Edit Banner"
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBanner(b.id, b.title)}
+                            className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors cursor-pointer"
+                            title="Hapus Banner"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
         {/* TAB 5: PENGATURAN & WA TEMPLATE */}
         {/* ========================================================= */}
         {activeTab === "settings" && (
@@ -2085,6 +2431,154 @@ export default function UrangDalamAdminPortal() {
                 Batal
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL: TAMBAH / EDIT BANNER PROMO */}
+      {/* ========================================================= */}
+      {isBannerModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="font-extrabold text-sm sm:text-base text-gray-900">
+                {bannerModalMode === "add" ? "Tambah Banner Promo Baru" : "Edit Banner Promo"}
+              </h3>
+              <button onClick={() => setIsBannerModalOpen(false)} className="p-1 text-gray-400 hover:text-gray-700">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleBannerSubmit} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Judul Banner *</label>
+                <input
+                  type="text"
+                  required
+                  value={bannerForm.title}
+                  onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
+                  placeholder="Contoh: Diskon Kilat Spesial Cafe 25%"
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Subtitle / Deskripsi Singkat</label>
+                <input
+                  type="text"
+                  value={bannerForm.subtitle}
+                  onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })}
+                  placeholder="Contoh: Paket lengkap cup, kemasan dan apron barista"
+                  className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                />
+              </div>
+
+              {/* Upload Gambar Banner */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Gambar Banner Promo *</label>
+                <div className="space-y-2">
+                  {bannerForm.imageUrl && (
+                    <div className="relative aspect-16/9 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 shadow-2xs">
+                      <Image
+                        src={bannerForm.imageUrl}
+                        alt="Preview Banner"
+                        fill
+                        unoptimized={bannerForm.imageUrl.startsWith("data:")}
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      value={bannerForm.imageUrl}
+                      onChange={(e) => setBannerForm({ ...bannerForm, imageUrl: e.target.value })}
+                      placeholder="Masukkan URL gambar atau klik Upload..."
+                      className="flex-1 px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
+                    />
+                    <input
+                      type="file"
+                      ref={bannerFileInputRef}
+                      onChange={handleBannerFileUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => bannerFileInputRef.current?.click()}
+                      disabled={uploadingBannerImage}
+                      className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl inline-flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      <Upload size={14} /> {uploadingBannerImage ? "Mengunggah..." : "Upload Foto"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Label Tombol CTA</label>
+                  <input
+                    type="text"
+                    value={bannerForm.ctaLabel}
+                    onChange={(e) => setBannerForm({ ...bannerForm, ctaLabel: e.target.value })}
+                    placeholder="Contoh: Pesan Sekarang"
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Link Tujuan CTA</label>
+                  <input
+                    type="text"
+                    value={bannerForm.ctaHref}
+                    onChange={(e) => setBannerForm({ ...bannerForm, ctaHref: e.target.value })}
+                    placeholder="Contoh: /produk?category=Packaging"
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Urutan Tampil (Angka)</label>
+                  <input
+                    type="number"
+                    value={bannerForm.sortOrder}
+                    onChange={(e) => setBannerForm({ ...bannerForm, sortOrder: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm"
+                  />
+                </div>
+                <div className="flex items-center pt-5">
+                  <label className="inline-flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={bannerForm.isActive}
+                      onChange={(e) => setBannerForm({ ...bannerForm, isActive: e.target.checked })}
+                      className="w-4 h-4 text-[#F97316] rounded-md border-gray-300 focus:ring-[#F97316]"
+                    />
+                    <span className="text-xs font-bold text-gray-700">Aktifkan di Beranda</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsBannerModalOpen(false)}
+                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-xs font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#F97316] text-white rounded-xl text-xs font-bold shadow-sm hover:bg-orange-600 transition-colors cursor-pointer"
+                >
+                  Simpan Banner Promo
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -66,7 +66,16 @@ export function getCategoryBySlug(slug: string): CategoryRecord | null {
 
 export function createCategory(input: CategoryInput): CategoryRecord {
   const id = input.id || "cat-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-  const slug = input.slug || input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const rawSlug = (input.slug && input.slug.trim()) || input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  let slug = rawSlug || "kategori";
+  
+  // Prevent UNIQUE constraint failed: categories.slug
+  let counter = 1;
+  while (db.prepare("SELECT 1 FROM categories WHERE slug = ?").get(slug)) {
+    slug = `${rawSlug || "kategori"}-${counter}`;
+    counter++;
+  }
+
   const now = new Date().toISOString();
 
   const stmt = db.prepare(`
@@ -80,7 +89,7 @@ export function createCategory(input: CategoryInput): CategoryRecord {
     input.name,
     input.icon || null,
     input.sortOrder || 0,
-    input.isActive ? 1 : 0,
+    input.isActive !== undefined ? (input.isActive ? 1 : 0) : 1,
     now,
     now
   );
@@ -94,7 +103,18 @@ export function updateCategory(id: string, input: Partial<CategoryInput>): Categ
 
   const now = new Date().toISOString();
   const name = input.name ?? existing.name;
-  const slug = input.slug ?? existing.slug;
+  
+  let slug = existing.slug;
+  if (input.slug && input.slug.trim()) {
+    const rawSlug = input.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    slug = rawSlug || "kategori";
+    let counter = 1;
+    while (db.prepare("SELECT 1 FROM categories WHERE slug = ? AND id != ?").get(slug, id)) {
+      slug = `${rawSlug || "kategori"}-${counter}`;
+      counter++;
+    }
+  }
+
   const icon = input.icon !== undefined ? input.icon : existing.icon;
   const sortOrder = input.sortOrder !== undefined ? input.sortOrder : existing.sortOrder;
   const isActive = input.isActive !== undefined ? (input.isActive ? 1 : 0) : (existing.isActive ? 1 : 0);

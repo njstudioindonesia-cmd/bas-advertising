@@ -193,8 +193,17 @@ export function getProductById(id: string): FormattedProduct | null {
 }
 
 export function createProduct(input: ProductInput): FormattedProduct {
-  const id = input.id || input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
-  const slug = input.slug || input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const rawSlug = (input.slug && input.slug.trim()) || input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  let slug = rawSlug || "produk";
+  const id = input.id || slug + "-" + Date.now().toString(36);
+
+  // Prevent UNIQUE constraint failed: products.slug
+  let counter = 1;
+  while (db.prepare("SELECT 1 FROM products WHERE slug = ?").get(slug)) {
+    slug = `${rawSlug || "produk"}-${counter}`;
+    counter++;
+  }
+
   const now = new Date().toISOString();
 
   const stmt = db.prepare(`
@@ -237,7 +246,16 @@ export function updateProduct(id: string, input: Partial<ProductInput>): Formatt
 
   const now = new Date().toISOString();
   const name = input.name ?? existing.name;
-  const slug = input.slug ?? existing.slug;
+  let slug = existing.slug;
+  if (input.slug && input.slug.trim()) {
+    const rawSlug = input.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    slug = rawSlug || "produk";
+    let counter = 1;
+    while (db.prepare("SELECT 1 FROM products WHERE slug = ? AND id != ?").get(slug, id)) {
+      slug = `${rawSlug || "produk"}-${counter}`;
+      counter++;
+    }
+  }
   const categoryId = input.categoryId ?? existing.categoryId;
   const description = input.description ?? existing.description;
   const price = input.price !== undefined ? input.price : existing.priceNumber;

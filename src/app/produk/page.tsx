@@ -36,9 +36,10 @@ function CatalogContent() {
   // Fetch categories & products from DB API
   useEffect(() => {
     const loadCatalog = () => {
+      const t = Date.now();
       Promise.all([
-        fetch("/api/categories", { cache: "no-store" }).then(res => res.json()).catch(() => ({ data: [] })),
-        fetch("/api/products", { cache: "no-store" }).then(res => res.json()).catch(() => ({ data: [] }))
+        fetch(`/api/categories?t=${t}`, { cache: "no-store" }).then(res => res.json()).catch(() => ({ data: [] })),
+        fetch(`/api/products?t=${t}`, { cache: "no-store" }).then(res => res.json()).catch(() => ({ data: [] }))
       ]).then(([catData, prodData]) => {
         if (catData.success && Array.isArray(catData.data)) {
           const catNames = ["Semua", ...catData.data.map((c: any) => c.name)];
@@ -59,8 +60,23 @@ function CatalogContent() {
       if (e.key === "bas_catalog_version") loadCatalog();
     });
 
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("bas_catalog_sync");
+      bc.onmessage = () => loadCatalog();
+    } catch {
+      // ignore
+    }
+
     return () => {
       window.removeEventListener("bas_products_updated", handleUpdate);
+      if (bc) {
+        try {
+          bc.close();
+        } catch {
+          // ignore
+        }
+      }
     };
   }, []);
 
