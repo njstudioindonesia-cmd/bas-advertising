@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/modules/auth";
-import { upsertDriverLocation } from "@/modules/delivery";
+import {
+  upsertDriverLocation,
+  getDriverLocation,
+  getDriverLocationByOrderId,
+} from "@/modules/delivery";
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { lat, lng, heading, speed } = body;
+    const { lat, lng, heading, speed, orderId } = body;
 
     if (typeof lat !== "number" || typeof lng !== "number") {
       return NextResponse.json(
@@ -22,7 +26,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await upsertDriverLocation(user.id, lat, lng, heading, speed);
+    const result = await upsertDriverLocation(user.id, lat, lng, heading, speed, orderId);
 
     return NextResponse.json({
       success: true,
@@ -32,6 +36,31 @@ export async function POST(request: Request) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || "Gagal memperbarui lokasi driver." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const orderId = searchParams.get("orderId");
+    const driverId = searchParams.get("driverId");
+
+    let location = null;
+    if (orderId) {
+      location = await getDriverLocationByOrderId(orderId);
+    } else if (driverId) {
+      location = await getDriverLocation(driverId);
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: location,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || "Gagal memuat posisi driver." },
       { status: 500 }
     );
   }

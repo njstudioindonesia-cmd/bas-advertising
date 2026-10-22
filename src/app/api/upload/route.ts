@@ -26,8 +26,8 @@ export async function POST(request: Request) {
 
     const targetFolder = formFolder || queryFolder || "products";
 
-    // Hanya izinkan unggahan publik tanpa sesi admin jika ditujukan untuk folder payment-proofs
-    if (targetFolder !== "payment-proofs") {
+    // Izinkan unggahan bukti bayar dan bukti antar kurir tanpa sesi admin
+    if (targetFolder !== "payment-proofs" && targetFolder !== "delivery-proofs") {
       const auth = await requireAdmin(request);
       if (!auth.authorized) return auth.response!;
     }

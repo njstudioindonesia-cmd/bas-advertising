@@ -1,8 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import { Bike, MapPin, Store, Phone, MessageSquare, ExternalLink, Navigation, Clock, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  Bike,
+  MapPin,
+  Store,
+  Phone,
+  MessageSquare,
+  ExternalLink,
+  Navigation,
+  Clock,
+  ShieldCheck,
+  CheckCircle2,
+  RefreshCw,
+} from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
 interface LiveOrderTrackingMapProps {
@@ -14,6 +25,9 @@ interface LiveOrderTrackingMapProps {
     statusStep?: number;
     address?: string;
     city?: string;
+    hubId?: string;
+    destLat?: number;
+    destLng?: number;
     shippingMethod?: string;
     driverName?: string;
     driverPhone?: string;
@@ -29,31 +43,142 @@ interface LiveOrderTrackingMapProps {
   };
 }
 
+// Haversine km calculator
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const driverMarkerRef = useRef<any>(null);
+  const polylineRef = useRef<any>(null);
 
-  // Titik Lokasi Workshop Cetak.inc di Kota Padang
-  const WORKSHOP_COORDS: [number, number] = [-0.9242, 100.3628];
-  
-  // Titik Lokasi Pengiriman Pelanggan (Padang Selatan / Timur / Koto Tangah)
-  const DESTINATION_COORDS: [number, number] = [-0.9415, 100.3765];
+  // Titik Lokasi Workshop Hub
+  const isLubukBuaya =
+    order.hubId === "00000000-0000-0000-0000-000000000002" ||
+    order.address?.toLowerCase().includes("lubuk buaya") ||
+    order.address?.toLowerCase().includes("koto tangah");
 
-  // Titik Posisi Kurir Saat Ini (di antara workshop dan pelanggan)
-  const isEnRoute = order.statusStep === 4 || order.status === "DIKIRIM" || order.status === "SHIPPED";
-  const DRIVER_COORDS: [number, number] = isEnRoute
-    ? [-0.9330, 100.3695]
-    : WORKSHOP_COORDS;
+  const WORKSHOP_COORDS: [number, number] = isLubukBuaya
+    ? [-0.8354, 100.315] // Hub Lubuk Buaya
+    : [-0.9025, 100.3542]; // Hub Pusat Belanti Baru
+
+  // Titik Tujuan Pelanggan
+  const DESTINATION_COORDS: [number, number] = [
+    order.destLat || (isLubukBuaya ? -0.842 : -0.9242),
+    order.destLng || (isLubukBuaya ? 100.321 : 100.3626),
+  ];
+
+  const isEnRoute =
+    order.status === "DALAM_PERJALANAN" ||
+    order.status === "KURIR_MENJEMPUT" ||
+    order.status === "TIBA" ||
+    order.status === "DIKIRIM" ||
+    order.status === "SHIPPED";
+
+  // State koordinat kurir terkini
+  const [driverPos, setDriverPos] = useState<[number, number]>(() => {
+    if (order.courier?.currentLocation) return order.courier.currentLocation;
+    if (isEnRoute) {
+      // Posisi awal interpolasi antara workshop dan tujuan
+      return [
+        (WORKSHOP_COORDS[0] + DESTINATION_COORDS[0]) / 2,
+        (WORKSHOP_COORDS[1] + DESTINATION_COORDS[1]) / 2,
+      ];
+    }
+    return WORKSHOP_COORDS;
+  });
+
+  const [lastUpdatedSec, setLastUpdatedSec] = useState<number>(0);
+  const [liveEta, setLiveEta] = useState<string>(() => {
+    const dist = calculateDistanceKm(
+      driverPos[0],
+      driverPos[1],
+      DESTINATION_COORDS[0],
+      DESTINATION_COORDS[1]
+    );
+    const mins = Math.max(5, Math.round((dist / 25) * 60)); // rata-rata 25 km/jam motor Padang
+    return `${mins} Menit`;
+  });
 
   const driver = {
     name: order.courier?.name || order.driverName || "Fajar Pratama (Kurir Cetak.inc)",
-    phone: order.courier?.phone || order.driverPhone || "6282283995544",
-    vehicle: order.courier?.plate || order.driverPlate || "Honda Vario 160 (BA 4219 QB)",
-    eta: order.courier?.eta || (isEnRoute ? "15 - 25 Menit" : "Menunggu Antrean Kurir"),
-    statusText: order.courier?.notes || (isEnRoute ? "Kurir sedang meluncur ke alamat Anda membawa pesanan cetak" : "Pesanan sedang dalam proses cetak & finishing"),
+    phone: order.courier?.phone || order.driverPhone || "082283995544",
+    vehicle: order.courier?.plate || order.driverPlate || "Honda Vario 160 (BA 4821 QA)",
+    statusText:
+      order.status === "KURIR_MENJEMPUT"
+        ? "Kurir sedang mengambil pesanan cetak Anda di workshop hub"
+        : order.status === "DALAM_PERJALANAN"
+        ? "Kurir sedang meluncur ke alamat Anda membawa pesanan"
+        : order.status === "TIBA"
+        ? "Kurir telah tiba di alamat pengiriman Anda"
+        : order.status === "SELESAI"
+        ? "Pesanan telah sukses diserahterimakan"
+        : "Pesanan siap dan menunggu penugasan armada kurir",
   };
 
+  // Poll lokasi GPS kurir secara berkala
+  const fetchDriverLiveLocation = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/driver/location?orderId=${order.id}`, { cache: "no-store" });
+      const data = await res.json();
+      if (data.success && data.data && typeof data.data.lat === "number") {
+        const newCoords: [number, number] = [data.data.lat, data.data.lng];
+        setDriverPos(newCoords);
+        setLastUpdatedSec(0);
+
+        // Update marker dan polyline di peta Leaflet secara dinamis tanpa re-render peta
+        if (driverMarkerRef.current) {
+          driverMarkerRef.current.setLatLng(newCoords);
+        }
+        if (polylineRef.current) {
+          polylineRef.current.setLatLngs([WORKSHOP_COORDS, newCoords, DESTINATION_COORDS]);
+        }
+
+        // Hitung ulang ETA dinamis
+        const dist = calculateDistanceKm(
+          newCoords[0],
+          newCoords[1],
+          DESTINATION_COORDS[0],
+          DESTINATION_COORDS[1]
+        );
+        const mins = Math.max(3, Math.round((dist / 25) * 60));
+        setLiveEta(`${mins} Menit (~${dist.toFixed(1)} km)`);
+      }
+    } catch {}
+  }, [order.id, DESTINATION_COORDS, WORKSHOP_COORDS]);
+
+  useEffect(() => {
+    fetchDriverLiveLocation();
+
+    // Polling tiap 8 detik
+    const pollInterval = setInterval(() => {
+      fetchDriverLiveLocation();
+    }, 8000);
+
+    // Counter detik sejak update terakhir
+    const timer = setInterval(() => {
+      setLastUpdatedSec((prev) => prev + 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearInterval(timer);
+    };
+  }, [fetchDriverLiveLocation]);
+
+  // Inisialisasi Peta Leaflet sekali
   useEffect(() => {
     let isMounted = true;
 
@@ -61,18 +186,16 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
       if (!mapContainerRef.current || mapInstanceRef.current) return;
 
       const L = (await import("leaflet")).default;
-
       if (!isMounted || !mapContainerRef.current) return;
 
-      // Inisialisasi Peta
       const map = L.map(mapContainerRef.current, {
-        center: DRIVER_COORDS,
+        center: driverPos,
         zoom: 14,
         zoomControl: false,
         attributionControl: false,
       });
 
-      // Tambahkan tile layer modern ala Carto Voyager (mirip style peta Gojek/Google Maps)
+      // Carto Voyager Basemap Tile
       L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         maxZoom: 19,
         subdomains: "abcd",
@@ -85,7 +208,7 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
           <div style="
             background: #0B1E36;
             color: white;
-            padding: 6px 10px;
+            padding: 5px 9px;
             border-radius: 9999px;
             box-shadow: 0 4px 15px rgba(11, 30, 54, 0.4);
             display: flex;
@@ -97,11 +220,11 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
             white-space: nowrap;
           ">
             <span>🏭</span>
-            <span>Workshop Cetak.inc</span>
+            <span>${isLubukBuaya ? "Hub Lubuk Buaya" : "Hub Pusat BAS"}</span>
           </div>
         `,
-        iconSize: [140, 36],
-        iconAnchor: [70, 18],
+        iconSize: [140, 34],
+        iconAnchor: [70, 17],
       });
       L.marker(WORKSHOP_COORDS, { icon: workshopIcon }).addTo(map);
 
@@ -112,7 +235,7 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
           <div style="
             background: #F97316;
             color: white;
-            padding: 6px 10px;
+            padding: 5px 9px;
             border-radius: 9999px;
             box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
             display: flex;
@@ -127,72 +250,68 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
             <span>Tujuan: ${order.customerName || "Pelanggan"}</span>
           </div>
         `,
-        iconSize: [140, 36],
-        iconAnchor: [70, 18],
+        iconSize: [140, 34],
+        iconAnchor: [70, 17],
       });
       L.marker(DESTINATION_COORDS, { icon: destIcon }).addTo(map);
 
       // 3. Icon Kurir Motor dengan Radar Pulse
-      if (isEnRoute) {
-        const driverIcon = L.divIcon({
-          className: "custom-map-marker",
-          html: `
-            <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
-              <div style="
-                position: absolute;
-                inset: 0;
-                border-radius: 9999px;
-                background: rgba(34, 197, 94, 0.35);
-                animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-              "></div>
-              <div style="
-                width: 36px;
-                height: 36px;
-                border-radius: 9999px;
-                background: #16A34A;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 4px 12px rgba(22, 163, 74, 0.5);
-                border: 2.5px solid white;
-                font-size: 18px;
-                position: relative;
-                z-index: 10;
-              ">
-                🛵
-              </div>
+      const driverIcon = L.divIcon({
+        className: "custom-map-marker",
+        html: `
+          <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+            <div style="
+              position: absolute;
+              inset: 0;
+              border-radius: 9999px;
+              background: rgba(14, 165, 233, 0.35);
+              animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+            "></div>
+            <div style="
+              width: 36px;
+              height: 36px;
+              border-radius: 9999px;
+              background: #0284C7;
+              color: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 4px 12px rgba(2, 132, 199, 0.5);
+              border: 2.5px solid white;
+              font-size: 18px;
+              position: relative;
+              z-index: 10;
+            ">
+              🛵
             </div>
-          `,
-          iconSize: [44, 44],
-          iconAnchor: [22, 22],
-        });
-        L.marker(DRIVER_COORDS, { icon: driverIcon }).addTo(map);
-      }
+          </div>
+        `,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+      });
+      const dMarker = L.marker(driverPos, { icon: driverIcon }).addTo(map);
+      driverMarkerRef.current = dMarker;
 
       // 4. Garis Rute (Polyline)
       const routePoints: [number, number][] = [
         WORKSHOP_COORDS,
-        [-0.9290, 100.3650],
-        DRIVER_COORDS,
-        [-0.9380, 100.3730],
+        driverPos,
         DESTINATION_COORDS,
       ];
 
-      L.polyline(routePoints, {
+      const pLine = L.polyline(routePoints, {
         color: "#F97316",
         weight: 4,
         opacity: 0.85,
         dashArray: "8, 8",
         lineCap: "round",
       }).addTo(map);
+      polylineRef.current = pLine;
 
-      // Sesuaikan pandangan peta agar mencakup seluruh rute
-      const bounds = L.latLngBounds([WORKSHOP_COORDS, DESTINATION_COORDS]);
+      const bounds = L.latLngBounds([WORKSHOP_COORDS, DESTINATION_COORDS, driverPos]);
       map.fitBounds(bounds, { padding: [50, 50] });
 
       mapInstanceRef.current = map;
-      setMapLoaded(true);
     }
 
     initMap();
@@ -204,9 +323,10 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
         mapInstanceRef.current = null;
       }
     };
-  }, [order]);
+  }, []);
 
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${WORKSHOP_COORDS[0]},${WORKSHOP_COORDS[1]}&destination=${DESTINATION_COORDS[0]},${DESTINATION_COORDS[1]}&travelmode=driving`;
+  const waCourierNumber = driver.phone.replace(/[^0-9]/g, "").replace(/^0/, "62");
 
   return (
     <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-md">
@@ -226,7 +346,7 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
               </span>
             </div>
             <p className="text-[10px] text-gray-300 mt-0.5">
-              Rute Pengiriman Area Kota Padang & Sekitarnya
+              Rute Pengiriman {isLubukBuaya ? "Hub Lubuk Buaya" : "Hub Pusat Padang"}
             </p>
           </div>
         </div>
@@ -237,7 +357,7 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
           rel="noopener noreferrer"
           className="text-[11px] font-bold text-amber-300 hover:text-white flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-xl transition-colors"
         >
-          <span>Google Maps</span>
+          <span>Buka Maps</span>
           <ExternalLink size={12} />
         </a>
       </div>
@@ -246,21 +366,35 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
       <div className="relative w-full h-[280px] sm:h-[340px] bg-slate-100">
         <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-        {/* Floating ETA Badge di Sudut Kanan Atas Peta */}
+        {/* Floating ETA Badge */}
         <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-md border border-gray-100 flex items-center gap-2">
           <Clock size={15} className="text-[#F97316]" />
           <div>
-            <span className="text-[9px] uppercase font-bold text-gray-400 block leading-none">Estimasi Tiba</span>
-            <span className="text-xs font-black text-gray-900">{driver.eta}</span>
+            <span className="text-[9px] uppercase font-bold text-gray-400 block leading-none">
+              Estimasi Tiba
+            </span>
+            <span className="text-xs font-black text-gray-900">{liveEta}</span>
           </div>
+        </div>
+
+        {/* Last Updated Badge */}
+        <div className="absolute bottom-3 left-3 z-10 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-xl text-[10px] font-mono text-white/90 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>
+            {lastUpdatedSec === 0
+              ? "Posisi baru saja diperbarui"
+              : lastUpdatedSec < 60
+              ? `Update ${lastUpdatedSec} dtk lalu`
+              : "Update >1 mnt lalu"}
+          </span>
         </div>
       </div>
 
-      {/* FLOATING DRIVER CARD ALA GOJEK / ASTRO */}
+      {/* DRIVER CARD ALA GOJEK / ASTRO */}
       <div className="p-4 sm:p-5 bg-white space-y-3.5 border-t border-gray-100">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="relative w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shrink-0 text-xl font-black shadow-xs">
+            <div className="relative w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-100 shrink-0 text-xl font-black shadow-xs">
               🛵
               <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white">
                 ✓
@@ -271,29 +405,29 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
                 <h5 className="font-extrabold text-sm text-gray-900 leading-tight">
                   {driver.name}
                 </h5>
-                <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.2 rounded-md">
+                <span className="bg-sky-100 text-sky-800 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
                   Kurir Toko
                 </span>
               </div>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
-                {driver.vehicle}
-              </p>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">{driver.vehicle}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <a
-              href={`https://wa.me/${driver.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Halo ${driver.name}, saya ingin menanyakan pesanan Cetak.inc nomor ${order.code}.`)}`}
+              href={`https://wa.me/${waCourierNumber}?text=${encodeURIComponent(
+                `Halo ${driver.name}, saya ingin menanyakan pesanan Cetak.inc nomor ${order.code}.`
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-10 h-10 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors shadow-2xs border border-emerald-200"
+              className="w-10 h-10 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors shadow-2xs border border-emerald-200 active:scale-95"
               title="Chat WhatsApp Kurir"
             >
               <MessageSquare size={18} />
             </a>
             <a
               href={`tel:${driver.phone}`}
-              className="w-10 h-10 rounded-2xl bg-orange-50 hover:bg-orange-100 text-[#F97316] flex items-center justify-center transition-colors shadow-2xs border border-orange-200"
+              className="w-10 h-10 rounded-2xl bg-orange-50 hover:bg-orange-100 text-[#F97316] flex items-center justify-center transition-colors shadow-2xs border border-orange-200 active:scale-95"
               title="Telepon Kurir"
             >
               <Phone size={18} />
