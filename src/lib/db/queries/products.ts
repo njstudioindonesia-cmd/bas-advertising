@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ProductInput } from "@/lib/validators";
+import fallbackProductsData from "@/data/products.json";
 
 export interface FormattedProduct {
   id: string;
@@ -94,6 +95,102 @@ export function mapRowToProduct(r: any): FormattedProduct {
   };
 }
 
+function getFallbackProducts(): FormattedProduct[] {
+  return (fallbackProductsData as any[]).map((p: any, idx: number) => {
+    const priceNum = typeof p.priceNumber === "number" ? p.priceNumber : 0;
+    const compareAtNum = typeof p.compareAtPrice === "number" ? p.compareAtPrice : null;
+    const gallery =
+      Array.isArray(p.images) && p.images.length > 0
+        ? p.images
+        : Array.isArray(p.gallery) && p.gallery.length > 0
+        ? p.gallery
+        : p.imageUrl || p.img
+        ? [p.imageUrl || p.img]
+        : [];
+    const specs = Array.isArray(p.specs) ? p.specs : [];
+
+    return {
+      id: p.id || `prod-${idx}`,
+      slug: p.slug || p.id || `prod-${idx}`,
+      name: p.name || p.title || "Produk",
+      title: p.title || p.name || "Produk",
+      categoryId: p.categoryId || "cat-umum",
+      category: p.category || "Umum",
+      description: p.description || p.desc || "",
+      desc: p.desc || p.description || "",
+      price: p.price || formatRupiah(priceNum),
+      priceNumber: priceNum,
+      normalPrice: p.normalPrice || (compareAtNum ? formatRupiah(compareAtNum) : undefined),
+      compareAtPrice: compareAtNum,
+      unit: p.unit || "/ pcs",
+      imageUrl: p.imageUrl || p.img || "",
+      img: p.img || p.imageUrl || "",
+      gallery,
+      images: gallery,
+      specs,
+      isBestSeller: Boolean(p.isBestSeller),
+      isActive: p.isActive !== false,
+      rating: p.rating || "5.0",
+      sold: p.sold || "0",
+      sortOrder: typeof p.sortOrder === "number" ? p.sortOrder : idx,
+      createdAt: p.createdAt || new Date().toISOString(),
+      updatedAt: p.updatedAt || new Date().toISOString(),
+    };
+  });
+}
+
+function filterProductsInMemory(
+  all: FormattedProduct[],
+  options?: {
+    category?: string;
+    search?: string;
+    includeInactive?: boolean;
+    isBestSeller?: boolean;
+    limit?: number;
+    offset?: number;
+  }
+): { products: FormattedProduct[]; total: number } {
+  let list = all;
+
+  if (!options?.includeInactive) {
+    list = list.filter((p) => p.isActive);
+  }
+
+  if (options?.category && options.category !== "Semua") {
+    const cat = options.category.toLowerCase().trim();
+    list = list.filter(
+      (p) =>
+        p.categoryId.toLowerCase() === cat ||
+        p.category.toLowerCase() === cat ||
+        p.category.toLowerCase().includes(cat)
+    );
+  }
+
+  if (options?.search && options.search.trim()) {
+    const q = options.search.trim().toLowerCase();
+    list = list.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q)
+    );
+  }
+
+  if (options?.isBestSeller !== undefined) {
+    list = list.filter((p) => p.isBestSeller === options.isBestSeller);
+  }
+
+  list = list.sort((a, b) => a.sortOrder - b.sortOrder);
+  const total = list.length;
+
+  if (options?.limit) {
+    const start = options.offset || 0;
+    list = list.slice(start, start + options.limit);
+  }
+
+  return { products: list, total };
+}
+
 export async function getProducts(options?: {
   category?: string;
   search?: string;
@@ -138,19 +235,19 @@ export async function getProducts(options?: {
 
     const { data, count, error } = await query;
 
-    if (error) {
-      console.error("[SUPABASE] Gagal mengambil daftar produk:", error.message);
-      return { products: [], total: 0 };
+    if (!error && data && data.length > 0) {
+      const products = data.map(mapRowToProduct);
+      return {
+        products,
+        total: count !== null ? count : products.length,
+      };
     }
 
-    const products = (data || []).map(mapRowToProduct);
-    return {
-      products,
-      total: count !== null ? count : products.length,
-    };
+    // Jika Supabase offline atau belum ada data di tabel, fallback ke products.json
+    return filterProductsInMemory(getFallbackProducts(), options);
   } catch (err: any) {
-    console.error("[SUPABASE_ERR] Error getProducts:", err);
-    return { products: [], total: 0 };
+    console.warn("[SUPABASE_OFFLINE] Menggunakan fallback data produk lokal:", err?.message);
+    return filterProductsInMemory(getFallbackProducts(), options);
   }
 }
 
@@ -163,12 +260,15 @@ export async function getProductById(id: string): Promise<FormattedProduct | nul
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) return null;
-    return mapRowToProduct(data);
+    if (!error && data) {
+      return mapRowToProduct(data);
+    }
   } catch (err: any) {
-    console.error("[SUPABASE_ERR] Error getProductById:", err);
-    return null;
+    // Supabase offline, fallback
   }
+
+  const fallbacks = getFallbackProducts();
+  return fallbacks.find((p) => p.id === id || p.slug === id) || null;
 }
 
 export async function createProduct(input: ProductInput): Promise<FormattedProduct> {

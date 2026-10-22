@@ -12,7 +12,10 @@ let circuitOpenedAt = 0;
 const CIRCUIT_RESET_MS = 30000; // 30 detik
 
 /**
- * Custom Fetch dengan timeout 1500ms dan Circuit Breaker otomatis.
+ * Custom Fetch dengan timeout 600ms dan Circuit Breaker otomatis.
+ * PENTING: Jika Supabase offline atau timeout, fungsi ini mengembalikan Response HTTP 400
+ * alih-alih melempar error / TypeError. Hal ini mencegah library @supabase/postgrest-js
+ * melakukan retry backoff otomatis yang dapat membekukan thread selama 7+ detik!
  */
 const fetchWithCircuitBreaker = async (url: any, options: any = {}) => {
   const now = Date.now();
@@ -20,12 +23,23 @@ const fetchWithCircuitBreaker = async (url: any, options: any = {}) => {
     if (now - circuitOpenedAt > CIRCUIT_RESET_MS) {
       isCircuitOpen = false; // Coba kembali (half-open probe)
     } else {
-      throw new TypeError("Supabase Circuit Breaker OPEN (remote host unreachable)");
+      // Kembalikan Response HTTP 400 instan (0ms) agar Postgrest langsung terminate tanpa retry
+      return new Response(
+        JSON.stringify({
+          message: "Supabase Circuit Breaker OPEN (remote host unreachable)",
+          code: "PGRST_OFFLINE",
+          details: "Circuit breaker is active to prevent blocking",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 800);
+  const timeoutId = setTimeout(() => controller.abort(), 600);
 
   if (options?.signal) {
     options.signal.addEventListener("abort", () => controller.abort());
@@ -36,7 +50,17 @@ const fetchWithCircuitBreaker = async (url: any, options: any = {}) => {
   } catch (err: any) {
     isCircuitOpen = true;
     circuitOpenedAt = Date.now();
-    throw err;
+    return new Response(
+      JSON.stringify({
+        message: "Supabase connection failed / timed out",
+        code: "PGRST_OFFLINE",
+        details: err?.message || "Host unreachable",
+      }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } finally {
     clearTimeout(timeoutId);
   }

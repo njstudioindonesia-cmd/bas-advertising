@@ -13,6 +13,31 @@ export interface BannerRecord {
   createdAt: string;
 }
 
+const DEFAULT_FALLBACK_BANNERS: BannerRecord[] = [
+  {
+    id: "ban-default-1",
+    title: "Cetak Cepat, Presisi & Bergaransi",
+    subtitle: "Solusi branding & percetakan advertising terlengkap untuk bisnis Anda.",
+    imageUrl: "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=1200&auto=format&fit=crop",
+    ctaLabel: "Lihat Katalog",
+    ctaHref: "/produk",
+    sortOrder: 1,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "ban-default-2",
+    title: "Promo Cetak Spanduk & Banner Kilat",
+    subtitle: "Cetak outdoor & indoor kualitas tinggi dengan mesin terbaru.",
+    imageUrl: "https://images.unsplash.com/photo-1542744094-3a31f272c490?q=80&w=1200&auto=format&fit=crop",
+    ctaLabel: "Pesan Sekarang",
+    ctaHref: "/produk",
+    sortOrder: 2,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 export async function getBanners(includeInactive = false): Promise<BannerRecord[]> {
   try {
     let query = supabaseAdmin
@@ -26,26 +51,26 @@ export async function getBanners(includeInactive = false): Promise<BannerRecord[
     }
 
     const { data, error } = await query;
-    if (error || !data) {
-      console.error("[SUPABASE] Gagal mengambil banner:", error?.message);
-      return [];
+    if (!error && data && data.length > 0) {
+      return data.map((r: any) => ({
+        id: r.id,
+        title: r.title,
+        subtitle: r.subtitle,
+        imageUrl: r.image_url,
+        ctaLabel: r.cta_label,
+        ctaHref: r.cta_href,
+        sortOrder: Number(r.sort_order) || 0,
+        isActive: Boolean(r.is_active),
+        createdAt: r.created_at,
+      }));
     }
-
-    return data.map((r: any) => ({
-      id: r.id,
-      title: r.title,
-      subtitle: r.subtitle,
-      imageUrl: r.image_url,
-      ctaLabel: r.cta_label,
-      ctaHref: r.cta_href,
-      sortOrder: Number(r.sort_order) || 0,
-      isActive: Boolean(r.is_active),
-      createdAt: r.created_at,
-    }));
   } catch (err: any) {
-    console.error("[SUPABASE_ERR] Error getBanners:", err);
-    return [];
+    console.warn("[SUPABASE_OFFLINE] Menggunakan fallback banner lokal");
   }
+
+  return includeInactive
+    ? DEFAULT_FALLBACK_BANNERS
+    : DEFAULT_FALLBACK_BANNERS.filter((b) => b.isActive);
 }
 
 export async function getBannerById(id: string): Promise<BannerRecord | null> {
@@ -57,22 +82,24 @@ export async function getBannerById(id: string): Promise<BannerRecord | null> {
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) return null;
-
-    return {
-      id: data.id,
-      title: data.title,
-      subtitle: data.subtitle,
-      imageUrl: data.image_url,
-      ctaLabel: data.cta_label,
-      ctaHref: data.cta_href,
-      sortOrder: Number(data.sort_order) || 0,
-      isActive: Boolean(data.is_active),
-      createdAt: data.created_at,
-    };
+    if (!error && data) {
+      return {
+        id: data.id,
+        title: data.title,
+        subtitle: data.subtitle,
+        imageUrl: data.image_url,
+        ctaLabel: data.cta_label,
+        ctaHref: data.cta_href,
+        sortOrder: Number(data.sort_order) || 0,
+        isActive: Boolean(data.is_active),
+        createdAt: data.created_at,
+      };
+    }
   } catch {
-    return null;
+    // offline fallback
   }
+
+  return DEFAULT_FALLBACK_BANNERS.find((b) => b.id === id) || null;
 }
 
 export async function createBanner(input: BannerInput): Promise<BannerRecord> {

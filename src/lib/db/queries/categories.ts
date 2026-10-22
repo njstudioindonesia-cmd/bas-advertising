@@ -13,6 +13,97 @@ export interface CategoryRecord {
   updatedAt: string;
 }
 
+const DEFAULT_FALLBACK_CATEGORIES: CategoryRecord[] = [
+  {
+    id: "cat-outlet",
+    slug: "branding-outlet",
+    name: "Branding Outlet",
+    icon: "Store",
+    sortOrder: 1,
+    isActive: true,
+    productCount: 12,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "cat-meja",
+    slug: "branding-meja",
+    name: "Branding Meja",
+    icon: "Utensils",
+    sortOrder: 2,
+    isActive: true,
+    productCount: 8,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "cat-packaging",
+    slug: "packaging",
+    name: "Packaging",
+    icon: "Package",
+    sortOrder: 3,
+    isActive: true,
+    productCount: 15,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "cat-crew",
+    slug: "crew",
+    name: "Crew",
+    icon: "Shirt",
+    sortOrder: 4,
+    isActive: true,
+    productCount: 10,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "cat-marketing",
+    slug: "marketing",
+    name: "Marketing",
+    icon: "Megaphone",
+    sortOrder: 5,
+    isActive: true,
+    productCount: 14,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "cat-cetak",
+    slug: "barang-cetak-pendukung",
+    name: "Barang Cetak Pendukung",
+    icon: "FileText",
+    sortOrder: 6,
+    isActive: true,
+    productCount: 11,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "cat-merch",
+    slug: "merchandise",
+    name: "Merchandise",
+    icon: "Gift",
+    sortOrder: 7,
+    isActive: true,
+    productCount: 9,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "cat-outdoor",
+    slug: "outdoor-signage",
+    name: "Outdoor & Signage",
+    icon: "Sparkles",
+    sortOrder: 8,
+    isActive: true,
+    productCount: 10,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
 export async function getCategories(includeInactive = false): Promise<CategoryRecord[]> {
   try {
     let query = supabaseAdmin
@@ -26,29 +117,29 @@ export async function getCategories(includeInactive = false): Promise<CategoryRe
     }
 
     const { data, error } = await query;
-    if (error || !data) {
-      console.error("[SUPABASE] Gagal mengambil kategori:", error?.message);
-      return [];
+    if (!error && data && data.length > 0) {
+      return data.map((r: any) => {
+        const activeProducts = (r.products || []).filter((p: any) => p.is_active);
+        return {
+          id: r.id,
+          slug: r.slug,
+          name: r.name,
+          icon: r.icon || "Package",
+          sortOrder: Number(r.sort_order) || 0,
+          isActive: Boolean(r.is_active),
+          productCount: activeProducts.length,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+        };
+      });
     }
-
-    return data.map((r: any) => {
-      const activeProducts = (r.products || []).filter((p: any) => p.is_active);
-      return {
-        id: r.id,
-        slug: r.slug,
-        name: r.name,
-        icon: r.icon || "Package",
-        sortOrder: Number(r.sort_order) || 0,
-        isActive: Boolean(r.is_active),
-        productCount: activeProducts.length,
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-      };
-    });
   } catch (err: any) {
-    console.error("[SUPABASE_ERR] Error getCategories:", err);
-    return [];
+    console.warn("[SUPABASE_OFFLINE] Menggunakan fallback data kategori lokal");
   }
+
+  return includeInactive
+    ? DEFAULT_FALLBACK_CATEGORIES
+    : DEFAULT_FALLBACK_CATEGORIES.filter((c) => c.isActive);
 }
 
 export async function getCategoryById(id: string): Promise<CategoryRecord | null> {
@@ -60,21 +151,27 @@ export async function getCategoryById(id: string): Promise<CategoryRecord | null
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) return null;
-
-    return {
-      id: data.id,
-      slug: data.slug,
-      name: data.name,
-      icon: data.icon,
-      sortOrder: Number(data.sort_order) || 0,
-      isActive: Boolean(data.is_active),
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    };
+    if (!error && data) {
+      return {
+        id: data.id,
+        slug: data.slug,
+        name: data.name,
+        icon: data.icon,
+        sortOrder: Number(data.sort_order) || 0,
+        isActive: Boolean(data.is_active),
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+    }
   } catch {
-    return null;
+    // offline fallback
   }
+
+  return (
+    DEFAULT_FALLBACK_CATEGORIES.find(
+      (c) => c.id === id || c.slug === id || c.name.toLowerCase() === id.toLowerCase()
+    ) || null
+  );
 }
 
 export async function getCategoryBySlug(slug: string): Promise<CategoryRecord | null> {

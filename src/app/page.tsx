@@ -80,11 +80,10 @@ export default function Home() {
 
   useEffect(() => {
     const loadData = () => {
-      const t = Date.now();
       Promise.all([
-        fetch(`/api/products?t=${t}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
-        fetch(`/api/categories?t=${t}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
-        fetch(`/api/banners?t=${t}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch("/api/products").then(r => r.json()).catch(() => ({ data: [] })),
+        fetch("/api/categories").then(r => r.json()).catch(() => ({ data: [] })),
+        fetch("/api/banners").then(r => r.json()).catch(() => ({ data: [] })),
       ]).then(([prodRes, catRes, banRes]) => {
         if (prodRes?.success && Array.isArray(prodRes.data)) {
           setProductList(prodRes.data);
