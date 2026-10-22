@@ -8,6 +8,7 @@ import CartDrawer from "@/components/CartDrawer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import JsonLd from "@/components/seo/JsonLd";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -56,26 +57,6 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Structured Data (JSON-LD) untuk LocalBusiness / Printing Service
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "Cetak.inc — Percetakan & Advertising Studio",
-    "image": "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=1200&auto=format&fit=crop",
-    "description": "Premium printing & advertising studio modern. Melayani cetak banner, neon box, stiker, dan custom packaging.",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Jl. Percetakan Modern No.88",
-      "addressLocality": "Kota Padang",
-      "addressRegion": "Sumatera Barat",
-      "postalCode": "25111",
-      "addressCountry": "ID"
-    },
-    "telephone": "+6281234567890",
-    "priceRange": "$$",
-    "url": "https://cetakinc.com"
-  };
-
   return (
     <html
       lang="id"
@@ -84,10 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col font-sans bg-gray-50 text-gray-900 selection:bg-brand-accent selection:text-white">
         <CartProvider>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-          />
+          <JsonLd />
           <Navbar />
           <main className="flex-grow flex flex-col pb-20 md:pb-0">{children}</main>
           <BottomNav />

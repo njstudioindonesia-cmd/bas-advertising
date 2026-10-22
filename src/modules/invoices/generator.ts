@@ -203,7 +203,7 @@ export async function markInvoicePaid(
   const now = new Date().toISOString();
 
   try {
-    const inv = await getInvoiceByOrderId(orderId);
+    const inv = await getInvoiceByOrderId(orderId, undefined, true);
     if (!inv) return { success: false };
 
     const updatedSnapshot: InvoiceSnapshot = {

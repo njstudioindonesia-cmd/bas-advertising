@@ -68,7 +68,7 @@ export async function transitionOrderStatus(
   orderId: string,
   targetStatus: OrderStatus,
   user: { id: string; role: UserRole; username: string }
-): Promise<{ success: boolean; newStatus?: OrderStatus; error?: string }> {
+): Promise<{ success: boolean; newStatus?: OrderStatus; order?: Order; error?: string }> {
   let current = await getOrderById(orderId);
 
   // Jika pesanan belum ada di DB tapi ada di fallback, gunakan fallback
@@ -160,5 +160,5 @@ export async function transitionOrderStatus(
     });
   }
 
-  return { success: true, newStatus: targetStatus };
+  return { success: true, newStatus: targetStatus, order: { ...current, status: targetStatus } };
 }

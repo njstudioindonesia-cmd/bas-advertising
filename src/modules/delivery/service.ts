@@ -4,6 +4,7 @@ import { publishEvent } from "@/lib/events";
 import { transitionOrderStatus, getOrderById } from "../orders/service";
 import { getOrders, updateOrderStatus as dbUpdateOrderStatus } from "@/lib/db/queries/orders";
 import { getHubById } from "../hubs/service";
+import { notifyOrderEnRoute, notifyOrderCompleted } from "../notifications";
 
 // In-memory cache untuk lokasi driver terkini (ultra-fast read)
 const driverLocationCache = new Map<string, DriverLocation>();
@@ -386,6 +387,24 @@ export async function updateDeliveryTaskStatus(
           })
           .eq("order_id", orderId);
       } catch {}
+    }
+
+    // 3. Notifikasi WhatsApp Otomatis ke Pelanggan (Non-blocking)
+    if (res.order && res.order.customerPhone) {
+      if (targetStatus === "DALAM_PERJALANAN") {
+        notifyOrderEnRoute({
+          phone: res.order.customerPhone,
+          customerName: res.order.customerName,
+          orderCode: res.order.code,
+          courierName: driver.fullName || driver.username,
+        }).catch((e) => console.warn("[DELIVERY] WA trigger failed:", e));
+      } else if (targetStatus === "SELESAI") {
+        notifyOrderCompleted({
+          phone: res.order.customerPhone,
+          customerName: res.order.customerName,
+          orderCode: res.order.code,
+        }).catch((e) => console.warn("[DELIVERY] WA trigger failed:", e));
+      }
     }
 
     return { success: true, newStatus: targetStatus };

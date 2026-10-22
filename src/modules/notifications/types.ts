@@ -17,4 +17,21 @@ export interface WhatsAppMessageInput {
   total?: number;
   status?: string;
   customMessage?: string;
+  invoiceNo?: string;
+  invoiceUrl?: string;
+  trackingUrl?: string;
+  courierName?: string;
+  courierPhone?: string;
+  estimatedTime?: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
+}
+
+export interface WhatsAppNotificationResult {
+  success: boolean;
+  messageId?: string;
+  provider: "fonnte" | "wablas" | "webhook" | "mock";
+  simulated?: boolean;
+  error?: string;
 }

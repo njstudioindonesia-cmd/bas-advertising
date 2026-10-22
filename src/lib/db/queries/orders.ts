@@ -4,6 +4,11 @@ import { assignHub, getActiveHubs, FALLBACK_HUBS } from "@/modules/hubs";
 import { InternalTariffShippingProvider } from "@/adapters/shipping/internal-tariff";
 import { createOrGetInvoice, generateInvoiceNumber } from "@/modules/invoices";
 import { generateUniqueCode } from "@/modules/payments";
+import { notifyOrderCreated } from "@/modules/notifications";
+import { registerMemoryOrder } from "@/modules/orders/service";
+
+// In-memory fallback untuk ketahanan offline / testing
+const memoryOrders = new Map<string, OrderRecord>();
 
 export interface OrderItemRecord {
   id: string;
@@ -91,13 +96,17 @@ export async function createOrder(
 ): Promise<{ order: OrderRecord | null; invoice?: any; error?: string }> {
   try {
     const productIds = input.items.map((i) => i.productId);
-    const { data: prods, error: pErr } = await supabaseAdmin
-      .from("products")
-      .select("id, name, price, unit")
-      .in("id", productIds);
-
-    if (pErr) {
-      return { order: null, error: `Database error: ${pErr.message}` };
+    let prods: any[] = [];
+    try {
+      const { data, error: pErr } = await supabaseAdmin
+        .from("products")
+        .select("id, name, price, unit")
+        .in("id", productIds);
+      if (!pErr && data) {
+        prods = data;
+      }
+    } catch (e: any) {
+      console.warn("[ORDERS] Supabase products query offline, fallback ke products.json:", e?.message);
     }
 
     const prodMap = new Map<string, any>((prods || []).map((p: any) => [p.id, p]));
@@ -216,31 +225,36 @@ export async function createOrder(
       updated_at: now,
     };
 
-    let { error: ordErr } = await supabaseAdmin.from("orders").insert(fullOrderPayload);
+    let ordErr: any = null;
+    try {
+      const res = await supabaseAdmin.from("orders").insert(fullOrderPayload);
+      ordErr = res.error;
 
-    // Fallback: Jika tabel di Supabase belum di-alter dengan kolom baru, insert payload dasar
-    if (ordErr && (ordErr.message.includes("column") || ordErr.message.includes("schema cache"))) {
-      console.warn("[ORDERS] Fallback insert dengan kolom dasar:", ordErr.message);
-      const basePayload = {
-        id: orderId,
-        code: orderCode,
-        customer_name: input.customerName,
-        customer_phone: input.customerPhone,
-        delivery_method: input.deliveryMethod,
-        address: input.address || null,
-        payment_method: input.paymentMethod,
-        note: input.note || null,
-        subtotal: calculatedSubtotal,
-        status: "BARU",
-        created_at: now,
-        updated_at: now,
-      };
-      const retry = await supabaseAdmin.from("orders").insert(basePayload);
-      ordErr = retry.error;
-    }
-
-    if (ordErr) {
-      return { order: null, error: ordErr.message };
+      // Fallback: Jika tabel di Supabase belum di-alter dengan kolom baru, insert payload dasar
+      if (ordErr && (ordErr.message.includes("column") || ordErr.message.includes("schema cache"))) {
+        console.warn("[ORDERS] Fallback insert dengan kolom dasar:", ordErr.message);
+        const basePayload = {
+          id: orderId,
+          code: orderCode,
+          customer_name: input.customerName,
+          customer_phone: input.customerPhone,
+          delivery_method: input.deliveryMethod,
+          address: input.address || null,
+          payment_method: input.paymentMethod,
+          note: input.note || null,
+          subtotal: calculatedSubtotal,
+          status: "BARU",
+          created_at: now,
+          updated_at: now,
+        };
+        const retry = await supabaseAdmin.from("orders").insert(basePayload);
+        ordErr = retry.error;
+      }
+      if (ordErr) {
+        console.warn("[ORDERS] Gagal insert orders ke Supabase, simpan ke memory fallback:", ordErr.message);
+      }
+    } catch (e: any) {
+      console.warn("[ORDERS] Exception saat insert orders ke Supabase, gunakan memory fallback:", e?.message);
     }
 
     // Insert order items
@@ -250,9 +264,13 @@ export async function createOrder(
       created_at: now,
     }));
 
-    const { error: itemsErr } = await supabaseAdmin.from("order_items").insert(finalItems);
-    if (itemsErr) {
-      console.error("[SUPABASE] Gagal simpan order_items:", itemsErr.message);
+    try {
+      const { error: itemsErr } = await supabaseAdmin.from("order_items").insert(finalItems);
+      if (itemsErr) {
+        console.warn("[SUPABASE] Gagal simpan order_items:", itemsErr.message);
+      }
+    } catch (e: any) {
+      console.warn("[SUPABASE] Exception simpan order_items:", e?.message);
     }
 
     const createdOrder: OrderRecord = {
@@ -312,9 +330,56 @@ export async function createOrder(
         paymentStatus: "BELUM_DIBAYAR",
         issuedAt: now,
       });
+
+      // Kirim Notifikasi WhatsApp Otomatis ke Pelanggan (Non-blocking)
+      notifyOrderCreated({
+        phone: input.customerPhone,
+        customerName: input.customerName,
+        orderCode,
+        total: grandTotal,
+        invoiceNo: createdInvoice?.invoiceNo,
+      }).catch((waErr) => console.warn("[ORDERS] Gagal auto-trigger WA:", waErr));
     } catch (e) {
       console.warn("[ORDERS] Gagal auto-generate invoice:", e);
     }
+
+    // Register ke in-memory cache untuk fallback lokal/offline/testing
+    memoryOrders.set(orderId, createdOrder);
+    memoryOrders.set(orderCode, createdOrder);
+    try {
+      registerMemoryOrder({
+        id: orderId,
+        code: orderCode,
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        deliveryMethod: input.deliveryMethod,
+        address: input.address || null,
+        destLat: input.destLat,
+        destLng: input.destLng,
+        destAddress: input.destAddress,
+        destNote: input.destNote,
+        deliveryFee: validatedDeliveryFee,
+        paymentMethod: input.paymentMethod,
+        paymentStatus: "UNPAID",
+        uniqueCode: 0,
+        hubId: assignedHubId,
+        note: input.note || null,
+        subtotal: calculatedSubtotal,
+        status: "BARU",
+        items: finalItems.map((it) => ({
+          id: it.id,
+          orderId,
+          productId: it.product_id,
+          productName: it.product_name,
+          price: it.product_price,
+          qty: it.qty,
+          subtotal: it.subtotal,
+          designNote: it.design_note,
+        })),
+        createdAt: now,
+        updatedAt: now,
+      });
+    } catch {}
 
     return { order: createdOrder, invoice: createdInvoice };
   } catch (err: any) {
@@ -396,7 +461,11 @@ export async function getOrderById(id: string): Promise<OrderRecord | null> {
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error || !data) {
+      const memory = memoryOrders.get(id);
+      if (memory) return memory;
+      return null;
+    }
 
     const { note: cleanNote, courier } = extractCourierInfo(data.note, data);
 
@@ -426,6 +495,8 @@ export async function getOrderById(id: string): Promise<OrderRecord | null> {
       createdAt: data.created_at,
     };
   } catch {
+    const memory = memoryOrders.get(id);
+    if (memory) return memory;
     return null;
   }
 }
@@ -436,6 +507,17 @@ export async function updateOrderStatus(
   courierData?: CourierInfo | null
 ): Promise<boolean> {
   const now = new Date().toISOString();
+
+  // Update in-memory fallback cache
+  const memory = memoryOrders.get(id);
+  if (memory) {
+    memory.status = status;
+    if (courierData) {
+      memory.courier = courierData;
+    }
+    memoryOrders.set(memory.id, memory);
+    if (memory.code) memoryOrders.set(memory.code, memory);
+  }
 
   if (courierData && (courierData.name || courierData.plate)) {
     // 1. Coba update ke kolom native jika kolom sudah ada di Supabase

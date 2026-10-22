@@ -4,6 +4,7 @@ import { transitionOrderStatus } from "../orders/service";
 import { publishEvent } from "@/lib/events";
 import { logAudit } from "@/lib/db/queries/audit";
 import { markInvoicePaid } from "../invoices";
+import { notifyPaymentVerified } from "../notifications";
 
 /**
  * In-memory fallback cache untuk payments jika Supabase cloud belum termigrasi
@@ -279,6 +280,16 @@ export async function verifyPayment(
       entityId: paymentId,
       diff: { orderId, status: "VERIFIED" },
     });
+
+    // 6. Notifikasi WhatsApp Otomatis ke Pelanggan (Non-blocking)
+    const paidOrder = res.order;
+    if (paidOrder && paidOrder.customerPhone) {
+      notifyPaymentVerified({
+        phone: paidOrder.customerPhone,
+        customerName: paidOrder.customerName,
+        orderCode: paidOrder.code,
+      }).catch((e) => console.warn("[PAYMENTS] WA trigger failed:", e));
+    }
 
     return { success: true };
   } catch (err: any) {
