@@ -1,4 +1,4 @@
-const CACHE_NAME = "cetakinc-pwa-v2";
+const CACHE_NAME = "cetakinc-pwa-v3";
 const STATIC_ASSETS = [
   "/",
   "/produk",
@@ -7,6 +7,17 @@ const STATIC_ASSETS = [
   "/icon-512.png",
   "/logo.png",
   "/manifest.webmanifest"
+];
+
+// Rute privat yang dilarang keras masuk ke cache offline demi keamanan & privasi data pengguna
+const PRIVATE_ROUTES = [
+  "/api/",
+  "/urang-dalam-bas-adv",
+  "/admin",
+  "/vendor",
+  "/driver",
+  "/invoice",
+  "/auth"
 ];
 
 // Install: Cache essential static shell
@@ -19,7 +30,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate: Clean up old caches
+// Activate: Clean up old caches (v1, v2 flusher)
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -35,17 +46,22 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: Network first with Cache fallback for HTML; Cache first with Network fallback for static assets
+// Fetch: Hardened network & caching strategy
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Jangan cache API routes atau Admin portal
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/urang-dalam-bas-adv")) {
+  // 1. Abaikan semua request cross-origin (hanya kelola domain aplikasi sendiri)
+  if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Khusus dokumen HTML: Network first, fallback ke cache jika offline
+  // 2. Cegah caching pada semua rute API, portal admin, vendor, driver, dan invoice
+  if (PRIVATE_ROUTES.some((route) => url.pathname.startsWith(route))) {
+    return;
+  }
+
+  // 3. Khusus dokumen HTML: Network first, fallback ke cache jika offline
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
@@ -92,12 +108,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Khusus Gambar, Font, Icon, CSS/JS: Stale-while-revalidate
+  // 4. Khusus Gambar, Font, Icon, dan CSS: Stale-while-revalidate
+  // Catatan: Script .js dilewati dari SW caching agar tidak memicu ChunkLoadError Next.js
   if (
     request.destination === "image" ||
     request.destination === "font" ||
-    request.destination === "style" ||
-    request.destination === "script"
+    request.destination === "style"
   ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
@@ -139,6 +155,17 @@ self.addEventListener("push", (event) => {
     }
   }
 
+  // Sanitasi URL notifikasi untuk mencegah Open Redirect / Phishing
+  let sanitizedUrl = data.url || (data.orderCode ? `/lacak?code=${data.orderCode}` : "/lacak");
+  if (
+    typeof sanitizedUrl !== "string" ||
+    !sanitizedUrl.startsWith("/") ||
+    sanitizedUrl.startsWith("//") ||
+    sanitizedUrl.includes("://")
+  ) {
+    sanitizedUrl = "/lacak";
+  }
+
   const options = {
     body: data.body,
     icon: data.icon || "/icon-192.png",
@@ -147,7 +174,7 @@ self.addEventListener("push", (event) => {
     tag: data.orderCode || "cetakinc-order-status",
     renotify: true,
     data: {
-      url: data.url || (data.orderCode ? `/lacak?code=${data.orderCode}` : "/lacak"),
+      url: sanitizedUrl,
     },
     actions: [
       { action: "track", title: "🗺️ Buka Peta Live" },
@@ -163,7 +190,17 @@ self.addEventListener("notificationclick", (event) => {
 
   if (event.action === "close") return;
 
-  const targetUrl = (event.notification.data && event.notification.data.url) || "/lacak";
+  let targetUrl = (event.notification.data && event.notification.data.url) || "/lacak";
+
+  // Strict local path validation
+  if (
+    typeof targetUrl !== "string" ||
+    !targetUrl.startsWith("/") ||
+    targetUrl.startsWith("//") ||
+    targetUrl.includes("://")
+  ) {
+    targetUrl = "/lacak";
+  }
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {

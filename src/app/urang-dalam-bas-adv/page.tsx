@@ -224,14 +224,16 @@ export default function UrangDalamAdminPortal() {
   };
 
   const adminFetch = async (url: string, options: RequestInit = {}) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("bas_admin_token") : null;
     const headers = new Headers(options.headers || {});
+    // Fallback token check jika ada legacy token
+    const token = typeof window !== "undefined" ? localStorage.getItem("bas_admin_token") : null;
     if (token && !headers.has("Authorization")) {
       headers.set("Authorization", `Bearer ${token}`);
     }
     const res = await fetch(url, {
       ...options,
       headers,
+      credentials: "include",
     });
     if (res.status === 401 && !url.includes("/api/auth/me")) {
       showToast("Sesi login telah berakhir. Silakan login kembali.", "error");
@@ -525,8 +527,8 @@ export default function UrangDalamAdminPortal() {
       const data = await res.json();
 
       if (data.success) {
-        if (data.token && typeof window !== "undefined") {
-          localStorage.setItem("bas_admin_token", data.token);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("bas_admin_token"); // Gunakan HttpOnly cookies, hapus token dari localStorage
         }
         setIsAuthenticated(true);
         showToast("Selamat datang di Urang Dalam BAS ADV", "success");

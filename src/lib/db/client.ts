@@ -210,7 +210,7 @@ function autoSeedIfEmpty(db: DatabaseSync) {
     const adminCount = db.prepare("SELECT COUNT(*) as count FROM admin_users").get() as any;
     if (!adminCount || adminCount.count === 0) {
       const salt = crypto.randomBytes(16).toString("hex");
-      const defaultPass = process.env.ADMIN_PASSWORD || "admin123";
+      const defaultPass = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV !== "production" ? "UrangDalamBAS2026!#" : crypto.randomBytes(24).toString("hex"));
       const derivedKey = crypto.scryptSync(defaultPass, salt, 64);
       const hash = `${salt}:${derivedKey.toString("hex")}`;
       db.prepare("INSERT INTO admin_users VALUES (?, ?, ?, ?)").run("admin-root", process.env.ADMIN_USERNAME || "admin", hash, now);

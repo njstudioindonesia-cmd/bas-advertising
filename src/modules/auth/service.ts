@@ -83,10 +83,10 @@ export async function authenticate(
   targetRole?: UserRole
 ): Promise<{ success: boolean; token?: string; user?: SessionUser; error?: string }> {
   const envAdminUser = process.env.ADMIN_USERNAME || "admin";
-  const envAdminPass = process.env.ADMIN_PASSWORD || "UrangDalamBAS2026!#";
+  const envAdminPass = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV !== "production" ? "UrangDalamBAS2026!#" : "");
 
-  // 1. Cek Admin Utama (via env atau tabel admin_users)
-  if (identifier === envAdminUser && (password === envAdminPass || password === "admin123")) {
+  // 1. Cek Admin Utama (HANYA valid jika envAdminPass disetel dan cocok)
+  if (envAdminPass && identifier === envAdminUser && password === envAdminPass) {
     const user: SessionUser = {
       id: "admin-root-001",
       username: envAdminUser,
@@ -109,7 +109,7 @@ export async function authenticate(
 
     if (!adminErr && adminRecord) {
       const isValid = verifyPassword(password, adminRecord.password_hash);
-      if (isValid || password === envAdminPass) {
+      if (isValid || (envAdminPass && password === envAdminPass)) {
         const user: SessionUser = {
           id: adminRecord.id,
           username: adminRecord.username,

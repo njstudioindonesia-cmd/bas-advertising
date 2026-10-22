@@ -62,7 +62,7 @@ export async function authenticateAdmin(
   password: string
 ): Promise<{ success: boolean; token?: string; error?: string }> {
   const envAdminUser = process.env.ADMIN_USERNAME || "admin";
-  const envAdminPass = process.env.ADMIN_PASSWORD || "UrangDalamBAS2026!#";
+  const envAdminPass = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV !== "production" ? "UrangDalamBAS2026!#" : "");
 
   try {
     // 1. Cek di Supabase database
@@ -76,7 +76,7 @@ export async function authenticateAdmin(
     if (!error && user) {
       let valid = verifyPassword(password, user.password_hash);
 
-      if (!valid && (password === envAdminPass || password === "admin123" || password === "UrangDalamBAS2026!#")) {
+      if (!valid && envAdminPass && password === envAdminPass) {
         valid = true;
         const newHash = hashPassword(password);
         const [salt] = newHash.split(":");
@@ -95,10 +95,11 @@ export async function authenticateAdmin(
     console.error("[AUTH] Database check failed, falling back to environment check:", dbErr);
   }
 
-  // 2. Fallback aman ke environment credentials
+  // 2. Fallback aman ke environment credentials (hanya jika envAdminPass disetel dan cocok)
   if (
+    envAdminPass &&
     username === envAdminUser &&
-    (password === envAdminPass || password === "admin123" || password === "UrangDalamBAS2026!#")
+    password === envAdminPass
   ) {
     const token = createSignedToken("admin-root", username);
     return { success: true, token };

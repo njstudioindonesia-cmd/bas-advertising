@@ -11,6 +11,7 @@ export async function POST() {
 
     const cookieStore = await cookies();
     cookieStore.delete("bas_admin_token");
+    cookieStore.delete("cetak_auth_token");
 
     return NextResponse.json({ success: true, message: "Berhasil logout." });
   } catch (error: any) {
