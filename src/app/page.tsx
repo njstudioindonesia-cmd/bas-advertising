@@ -872,8 +872,8 @@ export default function Home() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((n) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {[1, 2, 3, 4, 5].map((n) => (
                 <div key={n} className="bg-white rounded-3xl p-4 border border-gray-100 animate-pulse space-y-3">
                   <div className="aspect-square bg-gray-100 rounded-2xl" />
                   <div className="h-4 bg-gray-100 rounded w-2/3" />
@@ -882,8 +882,8 @@ export default function Home() {
               ))}
             </div>
           ) : recommendedList.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {recommendedList.slice(0, 8).map((item) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {recommendedList.slice(0, 10).map((item) => (
                 <QuickProductCard
                   key={item.id}
                   product={item}

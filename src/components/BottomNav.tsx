@@ -9,8 +9,14 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { totalItems, isLoaded } = useCart();
 
-  // Hide completely on Urang Dalam BAS ADV Admin portal
-  if (pathname?.startsWith("/urang-dalam-bas-adv") || pathname?.startsWith("/admin")) {
+  // Sembunyikan bottom navigation pada area portal kerja (Admin, Vendor, Driver) dan Invoice cetak
+  if (
+    pathname?.startsWith("/urang-dalam-bas-adv") ||
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/vendor") ||
+    pathname?.startsWith("/driver") ||
+    pathname?.startsWith("/invoice")
+  ) {
     return null;
   }
 

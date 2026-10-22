@@ -78,7 +78,7 @@ function TrackOrderContent() {
 
   return (
     <div className="bg-[#F8F9FA] min-h-screen pt-20 md:pt-36 pb-28 md:pb-24">
-      <div className="max-w-3xl mx-auto px-3.5 sm:px-6">
+      <div className="max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8">
         
         {/* TOP BREADCRUMB */}
         <div className="flex items-center justify-between mb-4">
@@ -90,12 +90,12 @@ function TrackOrderContent() {
           </Link>
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Live Tracking Mesin Cetak
+            Live Tracking Mesin & Kurir
           </span>
         </div>
 
         {/* HEADER HERO */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm mb-6 text-center">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm mb-6 text-center max-w-2xl mx-auto">
           <div className="w-14 h-14 rounded-2xl bg-orange-50 text-[#F97316] flex items-center justify-center mx-auto mb-3.5 shadow-xs">
             <Printer size={28} />
           </div>
@@ -136,7 +136,7 @@ function TrackOrderContent() {
 
         {/* HASIL TRACKING */}
         {errorMsg && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center text-xs text-red-700 font-medium flex items-center justify-center gap-2 mb-6">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center text-xs text-red-700 font-medium flex items-center justify-center gap-2 mb-6 max-w-md mx-auto">
             <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
@@ -174,127 +174,135 @@ function TrackOrderContent() {
                 </div>
               </div>
 
-              {/* TIMELINE PROGRESS ALA GOJEK */}
-              <div className="bg-[#F8F9FA] rounded-2xl p-4 sm:p-6 border border-gray-100">
-                <div className="text-xs font-black uppercase tracking-wider text-gray-500 mb-6">
-                  Tahapan Pengerjaan Cetak:
+              {/* DESKTOP 2-KOLOM (PETA BESAR KIRI, TIMELINE & RINCIAN KANAN) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* KOLOM KIRI: PETA LIVE TRACKING BESAR */}
+                <div className="lg:col-span-7 space-y-4 lg:sticky lg:top-28">
+                  <LiveOrderTrackingMap order={order} />
+                  <PushNotificationOptIn orderCode={order.code} />
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 relative">
-                  {steps.map((st) => {
-                    const isCompleted = currentStep >= st.num;
-                    const isCurrent = currentStep === st.num;
-                    const Icon = st.icon;
+                {/* KOLOM KANAN: TIMELINE, RINCIAN ITEM, PEMBAYARAN, & AKSI */}
+                <div className="lg:col-span-5 space-y-5">
+                  {/* TIMELINE PROGRESS ALA GOJEK */}
+                  <div className="bg-[#F8F9FA] rounded-2xl p-4 sm:p-5 border border-gray-100">
+                    <div className="text-xs font-black uppercase tracking-wider text-gray-500 mb-4">
+                      Tahapan Pengerjaan Cetak:
+                    </div>
 
-                    return (
-                      <div key={st.num} className="flex flex-col items-center text-center relative z-10">
-                        <div
-                          className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-2.5 transition-all shadow-xs ${
-                            isCurrent
-                              ? "bg-[#F97316] text-white ring-4 ring-orange-100 scale-110"
-                              : isCompleted
-                              ? "bg-emerald-600 text-white"
-                              : "bg-gray-200 text-gray-400"
-                          }`}
-                        >
-                          {isCompleted && !isCurrent ? (
-                            <CheckCircle2 size={22} />
-                          ) : (
-                            <Icon size={20} />
-                          )}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3 relative">
+                      {steps.map((st) => {
+                        const isCompleted = currentStep >= st.num;
+                        const isCurrent = currentStep === st.num;
+                        const Icon = st.icon;
+
+                        return (
+                          <div key={st.num} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-100 shadow-2xs">
+                            <div
+                              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                                isCurrent
+                                  ? "bg-[#F97316] text-white ring-2 ring-orange-100"
+                                  : isCompleted
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-gray-100 text-gray-400"
+                              }`}
+                            >
+                              {isCompleted && !isCurrent ? (
+                                <CheckCircle2 size={18} />
+                              ) : (
+                                <Icon size={16} />
+                              )}
+                            </div>
+
+                            <div className="text-left">
+                              <span className={`text-[11px] font-bold block leading-tight ${isCurrent ? "text-[#F97316]" : isCompleted ? "text-gray-900" : "text-gray-400"}`}>
+                                {st.title}
+                              </span>
+                              <span className="text-[10px] text-gray-400 leading-tight">
+                                {st.desc}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-3.5 pt-3 border-t border-gray-200/60 bg-white/60 p-2.5 rounded-xl flex items-center gap-2 text-xs text-gray-600">
+                      <Clock size={15} className="text-[#F97316] shrink-0" />
+                      <span className="text-[11px]">{order.statusDesc}</span>
+                    </div>
+                  </div>
+
+                  {/* RINCIAN PRODUK YANG DIPESAN */}
+                  <div className="bg-[#F8F9FA] rounded-2xl p-4 border border-gray-100 space-y-2.5">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-gray-500">
+                      Rincian Item Pesanan:
+                    </h3>
+                    <div className="space-y-1.5">
+                      {order.items.map((it: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-white text-xs border border-gray-100/80">
+                          <div className="font-semibold text-gray-800">
+                            <span>{it.qty}x </span>
+                            <span>{it.name}</span>
+                            {it.designNote && (
+                              <span className="block text-[10px] text-gray-400 italic font-normal">
+                                Note: {it.designNote}
+                              </span>
+                            )}
+                          </div>
+                          <div className="font-bold text-gray-900 shrink-0">
+                            {formatRupiah(it.subtotal)}
+                          </div>
                         </div>
+                      ))}
+                    </div>
 
-                        <span className={`text-xs font-bold ${isCurrent ? "text-[#F97316]" : isCompleted ? "text-gray-900" : "text-gray-400"}`}>
-                          {st.title}
-                        </span>
-                        <span className="text-[10px] text-gray-400 leading-tight mt-0.5">
-                          {st.desc}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-gray-200 text-xs sm:text-sm font-extrabold text-gray-900">
+                      <span>Total Tagihan:</span>
+                      <span className="text-[#F97316] text-base">{formatRupiah(order.subtotal)}</span>
+                    </div>
+                  </div>
 
-                <div className="mt-5 pt-4 border-t border-gray-200/60 bg-white/60 p-3 rounded-xl flex items-center gap-2.5 text-xs text-gray-600">
-                  <Clock size={16} className="text-[#F97316] shrink-0" />
-                  <span>{order.statusDesc}</span>
-                </div>
-              </div>
-
-              {/* 🔔 NOTIFIKASI PUSH ALA ASTRO / GOJEK */}
-              <PushNotificationOptIn orderCode={order.code} />
-
-              {/* 🗺️ LIVE GOOGLE MAPS TRACKING ALA GOJEK / ASTRO */}
-              <LiveOrderTrackingMap order={order} />
-
-              {/* RINCIAN PRODUK YANG DIPESAN */}
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-gray-500 mb-3">
-                  Rincian Item Pesanan:
-                </h3>
-                <div className="space-y-2">
-                  {order.items.map((it: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 text-xs">
-                      <div className="font-semibold text-gray-800">
-                        <span>{it.qty}x </span>
-                        <span>{it.name}</span>
-                        {it.designNote && (
-                          <span className="block text-[11px] text-gray-400 italic font-normal">
-                            Note: {it.designNote}
-                          </span>
-                        )}
-                      </div>
-                      <div className="font-bold text-gray-900">
-                        {formatRupiah(it.subtotal)}
+                  {/* STATUS PEMBAYARAN NOTIFIKASI (FASE 4 BLUEPRINT V2) */}
+                  {order.status === "MENUNGGU_VERIFIKASI" && (
+                    <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl flex items-center gap-2.5 text-xs text-amber-800">
+                      <Clock className="text-amber-600 shrink-0" size={16} />
+                      <div>
+                        <strong className="block font-bold">Bukti Pembayaran Sedang Diverifikasi</strong>
+                        <span className="text-[11px]">Admin Urang Dalam sedang mencocokkan mutasi transfer Anda.</span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                  {order.status === "PEMBAYARAN_DITOLAK" && (
+                    <div className="bg-red-50 border border-red-200 p-3.5 rounded-2xl flex items-center gap-2.5 text-xs text-red-800">
+                      <AlertCircle className="text-red-600 shrink-0" size={16} />
+                      <div>
+                        <strong className="block font-bold">Bukti Pembayaran Belum Sesuai</strong>
+                        <span className="text-[11px]">Mohon periksa kembali nominal atau kirimkan struk transfer yang jelas via WhatsApp.</span>
+                      </div>
+                    </div>
+                  )}
 
-                <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-100 text-sm font-extrabold text-gray-900">
-                  <span>Total Tagihan:</span>
-                  <span className="text-[#F97316] text-base">{formatRupiah(order.subtotal)}</span>
-                </div>
-              </div>
-
-              {/* STATUS PEMBAYARAN NOTIFIKASI (FASE 4 BLUEPRINT V2) */}
-              {order.status === "MENUNGGU_VERIFIKASI" && (
-                <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center gap-3 text-xs text-amber-800">
-                  <Clock className="text-amber-600 shrink-0" size={18} />
-                  <div>
-                    <strong className="block font-bold">Bukti Pembayaran Sedang Diverifikasi</strong>
-                    <span>Admin Urang Dalam sedang mencocokkan mutasi transfer Anda. Setelah diverifikasi lunas, pesanan langsung diproduksi oleh workshop cabang.</span>
+                  {/* ACTION BUTTONS: WHATSAPP OPERATOR & NOTA */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    <a
+                      href={`https://wa.me/6282283995544?text=${encodeURIComponent(`Halo Cetak.inc, saya ingin menanyakan status pesanan saya dengan nomor: ${order.code}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-outline flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-2xl border-gray-200 hover:border-emerald-500 hover:text-emerald-600"
+                    >
+                      <Phone size={14} /> Chat WhatsApp CS
+                    </a>
+                    <a
+                      href={`/invoice/${encodeURIComponent(order.code)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-2xl"
+                    >
+                      <FileText size={14} /> Buka Invoice Resmi
+                    </a>
                   </div>
                 </div>
-              )}
-              {order.status === "PEMBAYARAN_DITOLAK" && (
-                <div className="bg-red-50 border border-red-200 p-4 rounded-2xl flex items-center gap-3 text-xs text-red-800">
-                  <AlertCircle className="text-red-600 shrink-0" size={18} />
-                  <div>
-                    <strong className="block font-bold">Bukti Pembayaran Belum Sesuai</strong>
-                    <span>Mohon periksa kembali nominal atau kirimkan struk transfer yang jelas via WhatsApp admin.</span>
-                  </div>
-                </div>
-              )}
-
-              {/* ACTION BUTTONS: WHATSAPP OPERATOR & NOTA */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <a
-                  href={`https://wa.me/6281234567890?text=${encodeURIComponent(`Halo Cetak.inc, saya ingin menanyakan status pesanan saya dengan nomor: ${order.code}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-outline flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-2xl border-gray-200 hover:border-emerald-500 hover:text-emerald-600"
-                >
-                  <Phone size={15} /> Chat Operator Mesin
-                </a>
-                <a
-                  href={`/invoice/${encodeURIComponent(order.code)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-2xl"
-                >
-                  <FileText size={15} /> Buka Invoice Resmi & SPK
-                </a>
               </div>
             </motion.div>
           );
@@ -302,7 +310,7 @@ function TrackOrderContent() {
 
         {/* HELPER JIKA BELUM CARI */}
         {!hasSearched && (
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 text-xs text-gray-500 space-y-2">
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 text-xs text-gray-500 space-y-2 max-w-2xl mx-auto">
             <h4 className="font-bold text-gray-900 flex items-center gap-1.5">
               <Sparkles size={14} className="text-[#F97316]" />
               Tips Melacak Pesanan:

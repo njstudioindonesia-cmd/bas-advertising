@@ -123,8 +123,8 @@ function CatalogContent() {
       {/* 🛍️ PRODUCT GRID (ALA ASTRO: 2-KOLOM MOBILE, 4-KOLOM DESKTOP) */}
       <section className="min-h-[50vh] w-full max-w-full">
         {loading ? (
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 w-full min-w-0">
-            {[1, 2, 3, 4, 5, 6].map((n) => (
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 w-full min-w-0">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
               <div key={n} className="bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-100 animate-pulse space-y-2">
                 <div className="aspect-square bg-gray-100 rounded-xl" />
                 <div className="h-3 bg-gray-100 rounded w-2/3" />
@@ -162,7 +162,7 @@ function CatalogContent() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 w-full min-w-0">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 w-full min-w-0">
             {filteredProducts.map((item) => (
               <QuickProductCard
                 key={item.id}
