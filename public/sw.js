@@ -1,5 +1,5 @@
-const CACHE_NAME = "cetakinc-pwa-v3";
-const STATIC_ASSETS = [
+const CACHE_NAME = "cetakinc-pwa-v4";
+const STATIC_SHELL = [
   "/",
   "/produk",
   "/lacak",
@@ -9,28 +9,20 @@ const STATIC_ASSETS = [
   "/manifest.webmanifest"
 ];
 
-// Rute privat yang dilarang keras masuk ke cache offline demi keamanan & privasi data pengguna
-const PRIVATE_ROUTES = [
-  "/api/",
-  "/urang-dalam-bas-adv",
-  "/admin",
-  "/vendor",
-  "/driver",
-  "/invoice",
-  "/auth"
-];
+// Whitelist: Hanya halaman publik umum yang diizinkan untuk mode offline PWA
+const PUBLIC_OFFLINE_ROUTES = new Set(["/", "/produk", "/lacak"]);
 
 // Install: Cache essential static shell
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_SHELL);
     })
   );
   self.skipWaiting();
 });
 
-// Activate: Clean up old caches (v1, v2 flusher)
+// Activate: Bersihkan semua cache versi terdahulu
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -46,7 +38,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: Hardened network & caching strategy
+// Fetch: Hardened network & caching strategy (Zero Private Routes Leaked)
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -56,13 +48,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 2. Cegah caching pada semua rute API, portal admin, vendor, driver, dan invoice
-  if (PRIVATE_ROUTES.some((route) => url.pathname.startsWith(route))) {
-    return;
-  }
-
-  // 3. Khusus dokumen HTML: Network first, fallback ke cache jika offline
+  // 2. Khusus dokumen HTML navigasi: HANYA proses halaman yang ada di whitelist publik offline.
+  // Semua halaman privat, form, dashboard, dan endpoint lain otomatis bypass langsung ke server (Direct Network).
   if (request.mode === "navigate") {
+    if (!PUBLIC_OFFLINE_ROUTES.has(url.pathname)) {
+      return; // Direct network request, no caching, tidak ada nama URL privat yang ditulis di kode
+    }
+
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -108,8 +100,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 4. Khusus Gambar, Font, Icon, dan CSS: Stale-while-revalidate
-  // Catatan: Script .js dilewati dari SW caching agar tidak memicu ChunkLoadError Next.js
+  // 3. Khusus Gambar, Font, Icon, dan CSS: Stale-while-revalidate
   if (
     request.destination === "image" ||
     request.destination === "font" ||
