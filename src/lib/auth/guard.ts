@@ -11,7 +11,7 @@ export async function requireAdmin(request?: Request): Promise<{ authorized: boo
     }
     if (!token) {
       const cookieHeader = request.headers.get("cookie") || "";
-      const match = cookieHeader.match(/bas_admin_token=([^;]+)/);
+      const match = cookieHeader.match(/(?:cetak_auth_token|bas_admin_token)=([^;]+)/);
       if (match) {
         token = match[1];
       }

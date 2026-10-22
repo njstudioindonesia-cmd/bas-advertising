@@ -2,15 +2,17 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { hashPassword, verifyPassword } from "./password";
+import { verifyRoleToken } from "@/modules/auth/tokens";
 
 const SESSION_COOKIE = "bas_admin_token";
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 hari
 
 function getSecretKey(): string {
   return (
+    process.env.SESSION_SECRET ||
     process.env.ADMIN_JWT_SECRET ||
     process.env.ADMIN_PASSWORD ||
-    "cetak_inc_admin_secret_key_padang_2026_super_secure_salt"
+    "cetak_inc_multi_role_auth_secret_padang_2026_super_key"
   );
 }
 
@@ -114,6 +116,14 @@ export async function authenticateAdmin(
 
 export function validateSession(token: string): boolean {
   if (!token) return false;
+
+  // 1. Validasi via modern multi-role verifyRoleToken
+  const roleCheck = verifyRoleToken(token);
+  if (roleCheck.valid && (roleCheck.user?.role === "admin" || !roleCheck.user?.role)) {
+    return true;
+  }
+
+  // 2. Validasi via signed token legacy
   const signedCheck = verifySignedToken(token);
   return signedCheck.valid;
 }
@@ -123,7 +133,14 @@ export function deleteSession(token: string): void {
 }
 
 export async function getSessionTokenFromCookies(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const c = cookieStore.get(SESSION_COOKIE);
-  return c?.value || null;
+  try {
+    const cookieStore = await cookies();
+    return (
+      cookieStore.get("cetak_auth_token")?.value ||
+      cookieStore.get("bas_admin_token")?.value ||
+      null
+    );
+  } catch {
+    return null;
+  }
 }

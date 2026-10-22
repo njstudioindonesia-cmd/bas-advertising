@@ -235,7 +235,7 @@ export default function UrangDalamAdminPortal() {
       headers,
       credentials: "include",
     });
-    if (res.status === 401 && !url.includes("/api/auth/me")) {
+    if (res.status === 401 && url.includes("/api/auth/me")) {
       showToast("Sesi login telah berakhir. Silakan login kembali.", "error");
       if (typeof window !== "undefined") {
         localStorage.removeItem("bas_admin_token");
@@ -527,8 +527,8 @@ export default function UrangDalamAdminPortal() {
       const data = await res.json();
 
       if (data.success) {
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("bas_admin_token"); // Gunakan HttpOnly cookies, hapus token dari localStorage
+        if (typeof window !== "undefined" && data.token) {
+          localStorage.setItem("bas_admin_token", data.token); // Simpan fallback token untuk Authorization Bearer
         }
         setIsAuthenticated(true);
         showToast("Selamat datang di Urang Dalam BAS ADV", "success");
