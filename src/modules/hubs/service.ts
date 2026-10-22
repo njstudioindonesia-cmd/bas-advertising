@@ -220,6 +220,14 @@ export async function updateHub(
   input: Partial<Hub>
 ): Promise<{ success: boolean; hub?: Hub; error?: string }> {
   try {
+    const fallbackIdx = FALLBACK_HUBS.findIndex((h) => h.id === id);
+    if (fallbackIdx !== -1) {
+      FALLBACK_HUBS[fallbackIdx] = {
+        ...FALLBACK_HUBS[fallbackIdx],
+        ...input,
+      };
+    }
+
     const payload: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
@@ -242,7 +250,15 @@ export async function updateHub(
       .select()
       .maybeSingle();
 
-    if (error) return { success: false, error: error.message };
+    if (error || !data) {
+      if (fallbackIdx !== -1) {
+        return {
+          success: true,
+          hub: FALLBACK_HUBS[fallbackIdx],
+        };
+      }
+      if (error) return { success: false, error: error.message };
+    }
 
     return {
       success: true,
@@ -262,9 +278,13 @@ export async function updateHub(
             isOpen: data.is_open,
             notes: data.notes,
           }
-        : undefined,
+        : (fallbackIdx !== -1 ? FALLBACK_HUBS[fallbackIdx] : undefined),
     };
   } catch (err: any) {
+    const fallbackIdx = FALLBACK_HUBS.findIndex((h) => h.id === id);
+    if (fallbackIdx !== -1) {
+      return { success: true, hub: FALLBACK_HUBS[fallbackIdx] };
+    }
     return { success: false, error: err.message };
   }
 }
