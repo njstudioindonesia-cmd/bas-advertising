@@ -2,19 +2,51 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { extractCourierInfo } from "@/lib/db/queries/orders";
 
+// Helper Masking PII (Kepatuhan UU No. 27/2022 tentang Pelindungan Data Pribadi)
+function maskCustomerName(name?: string): string {
+  if (!name) return "Pelanggan";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].length > 2 ? `${parts[0].slice(0, 2)}***` : `${parts[0]}*`;
+  }
+  return `${parts[0]} ${parts[1][0]}.***`;
+}
+
+function maskPhoneNumber(phone?: string): string {
+  if (!phone || phone.length < 7) return "08**********";
+  const cleanPhone = phone.replace(/\D/g, "");
+  return `${cleanPhone.slice(0, 4)}****${cleanPhone.slice(-3)}`;
+}
+
+function maskAddress(addr?: string): string {
+  if (!addr) return "-";
+  if (addr.length <= 15) return addr;
+  return `${addr.slice(0, 15)}... [Disamarkan]`;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("code") || searchParams.get("q") || "";
 
-    if (!query || query.trim().length < 3) {
+    // 1. Sanitasi input terhadap PostgREST filter injection & karakter liar
+    const clean = query.replace(/[^a-zA-Z0-9-]/g, "").trim();
+
+    if (!clean || clean.length < 4) {
       return NextResponse.json(
-        { success: false, error: "Harap masukkan nomor pesanan atau nomor WhatsApp yang valid." },
+        { success: false, error: "Harap masukkan nomor pesanan atau nomor WhatsApp yang valid (minimal 4 karakter)." },
         { status: 400 }
       );
     }
 
-    const clean = query.trim();
+    // 2. Cegah harvesting massal: jika input berupa angka (nomor telepon), wajib minimal 8 digit
+    const isDigitsOnly = /^\d+$/.test(clean);
+    if (isDigitsOnly && clean.length < 8) {
+      return NextResponse.json(
+        { success: false, error: "Pencarian nomor telepon harus memasukkan minimal 8 digit." },
+        { status: 400 }
+      );
+    }
 
     // Cari berdasarkan kode pesanan atau nomor HP
     const { data: orders, error } = await supabaseAdmin
@@ -22,7 +54,7 @@ export async function GET(request: Request) {
       .select("*, order_items(*)")
       .or(`code.ilike.%${clean}%,customer_phone.ilike.%${clean}%`)
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(3);
 
     if (error || !orders || orders.length === 0) {
       return NextResponse.json(
@@ -146,17 +178,17 @@ export async function GET(request: Request) {
       return {
         id: o.id,
         code: o.code,
-        customerName: o.customer_name,
-        customerPhone: o.customer_phone,
+        customerName: maskCustomerName(o.customer_name),
+        customerPhone: maskPhoneNumber(o.customer_phone),
         status: o.status,
         statusLabel: info.label,
         statusStep: info.step,
         statusDesc: info.desc,
         deliveryMethod: o.delivery_method,
-        address: o.address,
+        address: maskAddress(o.address),
         destLat: o.dest_lat,
         destLng: o.dest_lng,
-        destAddress: o.dest_address,
+        destAddress: maskAddress(o.dest_address),
         paymentMethod: o.payment_method,
         paymentStatus: o.payment_status || "UNPAID",
         hubId: o.hub_id,

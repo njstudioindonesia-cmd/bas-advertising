@@ -37,8 +37,11 @@ export async function optimizeImageBuffer(
   const originalSize = inputBuffer.length;
   const isSvg = mimeType.includes("svg");
 
-  // Jika SVG, biarkan format aslinya (berbasis teks/vektor, sudah sangat ringan)
+  // Jika SVG, pastikan BUKAN untuk folder bukti pembayaran / pengantaran
   if (isSvg) {
+    if (options.folder === "payment-proofs" || options.folder === "delivery-proofs") {
+      throw new Error("Format SVG dilarang keras untuk bukti transaksi demi keamanan sistem.");
+    }
     return {
       buffer: inputBuffer,
       contentType: "image/svg+xml",

@@ -30,8 +30,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "User admin tidak ditemukan di database." }, { status: 404 });
     }
 
+    const envAdminPass = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV !== "production" ? "UrangDalamBAS2026!#" : "");
     const match = verifyPassword(oldPassword, admin.password_hash);
-    if (!match && oldPassword !== (process.env.ADMIN_PASSWORD || "UrangDalamBAS2026!#")) {
+    if (!match && (!envAdminPass || oldPassword !== envAdminPass)) {
       return NextResponse.json({ success: false, error: "Password lama tidak cocok." }, { status: 400 });
     }
 

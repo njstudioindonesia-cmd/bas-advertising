@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { OrderInput } from "@/lib/validators";
-import { assignHub } from "@/modules/hubs";
+import { assignHub, getActiveHubs, FALLBACK_HUBS } from "@/modules/hubs";
+import { InternalTariffShippingProvider } from "@/adapters/shipping/internal-tariff";
 import { createOrGetInvoice, generateInvoiceNumber } from "@/modules/invoices";
 import { generateUniqueCode } from "@/modules/payments";
 
@@ -36,6 +37,9 @@ export interface OrderRecord {
   note: string | null;
   courier?: CourierInfo | null;
   subtotal: number;
+  deliveryFee?: number;
+  delivery_fee?: number;
+  hubId?: string | null;
   status: string;
   items: OrderItemRecord[];
   createdAt: string;
@@ -98,6 +102,28 @@ export async function createOrder(
 
     const prodMap = new Map<string, any>((prods || []).map((p: any) => [p.id, p]));
 
+    // Fallback otomatis ke data products.json jika produk belum tersimpan di Supabase
+    if (prodMap.size < productIds.length) {
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const jsonPath = path.join(process.cwd(), "src", "data", "products.json");
+        if (fs.existsSync(jsonPath)) {
+          const raw = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+          for (const item of raw) {
+            if (!prodMap.has(item.id)) {
+              prodMap.set(item.id, {
+                id: item.id,
+                name: item.name || item.title || "Produk Cetak",
+                price: item.priceNumber || (Number(String(item.price).replace(/\D/g, "")) || 25000),
+                unit: item.unit || "/ pcs",
+              });
+            }
+          }
+        }
+      } catch {}
+    }
+
     const itemsToInsert: any[] = [];
     let calculatedSubtotal = 0;
 
@@ -138,6 +164,37 @@ export async function createOrder(
       } catch {}
     }
 
+    // 4. Kalkulasi & Verifikasi Ongkir Otoritatif di Sisi Server (Anti-Price Tampering)
+    let validatedDeliveryFee = 0;
+    if (input.deliveryMethod === "pickup") {
+      validatedDeliveryFee = 0;
+    } else {
+      if (calculatedSubtotal >= 300000) {
+        validatedDeliveryFee = 0;
+      } else if (input.destLat && input.destLng) {
+        try {
+          const hubs = await getActiveHubs();
+          const targetHub = hubs.find((h) => h.id === assignedHubId) || hubs[0] || FALLBACK_HUBS[0];
+          const provider = new InternalTariffShippingProvider();
+          const quote = await provider.quote({
+            from: { lat: targetHub.lat, lng: targetHub.lng },
+            to: { lat: input.destLat, lng: input.destLng },
+            hubId: targetHub.id,
+            subtotal: calculatedSubtotal,
+          });
+          if (quote) {
+            validatedDeliveryFee = quote.price;
+          } else {
+            validatedDeliveryFee = Math.max(Number(input.deliveryFee) || 8000, 8000);
+          }
+        } catch {
+          validatedDeliveryFee = Math.max(Number(input.deliveryFee) || 8000, 8000);
+        }
+      } else {
+        validatedDeliveryFee = Math.max(Number(input.deliveryFee) || 8000, 8000);
+      }
+    }
+
     const fullOrderPayload: Record<string, any> = {
       id: orderId,
       code: orderCode,
@@ -149,7 +206,7 @@ export async function createOrder(
       dest_lng: input.destLng || null,
       dest_address: input.destAddress || input.address || null,
       dest_note: input.destNote || null,
-      delivery_fee: input.deliveryFee || 0,
+      delivery_fee: validatedDeliveryFee,
       hub_id: assignedHubId,
       payment_method: input.paymentMethod,
       note: input.note || null,
@@ -208,6 +265,9 @@ export async function createOrder(
       paymentMethod: input.paymentMethod,
       note: input.note || null,
       subtotal: calculatedSubtotal,
+      deliveryFee: validatedDeliveryFee,
+      delivery_fee: validatedDeliveryFee,
+      hubId: assignedHubId,
       status: "BARU",
       items: finalItems.map((it) => ({
         id: it.id,
@@ -227,7 +287,7 @@ export async function createOrder(
     let createdInvoice: any = null;
     try {
       const uniqueCode = generateUniqueCode();
-      const deliveryFee = input.deliveryFee || 0;
+      const deliveryFee = validatedDeliveryFee;
       const grandTotal = calculatedSubtotal + deliveryFee + uniqueCode;
 
       createdInvoice = await createOrGetInvoice(orderId, {

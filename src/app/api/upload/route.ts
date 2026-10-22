@@ -2,14 +2,20 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/guard";
 import { uploadOptimizedImage } from "@/lib/storage-helper";
 
-const ALLOWED_MIME_TYPES = [
+// Format raster bitmap murni untuk folder publik (Anti-XSS: SVG dilarang keras bagi publik)
+const RASTER_SAFE_MIMES = [
   "image/jpeg",
   "image/png",
   "image/webp",
+  "image/heic",
+  "image/heif",
+];
+
+// Admin diizinkan mengunggah SVG untuk logo atau banner
+const ADMIN_ALLOWED_MIMES = [
+  ...RASTER_SAFE_MIMES,
   "image/gif",
   "image/svg+xml",
-  "image/heic",
-  "image/heif"
 ];
 
 // Izinkan hingga 15 MB foto mentah dari kamera HP modern karena Sharp akan langsung memampatkannya
@@ -25,9 +31,10 @@ export async function POST(request: Request) {
     const formFolder = formData.get("folder") as string | null;
 
     const targetFolder = formFolder || queryFolder || "products";
+    const isPublicUpload = targetFolder === "payment-proofs" || targetFolder === "delivery-proofs";
 
-    // Izinkan unggahan bukti bayar dan bukti antar kurir tanpa sesi admin
-    if (targetFolder !== "payment-proofs" && targetFolder !== "delivery-proofs") {
+    // 1. Verifikasi hak akses admin jika bukan folder publik transaksi
+    if (!isPublicUpload) {
       const auth = await requireAdmin(request);
       if (!auth.authorized) return auth.response!;
     }
@@ -36,9 +43,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "File gambar tidak ditemukan" }, { status: 400 });
     }
 
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    // 2. Proteksi Stored XSS: Cegah unggahan SVG pada bukti pembayaran / pengantaran
+    const allowedList = isPublicUpload ? RASTER_SAFE_MIMES : ADMIN_ALLOWED_MIMES;
+    if (!allowedList.includes(file.type.toLowerCase())) {
       return NextResponse.json(
-        { success: false, error: "Format gambar tidak didukung. Harap gunakan JPEG, PNG, WEBP, atau GIF." },
+        {
+          success: false,
+          error: isPublicUpload
+            ? "Format file tidak diizinkan. Bukti transaksi wajib berupa foto (JPG, PNG, WEBP)."
+            : "Format gambar tidak didukung. Harap gunakan JPEG, PNG, WEBP, atau GIF.",
+        },
         { status: 400 }
       );
     }

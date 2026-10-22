@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getInvoiceByNo, getInvoiceByOrderId } from "@/modules/invoices";
+import { getCurrentUser } from "@/modules/auth";
 
 export async function GET(
   request: Request,
@@ -10,12 +11,16 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token") || undefined;
 
-    // Coba cari berdasarkan nomor invoice
-    let invoice = await getInvoiceByNo(no, token);
+    // Verifikasi apakah pemanggil memiliki sesi otentikasi Admin atau Vendor yang sah
+    const user = await getCurrentUser(request);
+    const isPrivileged = user?.role === "admin" || user?.role === "vendor";
+
+    // Coba cari berdasarkan nomor invoice dengan strict token enforcement
+    let invoice = await getInvoiceByNo(no, token, isPrivileged);
 
     // Jika tidak ditemukan dan param mungkin adalah orderId
     if (!invoice) {
-      invoice = await getInvoiceByOrderId(no);
+      invoice = await getInvoiceByOrderId(no, token, isPrivileged);
     }
 
     if (!invoice) {

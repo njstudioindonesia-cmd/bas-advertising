@@ -34,7 +34,7 @@ export async function GET(
       }
     }
 
-    const invoice = await getInvoiceByOrderId(orderId);
+    const invoice = await getInvoiceByOrderId(orderId, undefined, true);
 
     return NextResponse.json({
       success: true,

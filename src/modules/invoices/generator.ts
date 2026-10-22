@@ -106,10 +106,12 @@ export async function createOrGetInvoice(
 
 export async function getInvoiceByNo(
   invoiceNo: string,
-  token?: string
+  token?: string,
+  isAdmin: boolean = false
 ): Promise<InvoiceRecord | null> {
   // Decode URL format jika nomor invoice ada garis miring ter-encode
-  const decodedNo = decodeURIComponent(invoiceNo);
+  const decodedNo = decodeURIComponent(invoiceNo).trim();
+  if (!decodedNo || decodedNo.length < 5) return null;
 
   try {
     let query = supabaseAdmin
@@ -119,9 +121,11 @@ export async function getInvoiceByNo(
 
     const { data, error } = await query.maybeSingle();
     if (!error && data) {
-      // Jika token disediakan, validasi token
-      if (token && data.public_token && data.public_token !== token) {
-        return null;
+      // PERTAHANAN ANTI-IDOR: Publik wajib menyediakan token hash 32-karakter yang valid
+      if (!isAdmin) {
+        if (!token || typeof token !== "string" || !data.public_token || data.public_token.trim() !== token.trim()) {
+          return null;
+        }
       }
       return {
         id: data.id,
@@ -139,8 +143,10 @@ export async function getInvoiceByNo(
 
   const cached = fallbackInvoices.get(decodedNo) || fallbackInvoices.get(invoiceNo);
   if (cached) {
-    if (token && cached.publicToken && cached.publicToken !== token) {
-      return null;
+    if (!isAdmin) {
+      if (!token || typeof token !== "string" || !cached.publicToken || cached.publicToken.trim() !== token.trim()) {
+        return null;
+      }
     }
     return cached;
   }
@@ -148,7 +154,11 @@ export async function getInvoiceByNo(
   return null;
 }
 
-export async function getInvoiceByOrderId(orderId: string): Promise<InvoiceRecord | null> {
+export async function getInvoiceByOrderId(
+  orderId: string,
+  token?: string,
+  isAdmin: boolean = false
+): Promise<InvoiceRecord | null> {
   try {
     const { data, error } = await supabaseAdmin
       .from("invoices")
@@ -157,6 +167,11 @@ export async function getInvoiceByOrderId(orderId: string): Promise<InvoiceRecor
       .maybeSingle();
 
     if (!error && data) {
+      if (!isAdmin) {
+        if (!token || typeof token !== "string" || !data.public_token || data.public_token.trim() !== token.trim()) {
+          return null;
+        }
+      }
       return {
         id: data.id,
         invoiceNo: data.invoice_no,
@@ -169,7 +184,17 @@ export async function getInvoiceByOrderId(orderId: string): Promise<InvoiceRecor
     }
   } catch {}
 
-  return fallbackInvoices.get(orderId) || null;
+  const cached = fallbackInvoices.get(orderId);
+  if (cached) {
+    if (!isAdmin) {
+      if (!token || typeof token !== "string" || !cached.publicToken || cached.publicToken.trim() !== token.trim()) {
+        return null;
+      }
+    }
+    return cached;
+  }
+
+  return null;
 }
 
 export async function markInvoicePaid(
