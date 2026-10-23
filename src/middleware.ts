@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || "https://bas-advertising-admin.vercel.app";
+  const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || "https://urangdalambas.vercel.app";
 
   // 1. Redirect admin & operational portals ke domain terpisah Vercel
   if (pathname === "/admin" || pathname === "/admin/") {
