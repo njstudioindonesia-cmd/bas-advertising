@@ -10,11 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: [
           "/api/",
-          "/urang-dalam-bas-adv",
-          "/urang-dalam-bas-adv/",
-          "/admin",
-          "/vendor/",
-          "/driver/",
           "/invoice/",
         ],
       },

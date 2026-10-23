@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function AdminPage() {
-  redirect("/urang-dalam-bas-adv");
+  const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || "https://bas-advertising-admin.vercel.app";
+  redirect(adminUrl);
 }

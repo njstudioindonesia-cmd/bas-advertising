@@ -48,6 +48,9 @@ backups/
 # vercel
 .vercel
 
+# dedicated admin portal repository (managed independently)
+/admin/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

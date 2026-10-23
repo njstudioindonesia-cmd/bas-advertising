@@ -3,62 +3,23 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || "https://bas-advertising-admin.vercel.app";
 
-  // 1. Redirect legacy /admin to /urang-dalam-bas-adv
+  // 1. Redirect admin & operational portals ke domain terpisah Vercel
   if (pathname === "/admin" || pathname === "/admin/") {
-    return NextResponse.redirect(new URL("/urang-dalam-bas-adv", request.url), 307);
+    return NextResponse.redirect(new URL(adminUrl), 307);
+  }
+  if (pathname === "/urang-dalam-bas-adv" || pathname.startsWith("/urang-dalam-bas-adv/")) {
+    return NextResponse.redirect(new URL(adminUrl), 307);
+  }
+  if (pathname === "/driver" || pathname.startsWith("/driver/")) {
+    return NextResponse.redirect(new URL(`${adminUrl}/driver`), 307);
+  }
+  if (pathname === "/vendor" || pathname.startsWith("/vendor/")) {
+    return NextResponse.redirect(new URL(`${adminUrl}/vendor`), 307);
   }
 
-  // 2. Multi-Role Route Guarding
-  const token =
-    request.cookies.get("cetak_auth_token")?.value ||
-    request.cookies.get("bas_admin_token")?.value;
-
-  let userRole: "customer" | "admin" | "vendor" | "driver" | null = null;
-
-  if (token && typeof token === "string" && token.includes(".")) {
-    try {
-      const [b64] = token.split(".");
-      // Decode URL-safe Base64
-      const binaryStr = atob(b64.replace(/-/g, "+").replace(/_/g, "/"));
-
-      if (binaryStr.includes("|")) {
-        const [, , role, , expiresAtStr] = binaryStr.split("|");
-        const exp = Number(expiresAtStr);
-        if (!Number.isNaN(exp) && Date.now() < exp) {
-          userRole = role as any;
-        }
-      } else if (binaryStr.includes(":")) {
-        const [, , expiresAtStr] = binaryStr.split(":");
-        const exp = Number(expiresAtStr);
-        if (!Number.isNaN(exp) && Date.now() < exp) {
-          userRole = "admin"; // Legacy token diasumsikan admin
-        }
-      }
-    } catch {
-      userRole = null;
-    }
-  }
-
-  // Proteksi Portal Vendor (/vendor/*)
-  if (pathname.startsWith("/vendor") && pathname !== "/vendor/login") {
-    if (!userRole || (userRole !== "vendor" && userRole !== "admin")) {
-      const loginUrl = new URL("/vendor/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  // Proteksi Portal Driver (/driver/*)
-  if (pathname.startsWith("/driver") && pathname !== "/driver/login") {
-    if (!userRole || (userRole !== "driver" && userRole !== "admin")) {
-      const loginUrl = new URL("/driver/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  // 3. Tambahkan Security Headers standar industri & perbankan
+  // 2. Tambahkan Security Headers standar industri & perbankan
   const response = NextResponse.next();
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
@@ -73,6 +34,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
+    "/urang-dalam-bas-adv/:path*",
     "/vendor/:path*",
     "/driver/:path*",
     "/((?!_next/static|_next/image|favicon.ico|uploads/|sw.js|manifest.webmanifest).*)",
