@@ -207,7 +207,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen pt-26 sm:pt-28 md:pt-36 pb-20 md:pb-24">
+    <div className="bg-white min-h-screen pt-24 sm:pt-28 md:pt-32 pb-20 md:pb-24">
       {/* ======================================================== */}
       {/* 📱 MOBILE APP HOME EXPERIENCE                           */}
       {/* ======================================================== */}
@@ -534,83 +534,110 @@ export default function Home() {
       {/* 💻 DESKTOP LAYOUT                                       */}
       {/* ======================================================== */}
       <div className="hidden md:block">
-        {/* HERO SECTION CARD - MINIMALIST & CLEAN */}
-        <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="bg-white rounded-3xl overflow-hidden shadow-sm relative flex flex-col-reverse lg:flex-row border border-neutral-200/70"
-          >
+        {/* HERO SECTION - MODERN MINIMALIST STUDIO */}
+        <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto pt-4 sm:pt-6 pb-14 lg:pb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
             {/* Left Content */}
-            <div className="lg:w-[60%] p-8 sm:p-10 lg:p-16 flex flex-col justify-center relative z-10 bg-white">
-              <div className="inline-flex items-center gap-1.5 bg-neutral-100 text-neutral-700 font-medium text-[11px] tracking-wider uppercase px-3 py-1 rounded-full mb-6 w-fit">
-                Solusi Percetakan & Advertising
+            <div className="lg:col-span-7 flex flex-col justify-center">
+              <div className="inline-flex items-center gap-2 bg-neutral-100 px-3.5 py-1.5 rounded-full w-fit mb-6 text-neutral-600 text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Percetakan & Advertising Studio • Padang</span>
               </div>
               
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-neutral-900 leading-[1.15] mb-4 tracking-tight">
-                Cari Cetakan Apapun, <br />
-                <span className="text-neutral-500 font-semibold">Kami Kerjakan Presisi.</span>
+              <h1 className="text-4xl sm:text-5xl lg:text-[52px] font-extrabold text-neutral-900 leading-[1.12] mb-5 tracking-tight">
+                Cetak Cepat, Presisi <br />
+                <span className="text-neutral-400 font-semibold">& Kualitas Terjamin.</span>
               </h1>
               
-              <p className="text-neutral-500 text-base lg:text-lg mb-8 max-w-lg leading-relaxed">
-                Spanduk kilat, stiker label kemasan, seragam crew, merchandise & kebutuhan branding kustom berkualitas tinggi.
+              <p className="text-neutral-500 text-base lg:text-lg mb-8 max-w-xl leading-relaxed font-normal">
+                Spanduk kilat, stiker & label kemasan, seragam crew, merchandise, hingga signage akrilik. Konsultasi dan pesan langsung via WhatsApp dalam hitungan menit.
               </p>
               
-              {/* SEARCH BAR */}
-              <form onSubmit={handleSearch} className="max-w-lg relative mb-4 rounded-2xl group">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-neutral-400 group-focus-within:text-neutral-900 transition-colors" />
+              {/* SEARCH CAPSULE */}
+              <form onSubmit={handleSearch} className="max-w-xl w-full relative mb-3">
+                <div className="relative flex items-center bg-white border border-neutral-300 hover:border-neutral-400 focus-within:border-neutral-900 focus-within:ring-4 focus-within:ring-neutral-100 rounded-2xl p-1.5 shadow-xs transition-all">
+                  <div className="pl-3.5 pr-2 text-neutral-400">
+                    <Search size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Cari spanduk, stiker label, box kemasan..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-transparent text-sm sm:text-base py-2.5 px-1 text-neutral-900 placeholder:text-neutral-400 focus:outline-none"
+                  />
+                  <button 
+                    type="submit"
+                    className="bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-colors shadow-2xs shrink-0"
+                  >
+                    Cari Produk
+                  </button>
                 </div>
-                <input
-                  type="text"
-                  placeholder="Ketik produk... (Contoh: Spanduk, Stiker, Paper Cup)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="block w-full pl-14 pr-[110px] py-4 bg-neutral-50 hover:bg-white focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-2xl text-sm sm:text-base focus:outline-none transition-all shadow-2xs"
-                />
-                <button 
-                  type="submit"
-                  className="absolute right-2 top-2 bottom-2 bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs sm:text-sm px-5 rounded-xl flex items-center justify-center transition-colors shadow-2xs"
-                >
-                  Cari
-                </button>
               </form>
+
+              {/* Quick Search Chips */}
+              <div className="flex items-center gap-2 flex-wrap text-xs text-neutral-400">
+                <span className="font-medium text-neutral-500">Paling dicari:</span>
+                {[
+                  { label: "Spanduk Kilat", q: "Spanduk" },
+                  { label: "Stiker Label", q: "Stiker" },
+                  { label: "Packaging", q: "Packaging" },
+                  { label: "Kaos Sablon", q: "Kaos" },
+                ].map((tag) => (
+                  <button
+                    key={tag.label}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(tag.q);
+                      router.push(`/produk?q=${encodeURIComponent(tag.q)}`);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900 transition-colors text-[11px] font-medium"
+                  >
+                    {tag.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Right Image */}
-            <div className="lg:w-[40%] h-[300px] sm:h-[400px] lg:h-auto relative bg-neutral-100">
-              <Image 
-                src="https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=1600&auto=format&fit=crop" 
-                alt="Fasilitas percetakan modern Cetak.inc" 
-                fill 
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover"
-                priority
-              />
-            </div>
-          </motion.div>
-        </section>
+            {/* Right Visual Showcase */}
+            <div className="lg:col-span-5 relative">
+              <div className="relative aspect-[4/3] lg:aspect-square w-full rounded-3xl overflow-hidden bg-neutral-100 border border-neutral-200/70 shadow-sm group">
+                <Image 
+                  src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=1200&auto=format&fit=crop" 
+                  alt="Studio percetakan dan packaging modern Cetak.inc" 
+                  fill 
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  priority
+                />
+                
+                {/* Subtle Floating Glass Badges */}
+                <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md border border-neutral-200/80 rounded-xl px-3 py-1.5 shadow-sm text-xs font-semibold text-neutral-800">
+                  ⚡ Selesai Tepat Waktu
+                </div>
 
-        {/* TRUST SIGNALS ROW - MINIMALIST */}
-        <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+                <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md border border-neutral-200/80 rounded-xl px-3.5 py-1.5 shadow-sm text-xs font-semibold text-neutral-800">
+                  ⭐ Kualitas Terjamin • Padang
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Integrated Minimalist Trust Strip */}
+          <div className="mt-12 lg:mt-14 pt-8 border-t border-neutral-200/70 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {[
-              { icon: <Clock size={18} className="text-neutral-700" />, title: "Proses Cepat", desc: "Selesai tepat waktu & presisi." },
-              { icon: <ShieldCheck size={18} className="text-neutral-700" />, title: "Pemesanan Instan", desc: "Langsung via WhatsApp tanpa ribet." },
-              { icon: <Truck size={18} className="text-neutral-700" />, title: "Antar Se-Padang", desc: "Layanan kirim cepat & aman." },
-              { icon: <Award size={18} className="text-neutral-700" />, title: "Kualitas Terjamin", desc: "Bahan bermutu & hasil tajam." }
+              { icon: <Clock size={16} className="text-neutral-700" />, title: "Proses Cepat", desc: "Selesai tepat waktu & presisi." },
+              { icon: <ShieldCheck size={16} className="text-neutral-700" />, title: "Pemesanan Instan", desc: "Langsung via WhatsApp tanpa ribet." },
+              { icon: <Truck size={16} className="text-neutral-700" />, title: "Antar Se-Padang", desc: "Layanan kirim cepat & aman." },
+              { icon: <Award size={16} className="text-neutral-700" />, title: "Kualitas Terjamin", desc: "Bahan bermutu & hasil tajam." }
             ].map((feature, idx) => (
-              <div 
-                key={idx} 
-                className="bg-white p-4 sm:p-4.5 rounded-2xl border border-neutral-200/70 flex items-center gap-3.5 hover:border-neutral-300 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0">
+              <div key={idx} className="flex items-start gap-3.5">
+                <div className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 mt-0.5">
                   {feature.icon}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-neutral-900 text-xs sm:text-sm mb-0.5">{feature.title}</h3>
-                  <p className="text-[11px] text-neutral-500 leading-tight">{feature.desc}</p>
+                  <h4 className="font-semibold text-neutral-900 text-xs sm:text-sm leading-snug">{feature.title}</h4>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">{feature.desc}</p>
                 </div>
               </div>
             ))}
