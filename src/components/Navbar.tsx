@@ -46,16 +46,23 @@ export default function Navbar() {
     return null;
   }
 
+  let cleanWa = String(settings["contact.whatsapp"] || "6282172725267").replace(/[^0-9]/g, "");
+  if (cleanWa.startsWith("0")) {
+    cleanWa = "62" + cleanWa.slice(1);
+  } else if (!cleanWa.startsWith("62")) {
+    cleanWa = "62" + cleanWa;
+  }
+
   return (
     <header className="fixed top-0 z-50 w-full flex flex-col items-center pointer-events-none">
       {/* ========================================================= */}
-      {/* 📱 MOBILE HEADER BAR                                      */}
+      {/* 📱 MOBILE HEADER BAR - ULTRA-MODERN GLASS & CLEAN         */}
       {/* ========================================================= */}
-      <div className="md:hidden w-full pointer-events-auto bg-white/95 backdrop-blur-md border-b border-neutral-200/60 shadow-2xs pt-safe transition-all">
+      <div className="md:hidden w-full pointer-events-auto bg-white/90 backdrop-blur-xl border-b border-neutral-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] pt-safe transition-all">
         {/* Top App Header Row */}
         <div className="flex items-center justify-between px-3.5 py-2.5">
           <Link href="/" className="flex items-center gap-2.5 group min-w-0">
-            <div className="relative w-8 h-8 rounded-xl bg-white border border-neutral-200/80 p-0.5 shadow-2xs shrink-0 overflow-hidden flex items-center justify-center">
+            <div className="relative w-8 h-8 rounded-xl bg-white border border-neutral-200/80 p-0.5 shadow-2xs shrink-0 overflow-hidden flex items-center justify-center group-active:scale-95 transition-transform">
               <Image
                 src="/logo-icon.png"
                 alt="Cetak.inc"
@@ -66,44 +73,44 @@ export default function Navbar() {
               />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-[16px] tracking-tight text-neutral-900 leading-none truncate">
+              <span className="font-extrabold text-[16px] tracking-tight text-neutral-950 leading-none truncate">
                 Cetak<span className="text-[#00A3E0]">.</span>inc
               </span>
-              <span className="text-[10px] font-normal text-neutral-400 flex items-center gap-1.5 mt-0.5 truncate">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                <span className="truncate">{settings["location.chipLabel"] || "Kota Padang & Sekitarnya"}</span>
+              <span className="text-[10px] font-medium text-neutral-400 flex items-center gap-1.5 mt-0.5 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="truncate">{settings["location.chipLabel"] || "Kota Padang • Online"}</span>
               </span>
             </div>
           </Link>
           <a
-            href="https://wa.me/6282172725267?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20pemesanan%20cetak"
+            href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi & pesan cetak.")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1.5 rounded-full bg-neutral-900 text-white font-medium text-[11px] inline-flex items-center gap-1 shadow-2xs active:scale-95 transition-transform"
+            className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-[11px] inline-flex items-center gap-1.5 border border-emerald-200/70 shadow-2xs active:scale-95 transition-all"
           >
-            <MessageCircle size={12} className="text-emerald-400" />
-            <span>WA</span>
+            <MessageCircle size={13} className="text-emerald-600" />
+            <span>Konsultasi</span>
           </a>
         </div>
 
         {/* Mobile Search Bar Row */}
-        <div className="px-3 pb-2.5">
+        <div className="px-3.5 pb-2.5">
           <form onSubmit={handleSearch} className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-400">
-              <Search size={15} />
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+              <Search size={15} strokeWidth={2} />
             </div>
             <input
               type="text"
-              placeholder="Cari spanduk, stiker, packaging..."
+              placeholder="Cari spanduk, stiker, packaging, akrilik..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-9 py-2 bg-neutral-100 focus:bg-white text-xs font-normal rounded-full border border-neutral-200/80 focus:border-neutral-900 outline-none transition-all placeholder:text-neutral-400"
+              className="w-full pl-9 pr-9 py-2 bg-neutral-100/80 focus:bg-white text-xs font-medium rounded-full border border-neutral-200/70 focus:border-neutral-900 outline-none transition-all placeholder:text-neutral-400 placeholder:font-normal shadow-2xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-700"
               >
                 <X size={14} />
               </button>
