@@ -22,17 +22,16 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
     }
   };
 
-  const imageUrl = product.imageUrl || product.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800";
+  const imageUrl = product.imageUrl || product.img || "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=800";
   const title = product.name || product.title || "Produk Cetak";
-  const category = product.category || "Percetakan";
 
   return (
     <article
       onClick={handleCardClick}
-      className="group relative bg-white rounded-2xl p-3 sm:p-3.5 border border-neutral-200/70 hover:border-neutral-300 hover:shadow-xl hover:shadow-neutral-900/5 transition-all duration-300 flex flex-col justify-between cursor-pointer active:scale-[0.99] w-full min-w-0"
+      className="group relative bg-white rounded-3xl p-2.5 sm:p-3 border border-neutral-200/80 hover:border-neutral-300 hover:shadow-xl hover:shadow-neutral-900/5 transition-all duration-300 flex flex-col justify-between cursor-pointer active:scale-[0.98] w-full min-w-0"
     >
-      {/* 🖼️ FOTO PRODUK CLEAN & MINIMALIS */}
-      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-neutral-100 mb-3">
+      {/* 🖼️ FOTO PRODUK VISUAL TINGGI & MODERN [4/5] */}
+      <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-neutral-100 mb-2">
         <Image
           src={imageUrl}
           alt={title}
@@ -42,12 +41,26 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
           className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
         />
 
-        {/* Minimalist Badge: Best Seller Only */}
-        {product.isBestSeller && (
-          <span className="absolute top-2.5 right-2.5 bg-neutral-900/85 backdrop-blur-md text-white text-[9px] font-semibold tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
+        {/* Floating Minimalist Badge */}
+        {product.isBestSeller ? (
+          <span className="absolute top-2 left-2 bg-neutral-900/90 backdrop-blur-md text-white text-[9px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full shadow-2xs">
             Best Seller
           </span>
+        ) : (
+          <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-md text-neutral-800 text-[9px] font-medium tracking-wide px-2 py-0.5 rounded-full shadow-2xs border border-neutral-200/50">
+            ⚡ Siap 24 Jam
+          </span>
         )}
+
+        {/* Floating WhatsApp Action Pill */}
+        <button
+          type="button"
+          onClick={handleOrderClick}
+          aria-label={`Pesan ${title} via WhatsApp`}
+          className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-90 text-white flex items-center justify-center shadow-md shadow-emerald-950/20 transition-all z-10"
+        >
+          <MessageCircle size={15} />
+        </button>
       </div>
 
       {/* 📄 DETAIL & TYPOGRAPHY CLEAN */}
@@ -58,23 +71,16 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
           </h3>
         </div>
 
-        {/* 🏷️ HARGA & ACTION BUTTON */}
-        <div className="mt-2.5 pt-2 border-t border-neutral-100 flex items-center justify-between gap-1.5">
-          <div className="min-w-0 flex-1">
-            <span className="font-bold text-xs sm:text-sm text-neutral-900 tracking-tight block truncate">
-              {product.price}
+        {/* 🏷️ HARGA & UNIT */}
+        <div className="mt-1 flex items-baseline justify-between gap-1 pt-1 border-t border-neutral-100">
+          <span className="font-extrabold text-xs sm:text-sm text-neutral-950 tracking-tight">
+            {product.price}
+          </span>
+          {product.unit && (
+            <span className="text-[10px] text-neutral-400 font-normal truncate">
+              {product.unit}
             </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleOrderClick}
-            aria-label={`Pesan ${title} via WhatsApp`}
-            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[11px] inline-flex items-center gap-1 shadow-2xs active:scale-95 transition-all shrink-0"
-          >
-            <MessageCircle size={12} className="fill-white/20" />
-            <span>Pesan</span>
-          </button>
+          )}
         </div>
       </div>
     </article>

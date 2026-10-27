@@ -67,20 +67,23 @@ function CatalogContent() {
   });
 
   return (
-    <div className="w-full max-w-lg md:max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-36 pb-24 md:pb-32 overflow-x-hidden">
+    <div className="w-full max-w-lg md:max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-[92px] md:pt-32 pb-24 md:pb-32 overflow-x-hidden">
       
       {/* 📱 TOP APP BAR CLEAN & MINIMALIST */}
-      <div className="sticky top-[88px] sm:top-[92px] md:top-20 z-20 bg-white/95 backdrop-blur-md pt-2 pb-3 mb-4 border-b border-neutral-200/60 w-full max-w-full overflow-hidden">
-        <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="sticky top-[86px] md:top-20 z-20 bg-white/95 backdrop-blur-md pt-2 pb-3 mb-3 border-b border-neutral-200/60 w-full max-w-full overflow-hidden">
+        <div className="flex items-center justify-between gap-3 mb-2.5">
           <div>
-            <span className="text-[10px] font-semibold tracking-widest uppercase text-neutral-400 block">
-              Katalog Cetak
-            </span>
-            <h1 className="text-lg sm:text-2xl font-bold text-neutral-900 tracking-tight">
-              {activeCategory === "Semua" ? "Semua Produk" : (activeCategory === "PACKAGING" ? "Packaging" : activeCategory)}
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-semibold tracking-widest uppercase text-neutral-400">
+                Percetakan & Advertising Studio
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight">
+              {activeCategory === "Semua" ? "Katalog Produk" : (activeCategory === "PACKAGING" ? "Packaging" : activeCategory)}
             </h1>
           </div>
-          <span className="text-xs font-medium text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full shrink-0">
+          <span className="text-xs font-semibold text-neutral-700 bg-neutral-100 px-3 py-1 rounded-full shrink-0 border border-neutral-200/60 shadow-2xs">
             {filteredProducts.length} Produk
           </span>
         </div>
@@ -103,9 +106,9 @@ function CatalogContent() {
                   key={cat}
                   type="button"
                   onClick={() => setActiveCategory(cat)}
-                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
+                  className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 shrink-0 ${
                     isSelected 
-                      ? "bg-neutral-900 text-white shadow-xs" 
+                      ? "bg-neutral-900 text-white shadow-sm scale-105" 
                       : "bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900"
                   }`}
                 >
@@ -120,13 +123,13 @@ function CatalogContent() {
       {/* 🛍️ PRODUCT GRID */}
       <section className="min-h-[50vh] w-full max-w-full">
         {loading ? (
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 w-full min-w-0">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 w-full min-w-0">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-              <div key={n} className="bg-neutral-100 rounded-2xl aspect-[3/4] animate-pulse" />
+              <div key={n} className="bg-neutral-100 rounded-3xl aspect-[4/5] animate-pulse" />
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="bg-neutral-50 rounded-2xl p-8 text-center border border-neutral-200/60 max-w-md mx-auto my-6 space-y-3">
+          <div className="bg-neutral-50 rounded-3xl p-8 text-center border border-neutral-200/60 max-w-md mx-auto my-6 space-y-3">
             <div className="w-12 h-12 bg-neutral-200/80 rounded-2xl flex items-center justify-center text-neutral-600 mx-auto">
               <Search size={22} />
             </div>
@@ -155,7 +158,7 @@ function CatalogContent() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 w-full min-w-0">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 w-full min-w-0">
             {filteredProducts.map((item) => (
               <QuickProductCard
                 key={item.id}

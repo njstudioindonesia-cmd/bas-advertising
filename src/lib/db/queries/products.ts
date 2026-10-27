@@ -34,6 +34,49 @@ export function formatRupiah(amount: number): string {
   return "Rp " + Math.round(amount).toLocaleString("id-ID");
 }
 
+export function resolveProductImage(currentUrl: string | undefined | null, name: string = "", category: string = ""): string {
+  const isGeneric = 
+    !currentUrl ||
+    currentUrl.includes("photo-1542751371-adc38448a05e") || // esports gaming PC
+    currentUrl.includes("photo-1588702547923-7093a6c3ba33") || // laptop
+    currentUrl.includes("photo-1557804506-669a67965ba0") || // corporate office meeting
+    currentUrl.includes("photo-1517245386807-bb43f82c33c4") ||
+    currentUrl.includes("photo-1528698827591-e19ccd7bc23d");
+
+  if (!isGeneric && typeof currentUrl === "string" && currentUrl.startsWith("http")) {
+    return currentUrl;
+  }
+
+  const text = (name + " " + category).toLowerCase();
+  
+  if (text.includes("x-banner") || text.includes("y-banner") || text.includes("standing")) {
+    return "https://images.unsplash.com/photo-1531973576160-7125cd663d86?q=80&w=800&auto=format&fit=crop";
+  }
+  if (text.includes("roll up") || text.includes("rollup")) {
+    return "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800&auto=format&fit=crop";
+  }
+  if (text.includes("spanduk") || text.includes("banner") || text.includes("flexi") || text.includes("baliho")) {
+    return "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800&auto=format&fit=crop";
+  }
+  if (text.includes("stiker") || text.includes("sticker") || text.includes("label") || text.includes("cutting") || text.includes("kromo") || text.includes("vinyl")) {
+    return "https://images.unsplash.com/photo-1572375992501-4b0892d50c69?q=80&w=800&auto=format&fit=crop";
+  }
+  if (text.includes("kemasan") || text.includes("box") || text.includes("packaging") || text.includes("kardus") || text.includes("pouch") || text.includes("paper bag")) {
+    return "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=800&auto=format&fit=crop";
+  }
+  if (text.includes("neon") || text.includes("akrilik") || text.includes("signage") || text.includes("plakat") || text.includes("huruf timbul")) {
+    return "https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=800&auto=format&fit=crop";
+  }
+  if (text.includes("kaos") || text.includes("sablon") || text.includes("jersey") || text.includes("dtf") || text.includes("tote")) {
+    return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop";
+  }
+  if (text.includes("brosur") || text.includes("flyer") || text.includes("kartu") || text.includes("nota") || text.includes("undangan") || text.includes("kalender")) {
+    return "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=800&auto=format&fit=crop";
+  }
+
+  return "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=800&auto=format&fit=crop";
+}
+
 export function syncProductsToJson(): void {
   // Cloud Supabase replaces local JSON sync
 }
@@ -65,6 +108,7 @@ export function mapRowToProduct(r: any): FormattedProduct {
   }
 
   const categoryName = r.categories?.name || r.category_name || "Lainnya";
+  const finalImage = resolveProductImage(r.image_url, r.name, categoryName);
 
   return {
     id: r.id,
@@ -80,10 +124,10 @@ export function mapRowToProduct(r: any): FormattedProduct {
     normalPrice: compareAtNum ? formatRupiah(compareAtNum) : undefined,
     compareAtPrice: compareAtNum,
     unit: r.unit || "/ pcs",
-    imageUrl: r.image_url || "",
-    img: r.image_url || "",
+    imageUrl: finalImage,
+    img: finalImage,
     gallery,
-    images: gallery.length > 0 ? gallery : [r.image_url || ""],
+    images: gallery.length > 0 ? gallery : [finalImage],
     specs,
     isBestSeller: Boolean(r.is_best_seller),
     isActive: Boolean(r.is_active),
@@ -99,14 +143,14 @@ function getFallbackProducts(): FormattedProduct[] {
   return (fallbackProductsData as any[]).map((p: any, idx: number) => {
     const priceNum = typeof p.priceNumber === "number" ? p.priceNumber : 0;
     const compareAtNum = typeof p.compareAtPrice === "number" ? p.compareAtPrice : null;
+    const catName = p.category || "Umum";
+    const finalImage = resolveProductImage(p.imageUrl || p.img, p.name || p.title, catName);
     const gallery =
       Array.isArray(p.images) && p.images.length > 0
         ? p.images
         : Array.isArray(p.gallery) && p.gallery.length > 0
         ? p.gallery
-        : p.imageUrl || p.img
-        ? [p.imageUrl || p.img]
-        : [];
+        : [finalImage];
     const specs = Array.isArray(p.specs) ? p.specs : [];
 
     return {
@@ -115,7 +159,7 @@ function getFallbackProducts(): FormattedProduct[] {
       name: p.name || p.title || "Produk",
       title: p.title || p.name || "Produk",
       categoryId: p.categoryId || "cat-umum",
-      category: p.category || "Umum",
+      category: catName,
       description: p.description || p.desc || "",
       desc: p.desc || p.description || "",
       price: p.price || formatRupiah(priceNum),
@@ -123,8 +167,8 @@ function getFallbackProducts(): FormattedProduct[] {
       normalPrice: p.normalPrice || (compareAtNum ? formatRupiah(compareAtNum) : undefined),
       compareAtPrice: compareAtNum,
       unit: p.unit || "/ pcs",
-      imageUrl: p.imageUrl || p.img || "",
-      img: p.img || p.imageUrl || "",
+      imageUrl: finalImage,
+      img: finalImage,
       gallery,
       images: gallery,
       specs,
