@@ -9,12 +9,10 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { totalItems, isLoaded } = useCart();
 
-  // Sembunyikan bottom navigation pada area portal kerja (Admin, Vendor, Driver) dan Invoice cetak
+  // Sembunyikan bottom navigation pada area portal kerja dan Invoice cetak
   if (
     pathname?.startsWith("/urang-dalam-bas-adv") ||
     pathname?.startsWith("/admin") ||
-    pathname?.startsWith("/vendor") ||
-    pathname?.startsWith("/driver") ||
     pathname?.startsWith("/invoice")
   ) {
     return null;

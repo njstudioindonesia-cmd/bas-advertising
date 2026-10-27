@@ -10,15 +10,13 @@ export default function FloatingCartBar() {
   const pathname = usePathname();
   const { totalItems, subtotal, formatRupiah, isLoaded } = useCart();
 
-  // Jangan tampilkan jika keranjang kosong atau sedang berada di halaman checkout / admin / vendor / driver / invoice
+  // Jangan tampilkan jika keranjang kosong atau sedang berada di halaman checkout / admin / invoice
   if (
     !isLoaded ||
     totalItems === 0 ||
     pathname === "/keranjang" ||
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/urang-dalam-bas-adv") ||
-    pathname?.startsWith("/vendor") ||
-    pathname?.startsWith("/driver") ||
     pathname?.startsWith("/invoice")
   ) {
     return null;

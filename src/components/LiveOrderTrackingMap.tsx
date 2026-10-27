@@ -128,36 +128,10 @@ export default function LiveOrderTrackingMap({ order }: LiveOrderTrackingMapProp
         : "Pesanan siap dan menunggu penugasan armada kurir",
   };
 
-  // Poll lokasi GPS kurir secara berkala
+  // Lokasi kurir default
   const fetchDriverLiveLocation = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/driver/location?orderId=${order.id}`, { cache: "no-store" });
-      const data = await res.json();
-      if (data.success && data.data && typeof data.data.lat === "number") {
-        const newCoords: [number, number] = [data.data.lat, data.data.lng];
-        setDriverPos(newCoords);
-        setLastUpdatedSec(0);
-
-        // Update marker dan polyline di peta Leaflet secara dinamis tanpa re-render peta
-        if (driverMarkerRef.current) {
-          driverMarkerRef.current.setLatLng(newCoords);
-        }
-        if (polylineRef.current) {
-          polylineRef.current.setLatLngs([WORKSHOP_COORDS, newCoords, DESTINATION_COORDS]);
-        }
-
-        // Hitung ulang ETA dinamis
-        const dist = calculateDistanceKm(
-          newCoords[0],
-          newCoords[1],
-          DESTINATION_COORDS[0],
-          DESTINATION_COORDS[1]
-        );
-        const mins = Math.max(3, Math.round((dist / 25) * 60));
-        setLiveEta(`${mins} Menit (~${dist.toFixed(1)} km)`);
-      }
-    } catch {}
-  }, [order.id, DESTINATION_COORDS, WORKSHOP_COORDS]);
+    // Driver portal dinonaktifkan
+  }, []);
 
   useEffect(() => {
     fetchDriverLiveLocation();

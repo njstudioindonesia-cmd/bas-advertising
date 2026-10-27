@@ -12,12 +12,6 @@ export function middleware(request: NextRequest) {
   if (pathname === "/urang-dalam-bas-adv" || pathname.startsWith("/urang-dalam-bas-adv/")) {
     return NextResponse.redirect(new URL(adminUrl), 307);
   }
-  if (pathname === "/driver" || pathname.startsWith("/driver/")) {
-    return NextResponse.redirect(new URL(`${adminUrl}/driver`), 307);
-  }
-  if (pathname === "/vendor" || pathname.startsWith("/vendor/")) {
-    return NextResponse.redirect(new URL(`${adminUrl}/vendor`), 307);
-  }
 
   // 2. Tambahkan Security Headers standar industri & perbankan
   const response = NextResponse.next();
@@ -35,8 +29,6 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/urang-dalam-bas-adv/:path*",
-    "/vendor/:path*",
-    "/driver/:path*",
     "/((?!_next/static|_next/image|favicon.ico|uploads/|sw.js|manifest.webmanifest).*)",
   ],
 };
