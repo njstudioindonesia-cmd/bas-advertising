@@ -504,7 +504,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2.5">
-              {displayFeed.map((item) => (
+              {displayFeed.slice(0, 4).map((item) => (
                 <QuickProductCard
                   key={item.id}
                   product={item}
@@ -520,7 +520,7 @@ export default function Home() {
           <div className="pt-4 text-center">
             <Link
               href="/produk"
-              className="inline-flex items-center justify-center gap-1.5 w-full py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold text-[#1E1B4B] shadow-2xs active:scale-98 transition-transform"
+              className="inline-flex items-center justify-center gap-1.5 w-full py-3 bg-neutral-900 text-white rounded-2xl text-xs font-medium shadow-xs active:scale-98 transition-transform"
             >
               {productList.length > 0 
                 ? `Lihat Seluruh ${productList.length} Produk Katalog` 
@@ -770,8 +770,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Minimalist Horizontal Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 mb-8">
+          {/* Minimalist Filter Pills - 2 Rows Clean Wrap */}
+          <div className="flex flex-wrap items-center gap-2 mb-8">
             <button
               type="button"
               onClick={() => setHomeCategory("Semua")}
@@ -813,7 +813,7 @@ export default function Home() {
               })}
           </div>
 
-          {/* Minimalist Product Grid */}
+          {/* Minimalist Product Grid (Strictly 2 Rows = 10 Products) */}
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
@@ -827,7 +827,7 @@ export default function Home() {
           ) : displayFeed.length > 0 ? (
             <div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
-                {displayFeed.slice(0, 15).map((item) => (
+                {displayFeed.slice(0, 10).map((item) => (
                   <QuickProductCard
                     key={item.id}
                     product={item}
@@ -839,14 +839,14 @@ export default function Home() {
                 ))}
               </div>
 
-              {displayFeed.length > 15 && (
+              {displayFeed.length > 10 && (
                 <div className="text-center mt-10">
                   <Link
                     href={`/produk${homeCategory !== "Semua" ? `?category=${encodeURIComponent(homeCategory)}` : ""}`}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-neutral-50 text-neutral-900 font-semibold text-xs border border-neutral-200 shadow-2xs hover:shadow-sm transition-all active:scale-95"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-xs shadow-xs hover:shadow-md transition-all active:scale-95"
                   >
-                    <span>Lihat Seluruh {displayFeed.length} Produk Kategori Ini</span>
-                    <ArrowRight size={14} className="text-neutral-400" />
+                    <span>Lihat Semua {displayFeed.length} Produk {homeCategory !== "Semua" ? `Kategori ${homeCategory}` : "Katalog"}</span>
+                    <ArrowRight size={14} className="text-neutral-300" />
                   </Link>
                 </div>
               )}
