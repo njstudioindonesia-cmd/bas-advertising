@@ -1,35 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShoppingCart, MessageCircle, Plus, Minus, Check, ShieldCheck, Truck, Star } from "lucide-react";
-import { useCart, parsePriceToNumber } from "@/context/CartContext";
+import { MessageCircle, Plus, Minus, ShieldCheck, Truck, Clock } from "lucide-react";
 
 export default function ProductDetailActions({ product }: { product: any }) {
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
-  const [added, setAdded] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState("6281234567890");
-  const { addToCart, formatRupiah } = useCart();
 
   useEffect(() => {
     fetch("/api/settings")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success && data.data && data.data["contact.whatsapp"]) {
           setWhatsappNumber(String(data.data["contact.whatsapp"]).replace(/[^0-9]/g, ""));
         }
       })
       .catch(() => {});
   }, []);
-
-  const unitPrice = parsePriceToNumber(product.price);
-  const totalPrice = unitPrice * quantity;
-
-  const handleAddToCart = () => {
-    addToCart(product, quantity, notes);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
 
   const handleBuyNow = () => {
     let cleanWa = whatsappNumber;
@@ -39,128 +27,78 @@ export default function ProductDetailActions({ product }: { product: any }) {
     msg += `----------------------------------------\n`;
     msg += `📦 *Produk:* ${product.title || product.name}\n`;
     msg += `🏷️ *Kategori:* ${product.category}\n`;
-    msg += `🔢 *Jumlah:* ${quantity} ${product.unit || "/ pcs"}\n`;
+    msg += `🔢 *Jumlah:* ${quantity} ${product.unit || "pcs"}\n`;
     msg += `💰 *Harga Satuan:* ${product.price}\n`;
-    if (totalPrice > 0) {
-      msg += `💵 *Total Estimasi:* *${formatRupiah(totalPrice)}*\n`;
-    }
     if (notes) {
       msg += `📝 *Catatan Tambahan:* ${notes}\n`;
     }
     msg += `----------------------------------------\n`;
-    msg += `Mohon konfirmasi ketersediaan dan cara pembayarannya. Terima kasih!`;
+    msg += `Mohon konfirmasi ketersediaan dan cara kirim filenya. Terima kasih!`;
 
     window.open(`https://wa.me/${cleanWa}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   return (
-    <>
-      {/* ========================================================= */}
-      {/* INLINE PRODUCT CONFIGURATOR (FOR DESKTOP & IN-PAGE FORM) */}
-      {/* ========================================================= */}
-      <div className="mt-auto space-y-4">
-        {/* Quantity & Notes input */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-sm font-bold text-gray-700">Jumlah Pesanan:</span>
-            <div className="flex items-center gap-2 bg-white rounded-xl p-1 border border-gray-200 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-8 h-8 rounded-lg bg-gray-50 text-gray-700 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-90"
-              >
-                <Minus size={14} />
-              </button>
-              <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-12 text-center text-sm font-bold text-[#1E1B4B] focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setQuantity(quantity + 1)}
-                className="w-8 h-8 rounded-lg bg-gray-50 text-gray-700 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-90"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
+    <div className="mt-auto space-y-4">
+      {/* Quantity & Notes input */}
+      <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs sm:text-sm font-bold text-gray-700">Jumlah Pesanan:</span>
+          <div className="flex items-center gap-2 bg-white rounded-xl p-1 border border-gray-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="w-8 h-8 rounded-lg bg-gray-50 text-gray-700 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-90"
+            >
+              <Minus size={14} />
+            </button>
+            <span className="w-8 text-center font-bold text-sm text-gray-900">{quantity}</span>
+            <button
+              type="button"
+              onClick={() => setQuantity(quantity + 1)}
+              className="w-8 h-8 rounded-lg bg-gray-50 text-gray-700 flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-90"
+            >
+              <Plus size={14} />
+            </button>
           </div>
+        </div>
 
-          {totalPrice > 0 && (
-            <div className="flex justify-between items-center text-xs text-gray-500 pt-2 border-t border-gray-200/60">
-              <span>Subtotal ({quantity} {product.unit || "/ pcs"}):</span>
-              <span className="text-sm font-bold text-[#F97316]">{formatRupiah(totalPrice)}</span>
-            </div>
-          )}
-
+        <div>
+          <label className="text-[11px] font-bold text-gray-600 block mb-1">Catatan Pesanan:</label>
           <input
             type="text"
-            placeholder="Catatan desain / ukuran khusus (opsional)..."
+            placeholder="Misal: Ukuran custom, warna, finishing mata ayam..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#F97316]"
+            className="w-full text-xs px-3 py-2 bg-white rounded-xl border border-gray-200 focus:outline-none focus:border-[#F97316] transition-all"
           />
         </div>
-
-        {/* Desktop Buttons */}
-        <div className="hidden md:grid grid-cols-2 gap-3">
-          <button
-            onClick={handleAddToCart}
-            className={`py-3.5 px-6 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-sm text-sm ${
-              added 
-                ? "bg-green-600 text-white" 
-                : "bg-white border-2 border-[#1E1B4B] text-[#1E1B4B] hover:bg-slate-50"
-            }`}
-          >
-            {added ? <Check size={18} /> : <ShoppingCart size={18} />}
-            {added ? "Sudah di Keranjang!" : "+ Keranjang"}
-          </button>
-
-          <button
-            onClick={handleBuyNow}
-            className="bg-[#1E1B4B] hover:bg-[#F97316] text-white font-bold py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-md text-sm"
-          >
-            <MessageCircle size={18} />
-            Beli via WhatsApp
-          </button>
-        </div>
-
-        {/* Trust Badging */}
-        <div className="flex items-center justify-between px-1 text-[11px] text-gray-400 font-medium pt-1">
-          <div className="flex items-center gap-1"><ShieldCheck size={14} className="text-[#10B981]" /> Transaksi Aman</div>
-          <div className="flex items-center gap-1"><Truck size={14} className="text-[#3B82F6]" /> Support Pengiriman</div>
-          <div className="flex items-center gap-1"><Star size={14} className="text-[#F59E0B]" /> Garansi Kualitas</div>
-        </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* 📱 MOBILE STICKY BOTTOM APP BAR (ALWAYS THUMB-REACHABLE) */}
-      {/* ========================================================= */}
-      <div 
-        className="md:hidden fixed bottom-14 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-200/80 p-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center gap-2"
+      {/* WhatsApp CTA Button */}
+      <button
+        onClick={handleBuyNow}
+        className="w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-98 transition-all"
       >
-        <button
-          onClick={handleAddToCart}
-          className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs ${
-            added 
-              ? "bg-green-600 text-white" 
-              : "bg-orange-50 border border-orange-200 text-[#F97316]"
-          }`}
-        >
-          {added ? <Check size={16} /> : <ShoppingCart size={16} />}
-          <span>{added ? "Masuk Keranjang" : "+ Keranjang"}</span>
-        </button>
+        <MessageCircle size={18} />
+        <span>Pesan via WhatsApp Sekarang</span>
+      </button>
 
-        <button
-          onClick={handleBuyNow}
-          className="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs bg-[#1E1B4B] hover:bg-[#F97316] text-white flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
-        >
-          <MessageCircle size={16} />
-          <span>Beli via WA</span>
-        </button>
+      {/* Trust Badges */}
+      <div className="grid grid-cols-3 gap-2 pt-2 text-center text-[10px] text-gray-500 font-semibold">
+        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-gray-100">
+          <Clock size={16} className="text-[#F97316]" />
+          <span>Cepat & Tepat</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-gray-100">
+          <ShieldCheck size={16} className="text-emerald-500" />
+          <span>Garansi Kualitas</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-gray-100">
+          <Truck size={16} className="text-blue-500" />
+          <span>Kirim se-Padang</span>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

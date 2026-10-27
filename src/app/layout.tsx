@@ -3,10 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
-import { CartProvider } from "@/context/CartContext";
-import CartDrawer from "@/components/CartDrawer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
-import FloatingCartBar from "@/components/FloatingCartBar";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import JsonLd from "@/components/seo/JsonLd";
 
@@ -45,7 +42,7 @@ export const metadata: Metadata = {
     siteName: "Cetak.inc",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=1200&auto=format&fit=crop", // OG Image
+        url: "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=1200&auto=format&fit=crop",
         width: 1200,
         height: 630,
         alt: "Workshop Cetak.inc Studio Modern",
@@ -64,17 +61,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className="h-full antialiased scroll-smooth"
     >
       <body className="min-h-full flex flex-col font-sans bg-gray-50 text-gray-900 selection:bg-brand-accent selection:text-white">
-        <CartProvider>
-          <JsonLd />
-          <Navbar />
-          <main className="flex-grow flex flex-col pb-20 md:pb-0">{children}</main>
-          <BottomNav />
-          <FloatingCartBar />
-          <Footer />
-          <CartDrawer />
-          <FloatingWhatsApp />
-          <PWAInstallPrompt />
-        </CartProvider>
+        <JsonLd />
+        <Navbar />
+        <main className="flex-grow flex flex-col pb-20 md:pb-0">{children}</main>
+        <BottomNav />
+        <Footer />
+        <FloatingWhatsApp />
+        <PWAInstallPrompt />
       </body>
     </html>
   );

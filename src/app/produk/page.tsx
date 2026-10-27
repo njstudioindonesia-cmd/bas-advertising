@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Check, X, Star, TrendingUp, Sparkles, Filter, Zap, MessageCircle } from "lucide-react";
-import { useCart } from "@/context/CartContext";
 import QuickProductCard from "@/components/QuickProductCard";
 import ProductBottomSheet from "@/components/ProductBottomSheet";
 

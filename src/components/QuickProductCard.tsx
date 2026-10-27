@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Plus, Minus, Check, Star, Zap } from "lucide-react";
-import { useCart } from "@/context/CartContext";
+import { Star, Zap, MessageCircle } from "lucide-react";
 
 interface QuickProductCardProps {
   product: any;
@@ -10,28 +9,17 @@ interface QuickProductCardProps {
 }
 
 export default function QuickProductCard({ product, onOpenDetail }: QuickProductCardProps) {
-  const { getItemQuantity, addToCart, updateQuantity } = useCart();
-  const qty = getItemQuantity(product.id);
-
   const handleCardClick = () => {
     if (onOpenDetail) {
       onOpenDetail(product);
     }
   };
 
-  const handleQuickAdd = (e: React.MouseEvent) => {
+  const handleOrderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToCart(product, 1, "", false);
-  };
-
-  const handleIncrement = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    updateQuantity(product.id, qty + 1);
-  };
-
-  const handleDecrement = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    updateQuantity(product.id, qty - 1);
+    if (onOpenDetail) {
+      onOpenDetail(product);
+    }
   };
 
   return (
@@ -39,7 +27,7 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
       onClick={handleCardClick}
       className="group relative bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-100 hover:border-orange-200/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer active:scale-[0.98] w-full min-w-0 overflow-hidden"
     >
-      {/* GAMBAR PRODUK DENGAN BADGE ALA ASTRO */}
+      {/* GAMBAR PRODUK */}
       <div className="relative aspect-square w-full rounded-xl sm:rounded-2xl overflow-hidden bg-gray-50 border border-gray-100/60 mb-2">
         <Image
           src={product.imageUrl || product.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"}
@@ -79,7 +67,7 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
           </h4>
         </div>
 
-        {/* HARGA & STEPPER ALA ASTRO */}
+        {/* HARGA & TOMBOL PESAN */}
         <div className="mt-2 pt-1.5 border-t border-gray-50 flex items-center justify-between gap-1">
           <div className="min-w-0 flex-1 flex flex-col justify-center">
             <span className="font-black text-xs sm:text-sm text-[#F97316] tracking-tight truncate block">
@@ -92,41 +80,15 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
             )}
           </div>
 
-          {/* TOMBOL / STEPPER */}
-          {qty === 0 ? (
-            <button
-              type="button"
-              onClick={handleQuickAdd}
-              aria-label={`Tambah ${product.name || product.title} ke keranjang`}
-              className="w-7 h-7 sm:w-auto sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl bg-orange-50 hover:bg-[#F97316] text-[#F97316] hover:text-white border border-orange-200/80 hover:border-transparent font-bold text-xs shadow-2xs active:scale-90 transition-all flex items-center justify-center shrink-0"
-            >
-              <Plus size={14} strokeWidth={2.5} />
-              <span className="hidden sm:inline ml-1 font-black">Tambah</span>
-            </button>
-          ) : (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center bg-[#F97316] text-white rounded-lg p-0.5 shrink-0 shadow-xs"
-            >
-              <button
-                type="button"
-                onClick={handleDecrement}
-                className="w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center hover:bg-black/10 active:scale-75 transition-all"
-              >
-                <Minus size={11} strokeWidth={3} />
-              </button>
-              <span className="w-4 sm:w-5 text-center font-black text-[11px] sm:text-xs">
-                {qty}
-              </span>
-              <button
-                type="button"
-                onClick={handleIncrement}
-                className="w-5 h-5 sm:w-6 sm:h-6 rounded flex items-center justify-center hover:bg-black/10 active:scale-75 transition-all"
-              >
-                <Plus size={11} strokeWidth={3} />
-              </button>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={handleOrderClick}
+            aria-label={`Pesan ${product.name || product.title}`}
+            className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] sm:text-[11px] flex items-center gap-1 transition-all active:scale-95"
+          >
+            <MessageCircle size={12} className="text-emerald-600" />
+            <span>Pesan</span>
+          </button>
         </div>
       </div>
     </div>

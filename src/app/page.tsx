@@ -14,57 +14,19 @@ import {
   Award, 
   Search, 
   Zap, 
-  Plus, 
-  Check,
-  Store,
-  Utensils,
-  Package,
-  Shirt,
-  Megaphone,
-  FileText,
-  Gift,
-  Palette,
-  Sparkles,
-  Flame,
-  Clock,
-  MessageCircle,
-  Bike,
-  Layers,
-  MapPin
+  Store, 
+  Package, 
+  Shirt, 
+  FileText, 
+  Sparkles, 
+  Flame, 
+  Clock, 
+  MessageCircle, 
+  Layers
 } from "lucide-react";
 
-import { useCart } from "@/context/CartContext";
 import QuickProductCard from "@/components/QuickProductCard";
 import ProductBottomSheet from "@/components/ProductBottomSheet";
-
-function getCategoryIconConfig(categoryName: string) {
-  const norm = (categoryName || "").toLowerCase().trim();
-  if (norm.includes("kemasan") || norm.includes("package") || norm.includes("box") || norm.includes("cup")) {
-    return { icon: Package, bg: "bg-emerald-500", text: "text-white" };
-  }
-  if (norm.includes("spanduk") || norm.includes("banner") || norm.includes("outdoor") || norm.includes("sign")) {
-    return { icon: Sparkles, bg: "bg-amber-500", text: "text-white" };
-  }
-  if (norm.includes("stiker") || norm.includes("sticker") || norm.includes("label")) {
-    return { icon: Megaphone, bg: "bg-rose-500", text: "text-white" };
-  }
-  if (norm.includes("crew") || norm.includes("kaos") || norm.includes("seragam") || norm.includes("baju") || norm.includes("jersey")) {
-    return { icon: Shirt, bg: "bg-purple-500", text: "text-white" };
-  }
-  if (norm.includes("outlet") || norm.includes("toko")) {
-    return { icon: Store, bg: "bg-blue-500", text: "text-white" };
-  }
-  if (norm.includes("meja") || norm.includes("menu")) {
-    return { icon: Utensils, bg: "bg-amber-600", text: "text-white" };
-  }
-  if (norm.includes("merchandise") || norm.includes("gift") || norm.includes("souvenir") || norm.includes("tumbler")) {
-    return { icon: Gift, bg: "bg-orange-500", text: "text-white" };
-  }
-  if (norm.includes("kantor") || norm.includes("dokumen") || norm.includes("nota") || norm.includes("cetak")) {
-    return { icon: FileText, bg: "bg-slate-700", text: "text-white" };
-  }
-  return { icon: Package, bg: "bg-orange-500", text: "text-white" };
-}
 
 export default function Home() {
   const [productList, setProductList] = useState<any[]>([]);
@@ -72,11 +34,11 @@ export default function Home() {
   const [banners, setBanners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [addedId, setAddedId] = useState<string | null>(null);
   const [sheetProduct, setSheetProduct] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [homeCategory, setHomeCategory] = useState<string>("Semua");
+  const [whatsappNumber, setWhatsappNumber] = useState("6281234567890");
   const router = useRouter();
-  const { addToCart } = useCart();
 
   useEffect(() => {
     const loadData = () => {
@@ -85,7 +47,8 @@ export default function Home() {
         fetch(`/api/products?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
         fetch(`/api/categories?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
         fetch(`/api/banners?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
-      ]).then(([prodRes, catRes, banRes]) => {
+        fetch(`/api/settings?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: {} })),
+      ]).then(([prodRes, catRes, banRes, setRes]) => {
         if (prodRes?.success && Array.isArray(prodRes.data)) {
           setProductList(prodRes.data);
         }
@@ -95,13 +58,16 @@ export default function Home() {
         if (banRes?.success && Array.isArray(banRes.data)) {
           setBanners(banRes.data);
         }
+        if (setRes?.success && setRes.data && setRes.data["contact.whatsapp"]) {
+          setWhatsappNumber(String(setRes.data["contact.whatsapp"]).replace(/[^0-9]/g, ""));
+        }
         setLoading(false);
       });
     };
 
     loadData();
 
-    // Listen for product & catalog updates from admin in same window or across tabs
+    // Listen for catalog updates from admin broadcast or local storage
     const handleUpdate = () => loadData();
     window.addEventListener("bas_products_updated", handleUpdate);
     window.addEventListener("storage", (e) => {
@@ -135,15 +101,7 @@ export default function Home() {
     }
   };
 
-  const handleQuickAdd = (product: any, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(product, 1);
-    setAddedId(product.id);
-    setTimeout(() => setAddedId(null), 1500);
-  };
-
-  const [homeCategory, setHomeCategory] = useState<string>("Semua");
+  const cleanWa = whatsappNumber.startsWith("0") ? "62" + whatsappNumber.slice(1) : whatsappNumber;
 
   const bestSellers = productList.filter(p => p.isBestSeller);
   const recommendedList = bestSellers.length > 0 ? bestSellers : productList;
@@ -159,7 +117,7 @@ export default function Home() {
     );
   });
 
-  // 8 Grid Categories Mobile Ala Gojek & Astro
+  // 8 Grid Categories Mobile
   const mobileGridCategories = [
     {
       id: "cat-spanduk",
@@ -182,14 +140,14 @@ export default function Home() {
       href: "/produk?category=Stiker%20%26%20Label%20Kemasan",
     },
     {
-      id: "cat-promosi",
-      name: "Brosur & Nota",
-      icon: FileText,
-      gradient: "from-blue-600 to-indigo-600",
-      shadow: "shadow-blue-500/25",
-      badge: null,
-      categoryName: "Media Promosi & Kantor",
-      href: "/produk?category=Media%20Promosi%20%26%20Kantor",
+      id: "cat-kemasan",
+      name: "Kemasan & Box",
+      icon: Package,
+      gradient: "from-emerald-600 to-teal-500",
+      shadow: "shadow-emerald-500/25",
+      badge: "Kustom",
+      categoryName: "Packaging",
+      href: "/produk?category=Packaging",
     },
     {
       id: "cat-merch",
@@ -205,32 +163,31 @@ export default function Home() {
       id: "cat-signage",
       name: "Neon Box Akrilik",
       icon: Store,
-      gradient: "from-emerald-600 to-teal-500",
-      shadow: "shadow-emerald-500/25",
+      gradient: "from-blue-600 to-indigo-600",
+      shadow: "shadow-blue-500/25",
       badge: "LED",
       categoryName: "Signage & Akrilik",
       href: "/produk?category=Signage%20%26%20Akrilik",
     },
     {
-      id: "cat-mockup",
-      name: "Studio 3D",
-      icon: Palette,
-      gradient: "from-fuchsia-600 to-pink-600",
-      shadow: "shadow-fuchsia-500/25",
-      badge: "3D",
-      categoryName: null,
-      href: "/mockup",
+      id: "cat-nota",
+      name: "Brosur & Nota",
+      icon: FileText,
+      gradient: "from-slate-700 to-slate-900",
+      shadow: "shadow-slate-500/25",
+      badge: "NCR",
+      categoryName: "Media Promosi & Kantor",
+      href: "/produk?category=Media%20Promosi%20%26%20Kantor",
     },
     {
-      id: "cat-lacak",
-      name: "Lacak Live",
-      icon: Bike,
-      gradient: "from-sky-500 to-blue-600",
-      shadow: "shadow-sky-500/25",
-      badge: "LIVE",
-      isLive: true,
+      id: "cat-wa",
+      name: "Konsultasi WA",
+      icon: MessageCircle,
+      gradient: "from-emerald-500 to-green-600",
+      shadow: "shadow-green-500/25",
+      badge: "CS",
       categoryName: null,
-      href: "/lacak",
+      href: `https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi kebutuhan cetak.")}`,
     },
     {
       id: "cat-all",
@@ -250,17 +207,7 @@ export default function Home() {
     "Media Promosi & Kantor": "Kartu nama exclusive, brosur art paper A5, nota NCR",
     "Merchandise & Sablon": "Kaos sablon DTF 30s, totebag kanvas, mug keramik",
     "Signage & Akrilik": "Neon box bulat LED dua sisi, plakat akrilik laser cutting",
-    "Branding Outlet": "Sticker kaca, wall graphic, X-banner, signage toko",
-    "Branding Meja": "Table number, table tent, buku menu, coaster",
     "Packaging": "Paper cup, plastic cup, food box, paper bag kustom",
-    "PACKAGING": "Paper cup, plastic cup, food box, paper bag kustom",
-    "Crew": "Kaos seragam, apron barista, polo shirt, name tag",
-    "Marketing": "Flyer, brosur promosi, voucher diskon, kartu nama",
-    "Barang Cetak Pendukung": "Nota NCR, kop surat resmi, amplop, map invoice",
-    "Merchandise": "Tote bag kanvas, tumbler grafir, topi bordir, gantungan kunci",
-    "Outdoor & Signage": "Spanduk flexi Korea, neon box, huruf timbul akrilik",
-    "SPANDUK": "Spanduk flexi Korea, baliho, X-banner, banner roll kilat",
-    "STIKER": "Stiker vinyl, stiker chromo, stiker transparan label botol",
   };
 
   const displayCategories = categories.map((c) => {
@@ -276,13 +223,11 @@ export default function Home() {
 
   return (
     <div className="bg-[#F8F9FA] min-h-screen pt-26 sm:pt-28 md:pt-36 pb-20 md:pb-24">
-
       {/* ======================================================== */}
-      {/* 📱 MOBILE APP HOME EXPERIENCE (POTRAIT NATIVE APP FEEL) */}
+      {/* 📱 MOBILE APP HOME EXPERIENCE                           */}
       {/* ======================================================== */}
       <div className="md:hidden space-y-4 px-3.5 max-w-lg mx-auto">
-        
-        {/* Mobile App Promo Banners (Horizontal Touch Swipe) */}
+        {/* Mobile Promo Banners */}
         <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pt-1 pb-1">
           {loading ? (
             <div className="min-w-[88%] h-36 rounded-2xl bg-gray-200 animate-pulse" />
@@ -332,7 +277,7 @@ export default function Home() {
                         href={b.ctaHref || b.cta_href || "/produk"}
                         className="bg-white text-[#1E1B4B] text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 active:scale-95 transition-transform shadow-sm"
                       >
-                        {b.ctaLabel || b.cta_label || "Pesan Sekarang"} <ArrowRight size={12} />
+                        {b.ctaLabel || b.cta_label || "Lihat Promo"} <ArrowRight size={12} />
                       </Link>
                       <span className="text-[9px] text-gray-300">Kirim Seluruh Padang</span>
                     </div>
@@ -363,18 +308,17 @@ export default function Home() {
                 </Link>
                 <span className="text-[9px] text-gray-400">Kirim Seluruh Padang</span>
               </div>
-              <div className="absolute right-0 bottom-0 w-28 h-28 opacity-20 pointer-events-none bg-orange-400 rounded-full blur-2xl" />
             </div>
           )}
         </div>
 
-        {/* 8 Mobile App Category Icons Grid Ala Gojek / Astro */}
+        {/* 8 Mobile Category Grid */}
         <div className="bg-white rounded-3xl p-3.5 sm:p-4 border border-gray-100/90 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
           {loading ? (
             <div className="grid grid-cols-4 gap-3 text-center">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                 <div key={n} className="flex flex-col items-center animate-pulse">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gray-200 mb-1.5" />
+                  <div className="w-12 h-12 rounded-2xl bg-gray-200 mb-1.5" />
                   <div className="w-12 h-2.5 bg-gray-200 rounded" />
                 </div>
               ))}
@@ -392,7 +336,31 @@ export default function Home() {
                   }
                 };
 
-                return (
+                const isExternal = item.href.startsWith("http");
+
+                return isExternal ? (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center group active:scale-90 transition-transform"
+                  >
+                    <div className="relative mb-1.5">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${item.gradient} text-white flex items-center justify-center shadow-md ${item.shadow} border border-white/20`}>
+                        <Icon size={22} strokeWidth={2.2} />
+                      </div>
+                      {item.badge && (
+                        <span className="absolute -top-1 -right-1 text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full shadow-xs ring-1 ring-white bg-[#1E1B4B] text-white">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-extrabold text-gray-800 leading-tight tracking-tight line-clamp-2 h-6 flex items-center justify-center px-0.5">
+                      {item.name}
+                    </span>
+                  </a>
+                ) : (
                   <Link 
                     key={item.id} 
                     href={item.href}
@@ -400,24 +368,16 @@ export default function Home() {
                     className="flex flex-col items-center group active:scale-90 transition-transform"
                   >
                     <div className="relative mb-1.5">
-                      <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr ${item.gradient} text-white flex items-center justify-center shadow-md ${item.shadow} group-hover:scale-105 transition-all duration-200 border border-white/20`}>
-                        <Icon size={24} strokeWidth={2.2} />
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${item.gradient} text-white flex items-center justify-center shadow-md ${item.shadow} group-hover:scale-105 transition-all duration-200 border border-white/20`}>
+                        <Icon size={22} strokeWidth={2.2} />
                       </div>
-
                       {item.badge && (
-                        <span className={`absolute -top-1 -right-1 text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full shadow-xs ring-1 ring-white ${
-                          item.isLive
-                            ? "bg-emerald-500 text-white flex items-center gap-0.5 animate-pulse"
-                            : item.badge === "3D"
-                            ? "bg-amber-400 text-slate-900"
-                            : "bg-[#1E1B4B] text-white"
-                        }`}>
-                          {item.isLive && <span className="w-1 h-1 rounded-full bg-white animate-ping" />}
+                        <span className="absolute -top-1 -right-1 text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full shadow-xs ring-1 ring-white bg-[#1E1B4B] text-white">
                           {item.badge}
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-800 leading-tight tracking-tight line-clamp-2 h-6 flex items-center justify-center px-0.5">
+                    <span className="text-[10px] font-extrabold text-gray-800 leading-tight tracking-tight line-clamp-2 h-6 flex items-center justify-center px-0.5">
                       {item.name}
                     </span>
                   </Link>
@@ -445,21 +405,8 @@ export default function Home() {
           })}
         </div>
 
-        {/* Flash Sale / Paling Laris Horizontal Touch Rail */}
-        {loading ? (
-          <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-2xs">
-            <div className="w-32 h-4 bg-gray-200 rounded animate-pulse mb-3" />
-            <div className="flex gap-2.5 overflow-hidden">
-              {[1, 2, 3].map((n) => (
-                <div key={n} className="min-w-[130px] w-[130px] bg-slate-50 rounded-xl p-2 border border-gray-100 animate-pulse space-y-2">
-                  <div className="aspect-square bg-gray-200 rounded-lg" />
-                  <div className="h-2.5 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/2" />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : flashSaleProducts.length > 0 ? (
+        {/* Paling Laris Horizontal Rail */}
+        {flashSaleProducts.length > 0 && (
           <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-2xs">
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-1.5">
@@ -476,77 +423,113 @@ export default function Home() {
             </div>
 
             <div className="flex gap-2.5 overflow-x-auto no-scrollbar scroll-smooth snap-x pb-1">
-              {flashSaleProducts.map((prod) => {
-                const hasDiscount = prod.compareAtPrice && prod.priceNumber && prod.compareAtPrice > prod.priceNumber;
-                const discountPercent = hasDiscount
-                  ? Math.round(((prod.compareAtPrice - prod.priceNumber) / prod.compareAtPrice) * 100)
-                  : null;
+              {flashSaleProducts.map((prod) => (
+                <div 
+                  key={prod.id} 
+                  className="min-w-[130px] w-[130px] snap-start bg-slate-50/80 rounded-xl p-2 border border-gray-100 flex flex-col justify-between shrink-0"
+                >
+                  <Link href={`/produk/${prod.id}`} className="block">
+                    <div className="relative aspect-square rounded-lg bg-gray-200 overflow-hidden mb-1.5">
+                      <Image
+                        src={prod.imageUrl || prod.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop"}
+                        alt={prod.title || prod.name || "Produk"}
+                        fill
+                        sizes="130px"
+                        unoptimized={Boolean((prod.imageUrl || prod.img)?.startsWith("data:"))}
+                        className="object-cover"
+                      />
+                    </div>
+                    <h4 className="text-[11px] font-medium text-gray-800 line-clamp-1 leading-tight mb-1">
+                      {prod.title || prod.name}
+                    </h4>
+                    <div className="font-bold text-xs text-[#F97316]">
+                      {prod.price || `Rp ${(prod.priceNumber || 0).toLocaleString("id-ID")}`}
+                    </div>
+                  </Link>
 
-                return (
-                  <div 
-                    key={prod.id} 
-                    className="min-w-[130px] w-[130px] snap-start bg-slate-50/80 rounded-xl p-2 border border-gray-100 flex flex-col justify-between shrink-0"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSheetProduct(prod);
+                      setIsSheetOpen(true);
+                    }}
+                    className="mt-1.5 w-full py-1 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all active:scale-95"
                   >
-                    <Link href={`/produk/${prod.id}`} className="block">
-                      <div className="relative aspect-square rounded-lg bg-gray-200 overflow-hidden mb-1.5">
-                        <Image
-                          src={prod.imageUrl || prod.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop"}
-                          alt={prod.title || prod.name || "Produk"}
-                          fill
-                          sizes="130px"
-                          unoptimized={Boolean((prod.imageUrl || prod.img)?.startsWith("data:"))}
-                          className="object-cover"
-                        />
-                        {discountPercent && discountPercent > 0 && (
-                          <span className="absolute top-1 left-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-2xs">
-                            -{discountPercent}%
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="text-[11px] font-medium text-gray-800 line-clamp-1 leading-tight mb-1">
-                        {prod.title || prod.name}
-                      </h4>
-                      <div className="font-bold text-xs text-[#F97316]">
-                        {prod.price || `Rp ${(prod.priceNumber || 0).toLocaleString("id-ID")}`}
-                      </div>
-                    </Link>
-
-                    <button
-                      type="button"
-                      onClick={(e) => handleQuickAdd(prod, e)}
-                      className={`mt-1.5 w-full py-1 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 ${
-                        addedId === prod.id 
-                          ? "bg-green-600 text-white" 
-                          : "bg-orange-100 text-[#F97316] hover:bg-[#F97316] hover:text-white"
-                      }`}
-                    >
-                      {addedId === prod.id ? <Check size={11} /> : <Plus size={11} />}
-                      <span>{addedId === prod.id ? "Masuk" : "Keranjang"}</span>
-                    </button>
-                  </div>
-                );
-              })}
+                    <MessageCircle size={11} />
+                    <span>Pesan</span>
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-        ) : null}
+        )}
 
-        {/* Feed Rekomendasi Produk (2-Column Mobile Grid) */}
-        <div>
+        {/* Feed Katalog Produk Mobile */}
+        <div id="home-product-feed" className="scroll-mt-28">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
+              <h3 className="font-extrabold text-xs sm:text-sm text-[#1E1B4B]">
+                {homeCategory === "Semua" ? "Katalog Produk Unggulan" : homeCategory}
+              </h3>
+            </div>
+            <span className="text-[10px] font-bold text-gray-400 bg-white border border-gray-100 px-2.5 py-1 rounded-full shadow-2xs">
+              {displayFeed.length} Produk
+            </span>
+          </div>
+
+          {/* Swipeable Category Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3.5 px-3.5 mb-3">
+            <button
+              type="button"
+              onClick={() => setHomeCategory("Semua")}
+              className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all duration-200 shrink-0 active:scale-95 flex items-center gap-1.5 ${
+                homeCategory === "Semua"
+                  ? "bg-[#1E1B4B] text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 shadow-2xs"
+              }`}
+            >
+              <span>Semua</span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${homeCategory === "Semua" ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"}`}>
+                {productList.length}
+              </span>
+            </button>
+
+            {categories.map((c: any) => {
+              const cName = typeof c === "string" ? c : c.name;
+              const count = productList.filter((p) => p.category === cName || p.categoryId === c.id).length;
+              const isSelected = homeCategory === cName;
+
+              return (
+                <button
+                  key={c.id || cName}
+                  type="button"
+                  onClick={() => setHomeCategory(cName)}
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all duration-200 shrink-0 active:scale-95 flex items-center gap-1.5 ${
+                    isSelected
+                      ? "bg-[#1E1B4B] text-white shadow-xs"
+                      : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 shadow-2xs"
+                  }`}
+                >
+                  <span>{cName}</span>
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${isSelected ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 2-Column Grid Feed */}
           {loading ? (
-            <div>
-              <div className="flex items-center justify-between mb-3 px-1">
-                <div className="w-32 h-4 bg-gray-200 rounded animate-pulse" />
-                <div className="w-16 h-3 bg-gray-200 rounded animate-pulse" />
-              </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                {[1, 2, 3, 4].map((n) => (
-                  <div key={n} className="bg-white rounded-2xl p-2.5 border border-gray-100 animate-pulse space-y-2">
-                    <div className="aspect-square bg-gray-200 rounded-xl" />
-                    <div className="h-3 bg-gray-200 rounded w-2/3" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="bg-white rounded-2xl p-2.5 border border-gray-100 animate-pulse space-y-2">
+                  <div className="aspect-square bg-gray-200 rounded-xl" />
+                  <div className="h-3 bg-gray-200 rounded w-2/3" />
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                </div>
+              ))}
             </div>
           ) : displayFeed.length === 0 ? (
             <div className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-2xs space-y-2">
@@ -555,109 +538,49 @@ export default function Home() {
               </div>
               <h4 className="font-extrabold text-sm text-[#1E1B4B]">Katalog Belum Memiliki Produk</h4>
               <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
-                Produk sedang disusun oleh tim kami. Silakan hubungi CS kami via WhatsApp untuk konsultasi dan pemesanan custom.
+                Produk sedang disusun oleh tim kami. Silakan hubungi CS kami via WhatsApp untuk konsultasi dan pemesanan.
               </p>
               <a
-                href="https://wa.me/6281234567890?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20cetak"
+                href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi pemesanan.")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 mt-2 px-4 py-2 bg-[#25D366] text-white rounded-xl text-xs font-bold active:scale-95 transition-transform"
+                className="inline-flex items-center justify-center gap-1.5 mt-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform"
               >
                 <MessageCircle size={14} /> Hubungi WhatsApp
               </a>
             </div>
           ) : (
-            <div id="home-product-feed" className="scroll-mt-28">
-              {/* Astro-Style Sticky Horizontal Category Chips Rail */}
-              <div className="flex items-center justify-between mb-2 px-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
-                  <h3 className="font-extrabold text-xs sm:text-sm text-[#1E1B4B]">
-                    {homeCategory === "Semua" ? "Katalog Produk Unggulan" : homeCategory}
-                  </h3>
-                </div>
-                <span className="text-[10px] font-bold text-gray-400 bg-white border border-gray-100 px-2.5 py-1 rounded-full shadow-2xs">
-                  {displayFeed.length} Produk
-                </span>
-              </div>
-
-              {/* Swipeable Chips Rail */}
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3.5 px-3.5 mb-3">
-                <button
-                  type="button"
-                  onClick={() => setHomeCategory("Semua")}
-                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all duration-200 shrink-0 active:scale-95 flex items-center gap-1.5 ${
-                    homeCategory === "Semua"
-                      ? "bg-[#1E1B4B] text-white shadow-xs"
-                      : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 shadow-2xs"
-                  }`}
-                >
-                  <span>Semua</span>
-                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${homeCategory === "Semua" ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"}`}>
-                    {productList.length}
-                  </span>
-                </button>
-
-                {categories.map((c: any) => {
-                  const cName = typeof c === "string" ? c : c.name;
-                  const count = productList.filter((p) => p.category === cName || p.categoryId === c.id).length;
-                  const isSelected = homeCategory === cName;
-
-                  return (
-                    <button
-                      key={c.id || cName}
-                      type="button"
-                      onClick={() => setHomeCategory(cName)}
-                      className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all duration-200 shrink-0 active:scale-95 flex items-center gap-1.5 ${
-                        isSelected
-                          ? "bg-[#1E1B4B] text-white shadow-xs"
-                          : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 shadow-2xs"
-                      }`}
-                    >
-                      <span>{cName}</span>
-                      <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${isSelected ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"}`}>
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* 2-Column Mobile Grid Feed */}
-              <div className="grid grid-cols-2 gap-2.5">
-                {displayFeed.map((item) => (
-                  <QuickProductCard
-                    key={item.id}
-                    product={item}
-                    onOpenDetail={(p) => {
-                      setSheetProduct(p);
-                      setIsSheetOpen(true);
-                    }}
-                  />
-                ))}
-              </div>
-
-              <div className="pt-4 text-center">
-                <Link
-                  href="/produk"
-                  className="inline-flex items-center justify-center gap-1.5 w-full py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold text-[#1E1B4B] shadow-2xs active:scale-98 transition-transform"
-                >
-                  {productList.length > 0 
-                    ? `Lihat Seluruh ${productList.length} Produk Katalog` 
-                    : "Kunjungi Seluruh Katalog"} <ArrowRight size={14} />
-                </Link>
-              </div>
+            <div className="grid grid-cols-2 gap-2.5">
+              {displayFeed.map((item) => (
+                <QuickProductCard
+                  key={item.id}
+                  product={item}
+                  onOpenDetail={(p) => {
+                    setSheetProduct(p);
+                    setIsSheetOpen(true);
+                  }}
+                />
+              ))}
             </div>
           )}
-        </div>
 
+          <div className="pt-4 text-center">
+            <Link
+              href="/produk"
+              className="inline-flex items-center justify-center gap-1.5 w-full py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold text-[#1E1B4B] shadow-2xs active:scale-98 transition-transform"
+            >
+              {productList.length > 0 
+                ? `Lihat Seluruh ${productList.length} Produk Katalog` 
+                : "Kunjungi Seluruh Katalog"} <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* ======================================================== */}
-      {/* 💻 DESKTOP LAYOUT (LARGE VIEWPORT OPTIMIZED)            */}
+      {/* 💻 DESKTOP LAYOUT                                       */}
       {/* ======================================================== */}
       <div className="hidden md:block">
-        
         {/* HERO SECTION CARD */}
         <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-8">
           <motion.div 
@@ -668,8 +591,8 @@ export default function Home() {
           >
             {/* Left Content */}
             <div className="lg:w-[60%] p-8 sm:p-10 lg:p-16 flex flex-col justify-center relative z-10 bg-white">
-              <div className="inline-block bg-[#FDF2F8] text-[#EC4899] font-bold text-[10px] tracking-widest uppercase px-3 py-1.5 rounded-full mb-6 w-fit">
-                🔥 SOLUSI CETAK CEPAT & MURAH
+              <div className="inline-block bg-orange-50 text-[#F97316] font-bold text-[10px] tracking-widest uppercase px-3 py-1.5 rounded-full mb-6 w-fit">
+                🔥 SOLUSI CETAK CEPAT & PRESISI
               </div>
               
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#1E1B4B] leading-[1.1] mb-4 tracking-tight">
@@ -678,17 +601,17 @@ export default function Home() {
               </h1>
               
               <p className="text-gray-500 text-base lg:text-lg mb-8 max-w-lg leading-relaxed">
-                Kualitas premium, harga pabrik. Ratusan bisnis telah mempercayakan branding mereka kepada kami tanpa rasa khawatir.
+                Spanduk kilat, stiker label kemasan, seragam crew, neon box & merchandise kustom dengan kualitas studio.
               </p>
               
-              {/* SEARCH BAR IN HERO */}
+              {/* SEARCH BAR */}
               <form onSubmit={handleSearch} className="max-w-lg relative mb-4 shadow-lg shadow-gray-200/50 rounded-2xl group">
                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                   <Search className="h-6 w-6 text-[#F97316]" />
                 </div>
                 <input
                   type="text"
-                  placeholder="Ketik produk... (Contoh: Spanduk, Brosur, Paper Cup)"
+                  placeholder="Ketik produk... (Contoh: Spanduk, Stiker, Paper Cup)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="block w-full pl-14 pr-[120px] py-5 bg-white border-2 border-gray-100 rounded-2xl text-base focus:outline-none focus:border-[#F97316] transition-all"
@@ -700,19 +623,16 @@ export default function Home() {
                   Cari
                 </button>
               </form>
-              <p className="text-xs text-gray-400 font-medium ml-2">
-                Pencarian Populer: <Link href="/produk?q=Paper+Cup" className="text-[#F97316] hover:underline">Paper Cup</Link>, <Link href="/produk?q=Tumbler" className="text-[#F97316] hover:underline">Tumbler</Link>, <Link href="/produk?q=Apron" className="text-[#F97316] hover:underline">Apron Crew</Link>, <Link href="/produk?q=Tote+Bag" className="text-[#F97316] hover:underline">Tote Bag</Link>
-              </p>
             </div>
 
             {/* Right Image */}
-            <div className="lg:w-[40%] h-[300px] sm:h-[400px] lg:h-auto relative" style={{ maskImage: "linear-gradient(to right, transparent, black 25%)", WebkitMaskImage: "linear-gradient(to right, transparent, black 25%)" }}>
+            <div className="lg:w-[40%] h-[300px] sm:h-[400px] lg:h-auto relative">
               <Image 
                 src="https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=1600&auto=format&fit=crop" 
                 alt="Fasilitas percetakan modern Cetak.inc" 
                 fill 
                 sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover object-right"
+                className="object-cover"
                 priority
               />
             </div>
@@ -723,10 +643,10 @@ export default function Home() {
         <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { icon: <CheckCircle className="text-[#3B82F6]" size={20} />, bg: "bg-blue-50", title: "Proses Cepat", desc: "Selesai tepat waktu." },
-              { icon: <ShieldCheck className="text-[#EC4899]" size={20} />, bg: "bg-pink-50", title: "Bayar Aman", desc: "Sistem transparan." },
-              { icon: <Truck className="text-[#10B981]" size={20} />, bg: "bg-green-50", title: "Gratis Ongkir", desc: "Wilayah tertentu." },
-              { icon: <Award className="text-[#F59E0B]" size={20} />, bg: "bg-yellow-50", title: "Garansi 100%", desc: "Cacat ganti baru." }
+              { icon: <Clock className="text-[#3B82F6]" size={20} />, bg: "bg-blue-50", title: "Proses Cepat", desc: "Selesai tepat waktu." },
+              { icon: <ShieldCheck className="text-[#EC4899]" size={20} />, bg: "bg-pink-50", title: "Pesan Langsung", desc: "Via WhatsApp instan." },
+              { icon: <Truck className="text-[#10B981]" size={20} />, bg: "bg-green-50", title: "Kirim se-Padang", desc: "Layanan antar cepat." },
+              { icon: <Award className="text-[#F59E0B]" size={20} />, bg: "bg-yellow-50", title: "Garansi Kualitas", desc: "Presisi & rapi." }
             ].map((feature, idx) => (
               <div 
                 key={idx} 
@@ -744,7 +664,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* DESKTOP PROMO BANNERS SHOWCASE */}
+        {/* DESKTOP PROMO BANNERS */}
         {banners.length > 0 && (
           <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16">
             <div className="flex items-center justify-between mb-6">
@@ -753,7 +673,7 @@ export default function Home() {
                   PENAWARAN & PROMOSI PILIHAN
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B4B]">
-                  Promo Spesial & Layanan Kilat Cetak.inc
+                  Promo Spesial & Layanan Kilat
                 </h2>
               </div>
               <Link href="/produk" className="text-xs font-bold text-[#F97316] hover:underline flex items-center gap-1">
@@ -769,7 +689,7 @@ export default function Home() {
                   return (
                     <div
                       key={b.id || idx}
-                      className="relative rounded-3xl overflow-hidden bg-[#0B1E36] text-white p-6 flex flex-col justify-between min-h-[220px] border border-gray-100 shadow-md group"
+                      className="relative rounded-3xl overflow-hidden bg-[#0B1E36] text-white p-6 flex flex-col justify-between min-h-[200px] border border-gray-100 shadow-md group"
                     >
                       {imgUrl && (
                         <div className="absolute inset-0 z-0 opacity-30 group-hover:scale-105 group-hover:opacity-40 transition-all duration-500">
@@ -810,23 +730,20 @@ export default function Home() {
           </section>
         )}
 
-        {/* CATEGORIES GRID SHOWCASE */}
+        {/* CATEGORIES GRID */}
         {displayCategories.length > 0 && (
-          <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20">
+          <section id="katalog" className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20 scroll-mt-28">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
               <div>
                 <div className="inline-block bg-orange-100 text-[#F97316] font-bold text-[10px] tracking-widest uppercase px-3 py-1 rounded-full mb-2">
-                  CHECKLIST CETAK & MERCHANDISE
+                  KATEGORI PRODUK UTAMA
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-[#1E1B4B]">
-                  Solusi Branding Cafe, Resto & Bisnis
+                  Pilihan Cetak Lengkap & Presisi
                 </h2>
-                <p className="text-gray-500 text-sm mt-1">
-                  Pilihan lengkap dari branding outlet, packaging, crew uniform hingga merchandise kustom.
-                </p>
               </div>
               <Link href="/produk" className="text-[#F97316] font-semibold text-sm hover:underline flex items-center gap-1">
-                Buka Katalog Lengkap ({productList.length} Produk) <ArrowRight size={16} />
+                Katalog Lengkap ({productList.length} Produk) <ArrowRight size={16} />
               </Link>
             </div>
 
@@ -857,14 +774,14 @@ export default function Home() {
           </section>
         )}
 
-        {/* TOP SELLING PRODUCTS */}
+        {/* CATALOG FEED DESKTOP */}
         <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16">
           <div className="flex justify-between items-end mb-6">
             <div>
               <h2 className="text-3xl font-bold text-[#1E1B4B] mb-2 flex items-center gap-2">
-                Lagi Diskon Hari Ini <Zap className="text-[#F97316]" fill="currentColor" size={24} />
+                Produk Unggulan Hari Ini <Zap className="text-[#F97316]" fill="currentColor" size={24} />
               </h2>
-              <p className="text-gray-500 text-sm">Produk incaran dengan harga miring sebelum kehabisan!</p>
+              <p className="text-gray-500 text-sm">Pilih produk dan konsultasikan pesanan langsung via WhatsApp!</p>
             </div>
             <Link href="/produk" className="text-[#F97316] font-semibold text-sm hover:underline flex items-center gap-1">
               Lihat Semua Produk <ArrowRight size={16} />
@@ -901,13 +818,13 @@ export default function Home() {
               </div>
               <h3 className="font-extrabold text-[#1E1B4B] text-base mb-1">Katalog Sedang Disusun</h3>
               <p className="text-xs text-gray-500 mb-4">
-                Produk cetak sedang dalam proses penataan oleh admin Cetak.inc. Hubungi kami langsung jika Anda membutuhkan cetakan kilat.
+                Hubungi kami via WhatsApp untuk pemesanan langsung.
               </p>
               <a
-                href="https://wa.me/6281234567890?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20cetak"
+                href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi cetak.")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#25D366] text-white font-bold rounded-xl text-xs hover:bg-green-600 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs hover:bg-emerald-700 transition-colors"
               >
                 <MessageCircle size={16} /> Konsultasi via WhatsApp
               </a>
@@ -915,49 +832,47 @@ export default function Home() {
           )}
         </section>
 
-        {/* B2B PARTNERSHIP */}
+        {/* B2B & WHATSAPP BANNER */}
         <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16">
-          <div className="bg-gradient-to-br from-[#272B70] to-[#1E1B4B] rounded-[2rem] p-8 lg:p-16 text-white relative overflow-hidden shadow-2xl flex flex-col lg:flex-row gap-12 justify-between items-center">
-            <div className="relative z-10 lg:w-[60%] w-full">
-              <div className="inline-block bg-white/10 text-blue-300 font-bold text-[10px] tracking-widest uppercase px-3 py-1.5 rounded-full mb-6 border border-white/10">
-                PARTNERSHIP & B2B
+          <div className="bg-gradient-to-br from-[#0B1E36] to-[#1E1B4B] rounded-[2rem] p-8 lg:p-14 text-white relative overflow-hidden shadow-2xl flex flex-col lg:flex-row gap-8 justify-between items-center">
+            <div className="relative z-10 lg:w-[65%] w-full">
+              <div className="inline-block bg-white/10 text-orange-300 font-bold text-[10px] tracking-widest uppercase px-3 py-1.5 rounded-full mb-4 border border-white/10">
+                KONSULTASI & PESAN LANGSUNG
               </div>
-              <h2 className="text-3xl lg:text-5xl font-bold mb-6 leading-tight">
-                Mitra Cetak Andal Untuk<br />
-                <span className="text-[#FBBF24]">Event & Partai Besar</span>
+              <h2 className="text-3xl lg:text-4xl font-bold mb-4 leading-tight">
+                Punya Kebutuhan Cetak Spesifik?<br />
+                <span className="text-[#FBBF24]">Diskusikan Langsung dengan CS Kami</span>
               </h2>
-              <p className="text-blue-100 text-base lg:text-lg max-w-xl mb-8 leading-relaxed opacity-90">
-                Menjadi andalan para <strong>Event Organizer (EO)</strong> dan Perusahaan. Mesin industrial kami siap menjamin deadline ketat Anda terpenuhi.
+              <p className="text-blue-100 text-sm lg:text-base max-w-xl mb-6 leading-relaxed opacity-90">
+                Kirimkan file desain Anda atau konsultasikan spesifikasi ukuran, bahan, dan deadline. Tim Cetak.inc siap membantu dengan cepat.
               </p>
-              <div className="grid grid-cols-2 gap-4 text-sm text-blue-50">
-                <div className="flex items-center gap-2"><CheckCircle size={18} className="text-[#10B981]" /> Harga Grosir EO & B2B</div>
-                <div className="flex items-center gap-2"><CheckCircle size={18} className="text-[#10B981]" /> Garansi Selesai Tepat Waktu</div>
-                <div className="flex items-center gap-2"><CheckCircle size={18} className="text-[#10B981]" /> Kapasitas Skala Industrial</div>
-                <div className="flex items-center gap-2"><CheckCircle size={18} className="text-[#10B981]" /> Gratis Proofing Warna</div>
+              <div className="grid grid-cols-2 gap-3 text-xs text-blue-50">
+                <div className="flex items-center gap-2"><CheckCircle size={16} className="text-[#10B981]" /> Pengerjaan Cepat & Rapi</div>
+                <div className="flex items-center gap-2"><CheckCircle size={16} className="text-[#10B981]" /> Garansi Kualitas Cetak</div>
               </div>
             </div>
 
-            <div className="relative z-10 lg:w-[35%] flex flex-col gap-4 w-full">
-              <Link 
-                href="https://wa.me/6281234567890?text=Halo%20Tim%20Sales%20B2B,%20saya%20ingin%20konsultasi%20partai%20besar."
+            <div className="relative z-10 lg:w-[30%] flex flex-col gap-3 w-full">
+              <a 
+                href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi cetak dan kirim file.")}`}
                 target="_blank"
-                className="w-full bg-[#FBBF24] hover:bg-[#F59E0B] text-slate-900 font-bold text-base py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-colors shadow-lg"
+                rel="noopener noreferrer"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-lg active:scale-95"
               >
-                Hubungi Sales B2B Kami
-              </Link>
+                <MessageCircle size={20} />
+                <span>Chat WhatsApp Sekarang</span>
+              </a>
             </div>
           </div>
         </section>
-
       </div>
 
-      {/* 📱 PRODUCT BOTTOM SHEET MODAL (ALA GOJEK / ASTRO) */}
+      {/* PRODUCT BOTTOM SHEET MODAL */}
       <ProductBottomSheet
         product={sheetProduct}
         isOpen={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
       />
-
     </div>
   );
 }

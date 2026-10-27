@@ -4,31 +4,25 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, ShoppingCart, Printer, Zap, X, MapPin, MessageCircle, Palette } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useCart } from "@/context/CartContext";
+import { Search, X, MapPin, MessageCircle } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { totalItems, setIsCartOpen, isLoaded } = useCart();
 
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showPromo, setShowPromo] = useState(true);
   const [settings, setSettings] = useState<Record<string, any>>({
     "contact.whatsapp": "6281234567890",
     "location.chipLabel": "Kota Padang & Sekitarnya",
-    "home.promoTitle": "Diskon 25%",
-    "home.promoSubtitle": "untuk Branding Cafe & Resto",
   });
 
   useEffect(() => {
     fetch("/api/settings")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success && data.data) {
-          setSettings(prev => ({ ...prev, ...data.data }));
+          setSettings((prev) => ({ ...prev, ...data.data }));
         }
       })
       .catch(() => {});
@@ -49,8 +43,8 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Hide on admin portal
-  if (pathname?.startsWith("/urang-dalam-bas-adv") || pathname?.startsWith("/admin")) {
+  // Sembunyikan pada admin jika ada redirect
+  if (pathname?.startsWith("/admin")) {
     return null;
   }
 
@@ -58,9 +52,8 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 z-50 w-full flex flex-col items-center">
-      
       {/* ========================================================= */}
-      {/* 📱 MOBILE APP TOP BAR (NATIVE APP EXPERIENCE FOR MOBILE) */}
+      {/* 📱 MOBILE HEADER BAR */}
       {/* ========================================================= */}
       <div className="md:hidden w-full bg-white/95 backdrop-blur-md border-b border-gray-100/90 shadow-2xs pt-safe transition-all">
         {/* Top App Header Row */}
@@ -88,32 +81,18 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Quick Action Icons */}
+          {/* Quick Action: Direct WhatsApp */}
           <div className="flex items-center gap-1.5 shrink-0 ml-2">
-            {/* WhatsApp Direct */}
             <a
-              href={`https://wa.me/${cleanWaNumber}`}
+              href={`https://wa.me/${cleanWaNumber}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi order cetak.")}`}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat WhatsApp"
-              className="w-8 h-8 rounded-full bg-green-50 text-[#25D366] flex items-center justify-center active:scale-95 transition-transform"
+              className="px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
             >
-              <MessageCircle size={17} />
+              <MessageCircle size={14} />
+              <span>Chat WA</span>
             </a>
-
-            {/* Cart Button */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              aria-label="Keranjang Belanja"
-              className="relative w-8 h-8 rounded-full bg-orange-50 text-[#F97316] flex items-center justify-center active:scale-95 transition-transform"
-            >
-              <ShoppingCart size={17} />
-              {isLoaded && totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[9px] font-extrabold min-w-4 h-4 px-1 rounded-full flex items-center justify-center ring-2 ring-white">
-                  {totalItems > 99 ? "99+" : totalItems}
-                </span>
-              )}
-            </button>
           </div>
         </div>
 
@@ -125,7 +104,7 @@ export default function Navbar() {
             </div>
             <input
               type="text"
-              placeholder="Mau cetak apa hari ini? Cari spanduk, stiker, kaos..."
+              placeholder="Cari spanduk, stiker, banner, packaging..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-9 py-2 bg-gray-100/80 focus:bg-white text-xs font-medium rounded-full border border-gray-200/60 focus:border-[#F97316] focus:ring-2 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-400"
@@ -146,10 +125,13 @@ export default function Navbar() {
       {/* ========================================================= */}
       {/* 💻 DESKTOP NAVBAR */}
       {/* ========================================================= */}
-      <nav className={`hidden md:block w-full transition-all duration-300 bg-white border-b border-gray-100 relative z-20 ${scrolled ? 'shadow-sm py-2.5' : 'py-4'}`}>
+      <nav
+        className={`hidden md:block w-full transition-all duration-300 bg-white border-b border-gray-100 relative z-20 ${
+          scrolled ? "shadow-sm py-2.5" : "py-4"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center gap-6">
-            
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group shrink-0">
               <div className="relative w-11 h-11 rounded-2xl bg-white border border-gray-200/90 p-1 shadow-2xs group-hover:border-orange-300 transition-colors flex items-center justify-center shrink-0">
@@ -173,79 +155,36 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop Navigation Menu */}
-            <div className="flex items-center gap-7 font-semibold text-sm text-gray-600">
-              <Link href="/" className="hover:text-[#F97316] transition-colors">Beranda</Link>
-              <Link href="/produk" className="hover:text-[#F97316] transition-colors">Katalog Produk</Link>
-              <Link href="/lacak" className="hover:text-[#F97316] transition-colors flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                <Zap size={13} className="fill-emerald-500 text-emerald-500" /> Lacak Pesanan
+            <div className="flex items-center gap-8 font-semibold text-sm text-gray-600">
+              <Link href="/" className="hover:text-[#F97316] transition-colors">
+                Beranda
               </Link>
-              <Link href="/mockup" className="hover:text-[#F97316] transition-colors flex items-center gap-1.5">
-                <Palette size={15} className="text-[#F97316]" /> Studio Mockup
+              <Link href="/produk" className="hover:text-[#F97316] transition-colors">
+                Katalog Produk
               </Link>
-              <Link href="/portofolio" className="hover:text-[#F97316] transition-colors">Portofolio</Link>
-            </div>
-
-            {/* Desktop Right Actions */}
-            <div className="flex items-center gap-4 shrink-0">
-              <button 
-                onClick={() => setIsCartOpen(true)}
-                className="text-[#0B1E36] hover:text-[#F97316] transition-colors relative flex items-center justify-center p-2 rounded-xl hover:bg-gray-50"
-                title="Buka Keranjang Belanja"
-                aria-label="Keranjang Belanja"
-              >
-                <ShoppingCart size={22} />
-                {isLoaded && totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[10px] font-bold min-w-4 h-4 px-1 rounded-full flex items-center justify-center shadow-sm">
-                    {totalItems > 99 ? "99+" : totalItems}
-                  </span>
-                )}
-              </button>
               <a
-                href={`https://wa.me/${cleanWaNumber}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-[#F97316] hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-full transition-colors text-sm shadow-sm inline-flex items-center gap-1.5"
+                href="#katalog"
+                className="hover:text-[#F97316] transition-colors text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full"
               >
-                <MessageCircle size={15} /> Hubungi Kami
+                Kategori Pilihan
               </a>
             </div>
 
+            {/* Desktop Right Action: WhatsApp */}
+            <div className="flex items-center gap-4 shrink-0">
+              <a
+                href={`https://wa.me/${cleanWaNumber}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi order cetak.")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-full transition-colors text-sm shadow-sm inline-flex items-center gap-2 active:scale-95"
+              >
+                <MessageCircle size={17} />
+                <span>Pesan via WhatsApp</span>
+              </a>
+            </div>
           </div>
         </div>
       </nav>
-
-      {/* FLOATING PROMO BANNER (DESKTOP ONLY) */}
-      <AnimatePresence>
-        {showPromo && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className={`hidden md:flex fixed w-full z-10 justify-center pointer-events-none px-4 transition-all duration-300 ${scrolled ? 'top-[68px]' : 'top-[84px]'}`}
-          >
-            <div className="pointer-events-auto bg-gradient-to-r from-[#F97316] to-[#F59E0B] rounded-full px-4 py-1.5 flex items-center gap-3 shadow-xl shadow-[#F97316]/20 border border-orange-400/40">
-              <div className="flex items-center gap-1.5 text-white font-medium text-xs">
-                <Zap size={14} fill="currentColor" className="shrink-0 animate-pulse" />
-                <span><strong className="font-bold">{settings["home.promoTitle"] || "Diskon 25%"}</strong> {settings["home.promoSubtitle"] || "untuk Branding Cafe & Resto"}</span>
-              </div>
-              
-              <div className="flex items-center gap-2 border-l border-white/30 pl-3">
-                <Link href="/produk" className="text-[#F97316] text-[10px] font-bold bg-white px-2.5 py-0.5 rounded-full hover:bg-gray-50 transition-colors shadow-2xs">
-                  KLAIM
-                </Link>
-                <button 
-                  onClick={() => setShowPromo(false)}
-                  className="text-white hover:bg-white/20 p-0.5 rounded-full transition-colors"
-                  aria-label="Tutup promo"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </header>
   );
 }
