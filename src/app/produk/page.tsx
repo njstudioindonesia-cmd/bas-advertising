@@ -30,9 +30,10 @@ function CatalogContent() {
   // Fetch categories & products from DB API
   useEffect(() => {
     const loadCatalog = () => {
+      const ts = Date.now();
       Promise.all([
-        fetch("/api/categories").then(res => res.json()).catch(() => ({ data: [] })),
-        fetch("/api/products").then(res => res.json()).catch(() => ({ data: [] }))
+        fetch(`/api/categories?t=${ts}`, { cache: "no-store" }).then(res => res.json()).catch(() => ({ data: [] })),
+        fetch(`/api/products?t=${ts}`, { cache: "no-store" }).then(res => res.json()).catch(() => ({ data: [] }))
       ]).then(([catData, prodData]) => {
         if (catData.success && Array.isArray(catData.data) && catData.data.length > 0) {
           const catNames = ["Semua", ...catData.data.map((c: any) => c.name)];
