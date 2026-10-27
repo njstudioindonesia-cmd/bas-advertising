@@ -6,27 +6,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   ArrowRight, 
-  ArrowUpRight, 
   CheckCircle2, 
   ShieldCheck, 
   Truck, 
   Award, 
   Search, 
-  Zap, 
   Store, 
   Package, 
   Shirt, 
   FileText, 
   Sparkles, 
-  Flame, 
   Clock, 
   MessageCircle, 
   Layers,
-  Star,
-  Palette,
-  Printer,
-  TrendingUp,
-  CheckCheck
+  Flame
 } from "lucide-react";
 
 import QuickProductCard from "@/components/QuickProductCard";
@@ -123,28 +116,28 @@ export default function Home() {
   });
 
   const bestSellers = productList.filter(p => p.isBestSeller);
-  // Kurasi spotlight: prioritaskan best seller atau filtered category, dibatasi agar tidak menumpuk
+  // Kurasi spotlight terpopuler (maksimal 4 di mobile)
   const spotlightMobile = (homeCategory === "Semua" ? (bestSellers.length >= 4 ? bestSellers : productList) : filteredProducts).slice(0, 4);
   const spotlightDesktop = (homeCategory === "Semua" ? (bestSellers.length >= 8 ? bestSellers : productList) : filteredProducts).slice(0, 8);
 
-  const categoryCards = [
-    { id: "all", name: "Semua", categoryName: "Semua", icon: Sparkles, badge: "Katalog" },
-    { id: "spanduk", name: "Spanduk", categoryName: "Spanduk & Banner", icon: Store, badge: "Kilat" },
-    { id: "stiker", name: "Stiker", categoryName: "Stiker & Label Kemasan", icon: Layers, badge: "Die Cut" },
-    { id: "kemasan", name: "Packaging", categoryName: "Packaging", icon: Package, badge: "Custom" },
-    { id: "merch", name: "Sablon", categoryName: "Merchandise & Sablon", icon: Shirt, badge: "DTF" },
-    { id: "signage", name: "Neon Box", categoryName: "Signage & Akrilik", icon: Award, badge: "Estetik" },
-    { id: "nota", name: "Brosur", categoryName: "Media Promosi & Kantor", icon: FileText, badge: "Presisi" },
+  const categoryStories = [
+    { id: "all", name: "Semua", categoryName: "Semua", icon: Sparkles },
+    { id: "spanduk", name: "Spanduk", categoryName: "Spanduk & Banner", icon: Store },
+    { id: "stiker", name: "Stiker", categoryName: "Stiker & Label Kemasan", icon: Layers },
+    { id: "kemasan", name: "Packaging", categoryName: "Packaging", icon: Package },
+    { id: "merch", name: "Sablon", categoryName: "Merchandise & Sablon", icon: Shirt },
+    { id: "signage", name: "Neon Box", categoryName: "Signage & Akrilik", icon: Award },
+    { id: "nota", name: "Brosur", categoryName: "Media Promosi & Kantor", icon: FileText },
   ];
 
   return (
-    <div className="bg-white min-h-screen pt-16 sm:pt-20 md:pt-28 pb-24 md:pb-24">
+    <div className="bg-white min-h-screen pt-16 sm:pt-20 md:pt-28 pb-28 md:pb-24">
       {/* ======================================================== */}
-      {/* 📱 MOBILE VIEW: CURATED, MODERN & DYNAMIC (NO WALL OF TEXT) */}
+      {/* 📱 MOBILE VIEW: PURE APP EXPERIENCE (VISUAL-FIRST & SLEEK) */}
       {/* ======================================================== */}
-      <div className="md:hidden space-y-7 px-4 max-w-lg mx-auto">
+      <div className="md:hidden space-y-5 px-4 max-w-lg mx-auto">
         
-        {/* 1. VISUAL HERO BANNER SLIDER */}
+        {/* 1. VISUAL HERO BANNER CAROUSEL */}
         <div className="relative">
           <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-1">
             {loading ? (
@@ -158,7 +151,7 @@ export default function Home() {
                     <Link
                       key={b.id || idx}
                       href={b.ctaHref || b.cta_href || "/produk"}
-                      className="min-w-full snap-center relative aspect-[16/9] rounded-3xl overflow-hidden shadow-sm group active:scale-[0.99] transition-transform block"
+                      className="min-w-full snap-center relative aspect-[16/9] rounded-3xl overflow-hidden shadow-xs group active:scale-[0.99] transition-transform block"
                     >
                       {imgUrl ? (
                         <Image
@@ -175,15 +168,15 @@ export default function Home() {
                       )}
 
                       {/* Smooth cinematic gradient scrim */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-5">
-                        <span className="text-[10px] font-semibold tracking-widest uppercase text-emerald-400 mb-1">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4 sm:p-5">
+                        <span className="text-[10px] font-semibold tracking-widest uppercase text-emerald-400 mb-0.5">
                           Layanan Pilihan
                         </span>
-                        <h2 className="text-white font-extrabold text-lg sm:text-xl leading-tight line-clamp-2">
+                        <h2 className="text-white font-extrabold text-base sm:text-lg leading-tight line-clamp-2">
                           {b.title}
                         </h2>
                         {b.subtitle && (
-                          <p className="text-white/80 text-xs mt-1 line-clamp-1 font-normal">
+                          <p className="text-white/80 text-[11px] mt-0.5 line-clamp-1 font-normal">
                             {b.subtitle}
                           </p>
                         )}
@@ -195,37 +188,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 2. VALUE PROPOSITION CHIPS (3 QUICK PILLS) */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-neutral-50 border border-neutral-200/70 rounded-2xl p-2.5 text-center flex flex-col items-center">
-            <Clock size={16} className="text-neutral-800 mb-1" />
-            <span className="text-[11px] font-bold text-neutral-900 leading-tight">Proses Kilat</span>
-            <span className="text-[9px] text-neutral-500 mt-0.5">Selesai 24 Jam</span>
-          </div>
-          <div className="bg-neutral-50 border border-neutral-200/70 rounded-2xl p-2.5 text-center flex flex-col items-center">
-            <ShieldCheck size={16} className="text-neutral-800 mb-1" />
-            <span className="text-[11px] font-bold text-neutral-900 leading-tight">Garansi Hasil</span>
-            <span className="text-[9px] text-neutral-500 mt-0.5">Warna Presisi</span>
-          </div>
-          <div className="bg-neutral-50 border border-neutral-200/70 rounded-2xl p-2.5 text-center flex flex-col items-center">
-            <Truck size={16} className="text-neutral-800 mb-1" />
-            <span className="text-[11px] font-bold text-neutral-900 leading-tight">Kirim Cepat</span>
-            <span className="text-[9px] text-neutral-500 mt-0.5">Aman Terbungkus</span>
-          </div>
-        </div>
-
-        {/* 3. VISUAL CATEGORY SELECTOR (AIRY ICONS) */}
+        {/* 2. VISUAL CATEGORY STORIES (CLEAN ICONS, ZERO CLUTTER) */}
         <div>
-          <div className="flex items-center justify-between mb-2.5 px-0.5">
-            <h3 className="text-xs font-bold text-neutral-900 tracking-tight flex items-center gap-1.5">
-              <span>Kategori Produk</span>
-            </h3>
-            <Link href="/produk" className="text-[11px] font-semibold text-neutral-500 hover:text-neutral-900 flex items-center gap-0.5">
-              Semua <ArrowRight size={11} />
-            </Link>
-          </div>
           <div className="flex items-center gap-3 overflow-x-auto no-scrollbar scroll-smooth px-0.5 py-1">
-            {categoryCards.map((cat) => {
+            {categoryStories.map((cat) => {
               const Icon = cat.icon;
               const isSelected = homeCategory === cat.categoryName || (cat.categoryName === "Semua" && homeCategory === "Semua");
               return (
@@ -235,7 +201,7 @@ export default function Home() {
                   onClick={() => {
                     setHomeCategory(cat.categoryName);
                   }}
-                  className="flex flex-col items-center gap-1.5 shrink-0 group active:scale-95 transition-transform"
+                  className="flex flex-col items-center gap-1.5 shrink-0 group active:scale-90 transition-transform"
                 >
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 ${
                     isSelected 
@@ -255,23 +221,20 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 4. CURATED SPOTLIGHT (ONLY 4 CARDS - TIDAK MENUMPUK!) */}
+        {/* 3. CURATED SPOTLIGHT (FOTO-FIRST, 4 PRODUK TERPILIH) */}
         <div className="pt-1">
-          <div className="flex items-center justify-between mb-3 px-0.5">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h3 className="font-extrabold text-sm text-neutral-900 tracking-tight">
-                  {homeCategory === "Semua" ? "Produk Terpopuler" : homeCategory}
-                </h3>
-              </div>
-              <p className="text-[10px] text-neutral-500 mt-0.5">Paling sering dipesan pelanggan</p>
+          <div className="flex items-center justify-between mb-2.5 px-0.5">
+            <div className="flex items-center gap-1.5">
+              <Flame size={15} className="text-amber-500 fill-amber-500" />
+              <h3 className="font-extrabold text-sm text-neutral-900 tracking-tight">
+                {homeCategory === "Semua" ? "Paling Sering Dipesan" : homeCategory}
+              </h3>
             </div>
             <Link
               href="/produk"
-              className="text-[11px] font-semibold text-neutral-600 hover:text-neutral-950 px-2.5 py-1 bg-neutral-100 rounded-full flex items-center gap-1 transition-colors"
+              className="text-[11px] font-semibold text-neutral-500 hover:text-neutral-900 flex items-center gap-0.5"
             >
-              Katalog ({productList.length}) <ArrowRight size={11} />
+              Semua ({productList.length}) <ArrowRight size={12} />
             </Link>
           </div>
 
@@ -315,194 +278,125 @@ export default function Home() {
           <div className="pt-3">
             <Link
               href="/produk"
-              className="flex items-center justify-between px-4 py-3 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-2xl text-xs font-semibold text-neutral-900 active:scale-98 transition-all"
+              className="flex items-center justify-between px-4 py-2.5 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/70 rounded-2xl text-xs font-semibold text-neutral-900 active:scale-98 transition-all"
             >
-              <div className="flex items-center gap-2">
-                <Package size={15} className="text-neutral-600" />
-                <span>Buka Seluruh Katalog ({productList.length} Produk)</span>
-              </div>
-              <ArrowRight size={14} className="text-neutral-400" />
+              <span className="text-[11px]">Buka Seluruh Katalog ({productList.length} Produk)</span>
+              <ArrowRight size={13} className="text-neutral-400" />
             </Link>
           </div>
         </div>
 
-        {/* 5. SOLUSI CETAK & ADVERTISING BISNIS (MODERN BENTO CARDS) */}
-        <div>
-          <div className="mb-3 px-0.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
-              Layanan Spesialis
-            </span>
+        {/* 4. INSPIRASI VISUAL LAYANAN (LOOKBOOK PHOTO CARDS - 100% VISUAL, ZERO TEXT ESSAYS) */}
+        <div className="pt-2">
+          <div className="flex items-center justify-between mb-2.5 px-0.5">
             <h3 className="font-extrabold text-sm text-neutral-900 tracking-tight">
-              Solusi Kebutuhan Bisnis & Brand
+              Inspirasi Hasil Cetak
             </h3>
+            <span className="text-[10px] text-neutral-400 font-medium">Geser untuk melihat</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            {/* Bento Card 1: Spanduk & Event */}
+          <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-1 px-0.5">
+            {/* Visual Card 1: Stiker & Kemasan */}
             <a
-              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi cetak Spanduk / Banner Event.")}`}
+              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi Cetak Stiker & Box Kemasan UMKM.")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-neutral-50/80 hover:bg-neutral-100/80 border border-neutral-200/80 rounded-2xl p-3.5 flex flex-col justify-between active:scale-[0.98] transition-all group"
+              className="snap-start shrink-0 w-[240px] relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xs group active:scale-[0.98] transition-transform block"
             >
-              <div>
-                <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-800 flex items-center justify-center mb-2.5">
-                  <Store size={16} />
-                </div>
-                <h4 className="font-bold text-xs text-neutral-900 leading-snug">
-                  Spanduk & Event
+              <Image
+                src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=800"
+                alt="Stiker & Kemasan Custom"
+                fill
+                sizes="240px"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3.5">
+                <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">
+                  Label & Packaging
+                </span>
+                <h4 className="text-white text-xs font-bold leading-snug">
+                  Stiker Vinyl & Box UMKM
                 </h4>
-                <p className="text-[10px] text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
-                  Bahan Flexi tajam tahan cuaca untuk promosi luar ruangan.
-                </p>
+                <span className="text-white/80 text-[10px] mt-0.5 flex items-center gap-1 font-medium">
+                  Konsultasi Desain <ArrowRight size={10} />
+                </span>
               </div>
-              <span className="text-[10px] font-semibold text-neutral-700 mt-3 inline-flex items-center gap-1 group-hover:text-neutral-950">
-                Pesan <ArrowRight size={10} />
-              </span>
             </a>
 
-            {/* Bento Card 2: Stiker & Kemasan UMKM */}
+            {/* Visual Card 2: Spanduk & Event */}
             <a
-              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi cetak Stiker Label Kemasan UMKM.")}`}
+              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi Spanduk & Banner Event Kilat.")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-neutral-50/80 hover:bg-neutral-100/80 border border-neutral-200/80 rounded-2xl p-3.5 flex flex-col justify-between active:scale-[0.98] transition-all group"
+              className="snap-start shrink-0 w-[240px] relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xs group active:scale-[0.98] transition-transform block"
             >
-              <div>
-                <div className="w-8 h-8 rounded-xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center mb-2.5">
-                  <Layers size={16} />
-                </div>
-                <h4 className="font-bold text-xs text-neutral-900 leading-snug">
-                  Label & Kemasan
+              <Image
+                src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800"
+                alt="Spanduk & Banner Kilat"
+                fill
+                sizes="240px"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3.5">
+                <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">
+                  Outdoor & Promosi
+                </span>
+                <h4 className="text-white text-xs font-bold leading-snug">
+                  Spanduk & Banner Kilat
                 </h4>
-                <p className="text-[10px] text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
-                  Cutting stiker vinyl & botol anti air untuk brand produk Anda.
-                </p>
+                <span className="text-white/80 text-[10px] mt-0.5 flex items-center gap-1 font-medium">
+                  Selesai 24 Jam <ArrowRight size={10} />
+                </span>
               </div>
-              <span className="text-[10px] font-semibold text-neutral-700 mt-3 inline-flex items-center gap-1 group-hover:text-neutral-950">
-                Pesan <ArrowRight size={10} />
-              </span>
             </a>
 
-            {/* Bento Card 3: Sablon Kaos & Merch */}
+            {/* Visual Card 3: Kaos & Merchandise */}
             <a
-              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi cetak Sablon Kaos / Merchandise.")}`}
+              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi Sablon Kaos / Seragam.")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-neutral-50/80 hover:bg-neutral-100/80 border border-neutral-200/80 rounded-2xl p-3.5 flex flex-col justify-between active:scale-[0.98] transition-all group"
+              className="snap-start shrink-0 w-[240px] relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xs group active:scale-[0.98] transition-transform block"
             >
-              <div>
-                <div className="w-8 h-8 rounded-xl bg-blue-100/80 text-blue-800 flex items-center justify-center mb-2.5">
-                  <Shirt size={16} />
-                </div>
-                <h4 className="font-bold text-xs text-neutral-900 leading-snug">
-                  Sablon & Kaos
+              <Image
+                src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800"
+                alt="Sablon Kaos & Merchandise"
+                fill
+                sizes="240px"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3.5">
+                <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">
+                  Apparel & Merch
+                </span>
+                <h4 className="text-white text-xs font-bold leading-snug">
+                  Sablon DTF & Seragam
                 </h4>
-                <p className="text-[10px] text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
-                  Sablon DTF presisi & bahan katun premium untuk seragam crew.
-                </p>
+                <span className="text-white/80 text-[10px] mt-0.5 flex items-center gap-1 font-medium">
+                  Katun Combed Premium <ArrowRight size={10} />
+                </span>
               </div>
-              <span className="text-[10px] font-semibold text-neutral-700 mt-3 inline-flex items-center gap-1 group-hover:text-neutral-950">
-                Pesan <ArrowRight size={10} />
-              </span>
-            </a>
-
-            {/* Bento Card 4: Neon Box & Signage */}
-            <a
-              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi Neon Box / Signage Toko.")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-neutral-50/80 hover:bg-neutral-100/80 border border-neutral-200/80 rounded-2xl p-3.5 flex flex-col justify-between active:scale-[0.98] transition-all group"
-            >
-              <div>
-                <div className="w-8 h-8 rounded-xl bg-purple-100/80 text-purple-800 flex items-center justify-center mb-2.5">
-                  <Award size={16} />
-                </div>
-                <h4 className="font-bold text-xs text-neutral-900 leading-snug">
-                  Neon Box & Plang
-                </h4>
-                <p className="text-[10px] text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
-                  Plang toko akrilik & LED terang untuk visibilitas usaha Anda.
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold text-neutral-700 mt-3 inline-flex items-center gap-1 group-hover:text-neutral-950">
-                Pesan <ArrowRight size={10} />
-              </span>
             </a>
           </div>
         </div>
 
-        {/* 6. ALUR PEMESANAN CEPAT 3 LANGKAH (VISUAL STEPPER) */}
-        <div className="bg-neutral-50/70 border border-neutral-200/70 rounded-3xl p-4 sm:p-5">
-          <div className="text-center mb-4">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-              Praktis & Tanpa Ribet
-            </span>
-            <h3 className="font-extrabold text-sm text-neutral-900 mt-0.5">
-              Cara Pesan Cetak 3 Langkah
-            </h3>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 bg-white p-3 rounded-2xl border border-neutral-200/60 shadow-2xs">
-              <div className="w-7 h-7 rounded-xl bg-neutral-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                1
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-neutral-900">Pilih Produk atau Chat WA</h4>
-                <p className="text-[11px] text-neutral-500 mt-0.5 leading-snug">
-                  Tentukan spesifikasi ukuran dan jumlah yang Anda perlukan.
-                </p>
-              </div>
+        {/* 5. APP-STYLE SLIM ACTION CAPSULE (COMPACT & MODERN) */}
+        <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+              <MessageCircle size={16} />
             </div>
-
-            <div className="flex items-start gap-3 bg-white p-3 rounded-2xl border border-neutral-200/60 shadow-2xs">
-              <div className="w-7 h-7 rounded-xl bg-neutral-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                2
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-neutral-900">Kirim File & ACC Desain</h4>
-                <p className="text-[11px] text-neutral-500 mt-0.5 leading-snug">
-                  Tim kami cek ketajaman resolusi & kirim mock-up sebelum produksi.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 bg-white p-3 rounded-2xl border border-neutral-200/60 shadow-2xs">
-              <div className="w-7 h-7 rounded-xl bg-neutral-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                3
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-neutral-900">Cetak Presisi & Dikirim</h4>
-                <p className="text-[11px] text-neutral-500 mt-0.5 leading-snug">
-                  Hasil cetak dipacking rapi dan langsung dikirim ke alamat Anda.
-                </p>
-              </div>
+            <div className="min-w-0">
+              <h4 className="text-xs font-bold text-neutral-900 truncate">Punya Desain Sendiri?</h4>
+              <p className="text-[10px] text-neutral-500 truncate">Kirim via WA, gratis review file</p>
             </div>
           </div>
-        </div>
-
-        {/* 7. MODERN LIGHT CONSULTATION CARD */}
-        <div className="bg-gradient-to-br from-neutral-50 via-white to-emerald-50/40 border border-neutral-200/80 rounded-3xl p-5 shadow-xs">
-          <div className="flex items-center gap-1.5 text-emerald-700 text-[10px] font-bold tracking-wide uppercase mb-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-            <span>CS Online Siap Bantu</span>
-          </div>
-          <h3 className="font-extrabold text-base text-neutral-900 leading-snug mb-1">
-            Punya Kebutuhan Cetak Khusus?
-          </h3>
-          <p className="text-xs text-neutral-500 leading-relaxed mb-4">
-            Ukuran custom, partai besar, atau butuh bantuan penyesuaian file desain? Diskusikan langsung dengan tim Cetak.inc.
-          </p>
-
           <a
-            href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi kebutuhan cetak kustom.")}`}
+            href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi cetak dan kirim file desain.")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/20 transition-all"
+            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-semibold shrink-0 transition-transform shadow-xs"
           >
-            <MessageCircle size={16} />
-            <span>Konsultasi Cepat via WhatsApp</span>
+            Chat CS
           </a>
         </div>
 
@@ -630,7 +524,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* DESKTOP PROMO BANNERS - MINIMALIST SHOWCASE */}
+        {/* DESKTOP PROMO BANNERS */}
         {banners.length > 0 && (
           <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 pb-5 border-b border-neutral-200/60 gap-4">
@@ -715,7 +609,7 @@ export default function Home() {
           </section>
         )}
 
-        {/* CURATED SPOTLIGHT PRODUCTS (MAKSIMAL 8 PRODUK - BERSIH & RAPI) */}
+        {/* CURATED SPOTLIGHT PRODUCTS (MAKSIMAL 8 PRODUK) */}
         <section id="katalog" className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20 scroll-mt-28">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-5 border-b border-neutral-200/60 gap-4">
             <div>
@@ -836,112 +730,7 @@ export default function Home() {
           )}
         </section>
 
-        {/* 🌟 DESKTOP BENTO SOLUTIONS & STEPPER SECTION */}
-        <section className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-            {/* Left 7 Cols: Solutions Bento */}
-            <div className="lg:col-span-7 bg-neutral-50/80 border border-neutral-200/70 rounded-3xl p-8 flex flex-col justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-                  Solusi Komprehensif
-                </span>
-                <h3 className="text-2xl font-extrabold text-neutral-900 tracking-tight mb-2">
-                  Kebutuhan Cetak Bisnis Anda, Lengkap di Satu Tempat
-                </h3>
-                <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed max-w-xl mb-6">
-                  Dari promosi outdoor berukuran besar hingga detail packaging yang memikat pembeli, kami siapkan dengan mesin teknologi mutakhir.
-                </p>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-4 rounded-2xl border border-neutral-200/60 shadow-2xs">
-                    <Store className="text-amber-700 mb-2" size={20} />
-                    <h4 className="text-sm font-bold text-neutral-900">Outdoor & Spanduk</h4>
-                    <p className="text-xs text-neutral-500 mt-1">Flexi Korea, Backlite, Baliho & X-Banner kokoh tahan hujan panas.</p>
-                  </div>
-                  <div className="bg-white p-4 rounded-2xl border border-neutral-200/60 shadow-2xs">
-                    <Layers className="text-emerald-700 mb-2" size={20} />
-                    <h4 className="text-sm font-bold text-neutral-900">Stiker & Box Packaging</h4>
-                    <p className="text-xs text-neutral-500 mt-1">Cromo, Vinyl, Transparan & Kraft Box makanan food-grade.</p>
-                  </div>
-                  <div className="bg-white p-4 rounded-2xl border border-neutral-200/60 shadow-2xs">
-                    <Shirt className="text-blue-700 mb-2" size={20} />
-                    <h4 className="text-sm font-bold text-neutral-900">Seragam & Sablon DTF</h4>
-                    <p className="text-xs text-neutral-500 mt-1">Kaos katun combed 24s/30s, polo shirt, topi, dan lanyard identitas.</p>
-                  </div>
-                  <div className="bg-white p-4 rounded-2xl border border-neutral-200/60 shadow-2xs">
-                    <Award className="text-purple-700 mb-2" size={20} />
-                    <h4 className="text-sm font-bold text-neutral-900">Neon Box & Akrilik</h4>
-                    <p className="text-xs text-neutral-500 mt-1">Plang nama usaha, neon sign LED, dan plakat wisuda presisi.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right 5 Cols: Stepper */}
-            <div className="lg:col-span-5 bg-white border border-neutral-200/80 rounded-3xl p-8 flex flex-col justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
-                  Alur Pemesanan
-                </span>
-                <h3 className="text-2xl font-extrabold text-neutral-900 tracking-tight mb-6">
-                  3 Langkah Pemesanan Cepat
-                </h3>
-
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-xl bg-neutral-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      1
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-neutral-900">Konsultasi & Pilih Produk</h4>
-                      <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
-                        Tentukan jenis bahan, ukuran, dan kuantitas pesanan Anda secara langsung.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-xl bg-neutral-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      2
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-neutral-900">Kirim File & ACC Proofing</h4>
-                      <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
-                        Kirim file desain (PDF/AI/JPG). Tim kami pastikan layout dan resolusi siap cetak tanpa pecah.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-xl bg-neutral-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      3
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-neutral-900">Produksi & Pengiriman Aman</h4>
-                      <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
-                        Pesanan langsung diproses mesin digital presisi dan diantar dengan aman.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-neutral-100">
-                <a
-                  href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi alur pemesanan cetak.")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-neutral-900 hover:bg-neutral-800 text-white rounded-2xl py-3 text-xs font-semibold flex items-center justify-center gap-2 transition-colors active:scale-98"
-                >
-                  <MessageCircle size={15} />
-                  <span>Mulai Konsultasi Pesanan</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 🌿 MODERN LIGHT CONSULTATION CARD (NO DARK NAVY / HEAVY DARK BOXES) */}
+        {/* 🌿 MODERN LIGHT CONSULTATION CARD */}
         <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16">
           <div className="bg-gradient-to-br from-neutral-50 via-white to-emerald-50/50 border border-neutral-200/80 rounded-3xl p-8 lg:p-12 text-neutral-900 shadow-sm flex flex-col lg:flex-row gap-8 justify-between items-center">
             <div className="lg:w-[65%] w-full">
