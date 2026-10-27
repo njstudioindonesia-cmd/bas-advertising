@@ -69,49 +69,48 @@ function CatalogContent() {
   return (
     <div className="w-full max-w-lg md:max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-36 pb-24 md:pb-32 overflow-x-hidden">
       
-      {/* 📱 TOP APP BAR ALA GOJEK/ASTRO */}
-      <div className="sticky top-[88px] sm:top-[92px] md:top-20 z-20 bg-[#F8F9FA]/95 backdrop-blur-md pt-2 pb-2.5 mb-3 border-b border-gray-100/60 w-full max-w-full overflow-hidden">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
-            <h1 className="text-xs sm:text-sm font-extrabold text-[#1E1B4B]">
-              {activeCategory === "Semua" ? "Katalog Produk Unggulan" : activeCategory}
+      {/* 📱 TOP APP BAR CLEAN & MINIMALIST */}
+      <div className="sticky top-[88px] sm:top-[92px] md:top-20 z-20 bg-[#F8F9FA]/95 backdrop-blur-md pt-2 pb-3 mb-4 border-b border-neutral-200/60 w-full max-w-full overflow-hidden">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 block">
+              Katalog Lengkap
+            </span>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight">
+              {activeCategory === "Semua" ? "Semua Produk" : (activeCategory === "PACKAGING" ? "Packaging" : activeCategory)}
             </h1>
           </div>
-          <span className="text-[10px] sm:text-xs font-bold text-gray-400 bg-white border border-gray-200/80 px-2.5 py-1 rounded-full shadow-2xs shrink-0">
+          <span className="text-xs font-medium text-neutral-500 bg-neutral-100 px-3 py-1.5 rounded-full shrink-0">
             {filteredProducts.length} Produk
           </span>
         </div>
 
         {/* 📱 HORIZONTAL TOUCH SWIPEABLE CATEGORY CHIPS */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 w-full max-w-full">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 w-full max-w-full">
           {loading ? (
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="h-7 w-20 bg-gray-200 rounded-full animate-pulse shrink-0" />
+                <div key={n} className="h-8 w-20 bg-neutral-200/70 rounded-full animate-pulse shrink-0" />
               ))}
             </div>
           ) : (
             categories.map((cat) => {
               const count = cat === "Semua" ? productList.length : productList.filter(p => p.category === cat).length;
               const isSelected = activeCategory === cat;
+              const displayName = cat === "PACKAGING" ? "Packaging" : cat === "SPANDUK" ? "Spanduk" : cat === "STIKER" ? "Stiker" : cat;
 
               return (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => setActiveCategory(cat)}
-                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-extrabold transition-all duration-200 flex items-center gap-1.5 shrink-0 active:scale-95 ${
+                  className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
                     isSelected 
-                      ? "bg-[#1E1B4B] text-white shadow-xs" 
-                      : "bg-white text-gray-600 hover:text-gray-900 border border-gray-200/80 shadow-2xs"
+                      ? "bg-neutral-900 text-white shadow-xs" 
+                      : "bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900"
                   }`}
                 >
-                  <span>{cat}</span>
-                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full ${
-                    isSelected ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"
-                  }`}>
-                    {count}
-                  </span>
+                  {displayName} <span className="opacity-60 text-[11px] ml-0.5">({count})</span>
                 </button>
               );
             })
@@ -151,10 +150,10 @@ function CatalogContent() {
               </button>
             ) : (
               <a
-                href="https://wa.me/6281234567890?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20pemesanan%20cetak"
+                href="https://wa.me/6282172725267?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20pemesanan%20cetak"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-[#25D366] hover:bg-green-600 text-white transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs"
               >
                 <MessageCircle size={14} /> Hubungi CS WhatsApp
               </a>

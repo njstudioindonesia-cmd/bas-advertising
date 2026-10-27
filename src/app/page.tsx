@@ -715,30 +715,30 @@ export default function Home() {
           </section>
         )}
 
-        {/* UNIFIED MINIMALIST CATALOG SECTION (SUBSTITUTES CLUTTERED 15-CARD TEXT WALL) */}
+        {/* UNIFIED MINIMALIST CATALOG SECTION */}
         <section id="katalog" className="px-4 sm:px-6 lg:px-8 max-w-[1400px] mx-auto mb-16 lg:mb-20 scroll-mt-28">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-5 border-b border-neutral-200/60 gap-4">
             <div>
-              <span className="text-xs font-bold text-[#F97316] uppercase tracking-wider block mb-1">
-                Katalog Produk Pilihan
+              <span className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 block mb-1">
+                Katalog Resmi
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1E1B4B] tracking-tight">
-                Pilihan Cetak Lengkap & Presisi
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
+                Pilihan Produk Percetakan & Advertising
               </h2>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                Pilih kategori dan pesan langsung via WhatsApp dengan spesifikasi pesanan Anda.
+              <p className="text-xs sm:text-sm text-neutral-500 mt-1">
+                Pilih produk berkualitas dan pesan langsung via WhatsApp dalam hitungan menit.
               </p>
             </div>
             <div className="flex items-center gap-2.5">
-              <span className="text-xs font-semibold text-gray-500 bg-white border border-gray-200/80 px-3.5 py-1.5 rounded-full shadow-2xs">
-                {displayFeed.length} Produk Siap Cetak
+              <span className="text-xs font-medium text-neutral-500 bg-neutral-100 px-3 py-1.5 rounded-full">
+                {displayFeed.length} Produk
               </span>
               <Link 
                 href="/produk" 
-                className="text-xs font-bold text-[#F97316] hover:text-orange-600 px-4 py-1.5 rounded-full bg-orange-50 hover:bg-orange-100 transition-colors inline-flex items-center gap-1.5"
+                className="text-xs font-semibold text-neutral-700 hover:text-neutral-950 px-3.5 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200/80 transition-colors inline-flex items-center gap-1"
               >
-                Semua Produk <ArrowRight size={13} />
+                Semua Katalog <ArrowRight size={13} />
               </Link>
             </div>
           </div>
@@ -748,16 +748,13 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setHomeCategory("Semua")}
-              className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 shrink-0 flex items-center gap-2 ${
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
                 homeCategory === "Semua"
-                  ? "bg-[#0B1E36] text-white shadow-sm"
-                  : "bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200/80 shadow-2xs"
+                  ? "bg-neutral-900 text-white shadow-xs"
+                  : "bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900"
               }`}
             >
-              <span>Semua</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${homeCategory === "Semua" ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"}`}>
-                {productList.length}
-              </span>
+              Semua <span className="opacity-60 text-[11px] ml-0.5">({productList.length})</span>
             </button>
 
             {categories
@@ -767,25 +764,23 @@ export default function Home() {
                 return count > 0;
               })
               .map((c: any) => {
-                const cName = typeof c === "string" ? c : c.name;
-                const count = productList.filter((p) => p.category === cName || p.categoryId === c.id).length;
-                const isSelected = homeCategory === cName;
+                const rawName = typeof c === "string" ? c : c.name;
+                const cName = rawName === "PACKAGING" ? "Packaging" : rawName === "SPANDUK" ? "Spanduk" : rawName === "STIKER" ? "Stiker" : rawName;
+                const count = productList.filter((p) => p.category === rawName || p.categoryId === c.id).length;
+                const isSelected = homeCategory === rawName;
 
                 return (
                   <button
-                    key={c.id || cName}
+                    key={c.id || rawName}
                     type="button"
-                    onClick={() => setHomeCategory(cName)}
-                    className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 shrink-0 flex items-center gap-2 ${
+                    onClick={() => setHomeCategory(rawName)}
+                    className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
                       isSelected
-                        ? "bg-[#0B1E36] text-white shadow-sm"
-                        : "bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200/80 shadow-2xs"
+                        ? "bg-neutral-900 text-white shadow-xs"
+                        : "bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900"
                     }`}
                   >
-                    <span>{cName}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? "bg-[#F97316] text-white" : "bg-gray-100 text-gray-500"}`}>
-                      {count}
-                    </span>
+                    {cName} <span className="opacity-60 text-[11px] ml-0.5">({count})</span>
                   </button>
                 );
               })}
@@ -793,18 +788,18 @@ export default function Home() {
 
           {/* Minimalist Product Grid */}
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                <div key={n} className="bg-white rounded-2xl p-3 border border-gray-100 animate-pulse space-y-3">
-                  <div className="aspect-square bg-gray-100 rounded-xl" />
-                  <div className="h-4 bg-gray-100 rounded w-2/3" />
-                  <div className="h-4 bg-gray-100 rounded w-1/3" />
+                <div key={n} className="bg-white rounded-2xl p-3 border border-neutral-100 animate-pulse space-y-3">
+                  <div className="aspect-square bg-neutral-100 rounded-xl" />
+                  <div className="h-4 bg-neutral-100 rounded w-2/3" />
+                  <div className="h-4 bg-neutral-100 rounded w-1/3" />
                 </div>
               ))}
             </div>
           ) : displayFeed.length > 0 ? (
             <div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
                 {displayFeed.slice(0, 15).map((item) => (
                   <QuickProductCard
                     key={item.id}
@@ -821,27 +816,27 @@ export default function Home() {
                 <div className="text-center mt-10">
                   <Link
                     href={`/produk${homeCategory !== "Semua" ? `?category=${encodeURIComponent(homeCategory)}` : ""}`}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-gray-50 text-[#0B1E36] font-bold text-xs border border-gray-200/80 shadow-2xs hover:shadow-md transition-all active:scale-95"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white hover:bg-neutral-50 text-neutral-900 font-semibold text-xs border border-neutral-200 shadow-2xs hover:shadow-sm transition-all active:scale-95"
                   >
                     <span>Lihat Seluruh {displayFeed.length} Produk Kategori Ini</span>
-                    <ArrowRight size={14} className="text-[#F97316]" />
+                    <ArrowRight size={14} className="text-neutral-400" />
                   </Link>
                 </div>
               )}
             </div>
           ) : (
-            <div className="bg-white rounded-3xl p-10 text-center border border-gray-100 max-w-lg mx-auto">
-              <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-[#F97316] mx-auto mb-3">
+            <div className="bg-white rounded-3xl p-10 text-center border border-neutral-100 max-w-lg mx-auto">
+              <div className="w-14 h-14 bg-neutral-100 rounded-2xl flex items-center justify-center text-neutral-600 mx-auto mb-3">
                 <Package size={28} />
               </div>
-              <h3 className="font-extrabold text-[#1E1B4B] text-base mb-1">Kategori Ini Belum Ada Produk</h3>
-              <p className="text-xs text-gray-500 mb-4">
+              <h3 className="font-extrabold text-neutral-900 text-base mb-1">Kategori Ini Belum Ada Produk</h3>
+              <p className="text-xs text-neutral-500 mb-4">
                 Pilih kategori lain atau hubungi CS kami via WhatsApp.
               </p>
               <button
                 type="button"
                 onClick={() => setHomeCategory("Semua")}
-                className="px-5 py-2.5 bg-[#0B1E36] text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors"
+                className="px-5 py-2.5 bg-neutral-900 text-white font-semibold rounded-xl text-xs hover:bg-neutral-800 transition-colors"
               >
                 Tampilkan Semua Produk
               </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Star, Zap, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 
 interface QuickProductCardProps {
   product: any;
@@ -22,60 +22,61 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
     }
   };
 
+  const imageUrl = product.imageUrl || product.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800";
+  const title = product.name || product.title || "Produk Cetak";
+  const category = product.category || "Percetakan";
+
   return (
-    <div
+    <article
       onClick={handleCardClick}
-      className="group relative bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-100 hover:border-orange-200/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer active:scale-[0.98] w-full min-w-0 overflow-hidden"
+      className="group relative bg-white rounded-2xl p-3 sm:p-3.5 border border-neutral-200/70 hover:border-neutral-300 hover:shadow-xl hover:shadow-neutral-900/5 transition-all duration-300 flex flex-col justify-between cursor-pointer active:scale-[0.99] w-full min-w-0"
     >
-      {/* GAMBAR PRODUK */}
-      <div className="relative aspect-square w-full rounded-xl sm:rounded-2xl overflow-hidden bg-gray-50 border border-gray-100/60 mb-2">
+      {/* 🖼️ FOTO PRODUK CLEAN & MINIMALIS */}
+      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-neutral-100 mb-3">
         <Image
-          src={product.imageUrl || product.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"}
-          alt={product.name || product.title}
+          src={imageUrl}
+          alt={title}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          unoptimized={Boolean(imageUrl.startsWith("data:"))}
+          className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
         />
 
-        {/* TOP BADGES */}
-        <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 items-start">
-          {product.isBestSeller && (
-            <span className="bg-amber-500 text-white text-[8px] sm:text-[9px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-md shadow-2xs flex items-center gap-0.5">
-              <Star size={8} className="fill-white" /> Best
-            </span>
-          )}
-          <span className="bg-white/95 backdrop-blur-xs text-[#F97316] text-[8px] sm:text-[9px] font-extrabold uppercase px-1.5 sm:px-2 py-0.5 rounded-md shadow-2xs border border-orange-100 flex items-center gap-0.5">
-            <Zap size={8} className="fill-[#F97316]" /> Kilat
+        {/* Minimalist Badge: Best Seller Only */}
+        {product.isBestSeller && (
+          <span className="absolute top-2.5 right-2.5 bg-neutral-900/85 backdrop-blur-md text-white text-[9px] font-semibold tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
+            Best Seller
           </span>
-        </div>
-
-        {/* RATING PILL */}
-        <div className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5">
-          <Star size={9} className="text-amber-400 fill-amber-400" />
-          <span>{product.rating || "5.0"}</span>
-        </div>
+        )}
       </div>
 
-      {/* INFORMASI PRODUK */}
+      {/* 📄 DETAIL & TYPOGRAPHY CLEAN */}
       <div className="flex-1 flex flex-col justify-between min-w-0">
         <div>
-          <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-0.5 truncate">
-            {product.category || "Cetak.inc"}
+          <span className="text-[10px] sm:text-[11px] font-medium tracking-wider uppercase text-neutral-400 block mb-1 truncate">
+            {category}
           </span>
-          <h4 className="font-extrabold text-[11px] sm:text-xs md:text-sm text-gray-900 leading-snug line-clamp-2 h-7 sm:h-8 group-hover:text-[#F97316] transition-colors">
-            {product.name || product.title}
-          </h4>
+          <h3 className="font-semibold text-xs sm:text-[14px] text-neutral-900 leading-snug line-clamp-2 min-h-[2.5rem] group-hover:text-emerald-700 transition-colors">
+            {title}
+          </h3>
         </div>
 
-        {/* HARGA & TOMBOL PESAN */}
-        <div className="mt-2 pt-1.5 border-t border-gray-50 flex items-center justify-between gap-1">
-          <div className="min-w-0 flex-1 flex flex-col justify-center">
-            <span className="font-black text-xs sm:text-sm text-[#F97316] tracking-tight truncate block">
-              {product.price}
-            </span>
-            {product.normalPrice && (
-              <span className="text-[9px] text-gray-400 line-through leading-none block truncate">
-                {product.normalPrice}
+        {/* 🏷️ HARGA & ACTION BUTTON */}
+        <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="font-bold text-sm sm:text-base text-neutral-900 tracking-tight">
+                {product.price}
+              </span>
+              {product.normalPrice && (
+                <span className="text-[11px] text-neutral-400 line-through font-normal">
+                  {product.normalPrice}
+                </span>
+              )}
+            </div>
+            {product.unit && (
+              <span className="text-[10px] text-neutral-400 block -mt-0.5 truncate">
+                {product.unit}
               </span>
             )}
           </div>
@@ -83,14 +84,14 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
           <button
             type="button"
             onClick={handleOrderClick}
-            aria-label={`Pesan ${product.name || product.title}`}
-            className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] sm:text-[11px] flex items-center gap-1 transition-all active:scale-95"
+            aria-label={`Pesan ${title} via WhatsApp`}
+            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs inline-flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-95 transition-all shrink-0"
           >
-            <MessageCircle size={12} className="text-emerald-600" />
+            <MessageCircle size={13} className="fill-white/20" />
             <span>Pesan</span>
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
