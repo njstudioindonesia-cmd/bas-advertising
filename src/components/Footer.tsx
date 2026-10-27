@@ -38,7 +38,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="w-full bg-neutral-50/90 border-t border-neutral-200/70 pt-8 pb-28 md:pt-14 md:pb-12 text-neutral-900">
+    <footer className="hidden md:block w-full bg-neutral-50/90 border-t border-neutral-200/70 pt-8 pb-14 text-neutral-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Highlight Banner on Footer */}

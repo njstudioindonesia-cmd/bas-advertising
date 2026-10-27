@@ -31,57 +31,58 @@ export default function BottomNav() {
     cleanWa = "62" + cleanWa;
   }
 
+  const isHome = pathname === "/";
+  const isCatalog = pathname?.startsWith("/produk");
+
   return (
-    <nav
-      aria-label="Mobile Navigation Bar"
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-neutral-200/60 z-40 shadow-[0_-4px_24px_rgba(0,0,0,0.04)]"
-      style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)" }}
+    <div
+      className="md:hidden fixed left-0 right-0 z-40 flex justify-center pointer-events-none px-4"
+      style={{ bottom: "max(env(safe-area-inset-bottom, 0px) + 10px, 16px)" }}
     >
-      <div className="flex justify-around items-center h-14 px-4 max-w-md mx-auto">
+      <nav
+        aria-label="Floating Mobile Dock"
+        className="pointer-events-auto bg-white/90 backdrop-blur-2xl border border-neutral-200/80 p-1.5 rounded-full shadow-[0_12px_36px_rgba(0,0,0,0.12)] flex items-center gap-1 max-w-sm w-auto transition-all"
+      >
         {/* Beranda */}
         <Link
           href="/"
-          className={`flex flex-col items-center justify-center flex-1 h-full relative transition-all duration-200 active:scale-95 ${
-            pathname === "/" ? "text-neutral-950 font-semibold" : "text-neutral-400 font-medium hover:text-neutral-700"
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs transition-all duration-300 active:scale-95 ${
+            isHome
+              ? "bg-neutral-950 text-white shadow-sm font-semibold"
+              : "text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 font-medium"
           }`}
         >
-          {pathname === "/" && (
-            <span className="absolute top-0 w-8 h-0.5 bg-neutral-950 rounded-full" />
-          )}
-          <Home size={20} strokeWidth={pathname === "/" ? 2.2 : 1.75} />
-          <span className="text-[10px] mt-1 tracking-tight">Beranda</span>
+          <Home size={16} strokeWidth={isHome ? 2.2 : 1.8} />
+          <span>Beranda</span>
         </Link>
 
         {/* Katalog */}
         <Link
           href="/produk"
-          className={`flex flex-col items-center justify-center flex-1 h-full relative transition-all duration-200 active:scale-95 ${
-            pathname?.startsWith("/produk")
-              ? "text-neutral-950 font-semibold"
-              : "text-neutral-400 font-medium hover:text-neutral-700"
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs transition-all duration-300 active:scale-95 ${
+            isCatalog
+              ? "bg-neutral-950 text-white shadow-sm font-semibold"
+              : "text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 font-medium"
           }`}
         >
-          {pathname?.startsWith("/produk") && (
-            <span className="absolute top-0 w-8 h-0.5 bg-neutral-950 rounded-full" />
-          )}
-          <LayoutGrid size={20} strokeWidth={pathname?.startsWith("/produk") ? 2.2 : 1.75} />
-          <span className="text-[10px] mt-1 tracking-tight">Katalog</span>
+          <LayoutGrid size={16} strokeWidth={isCatalog ? 2.2 : 1.8} />
+          <span>Katalog</span>
         </Link>
 
-        {/* WhatsApp Chat Langsung */}
+        {/* WhatsApp Direct Hub */}
         <a
           href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi & pesan cetak.")}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-col items-center justify-center flex-1 h-full relative transition-all duration-200 active:scale-95 text-emerald-600 hover:text-emerald-700 font-medium"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold shadow-sm shadow-emerald-600/25 transition-all duration-300"
         >
           <div className="relative">
-            <MessageCircle size={20} strokeWidth={2.2} />
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white" />
+            <MessageCircle size={16} className="fill-white/20" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-300 rounded-full animate-ping" />
           </div>
-          <span className="text-[10px] mt-1 font-semibold tracking-tight">WhatsApp</span>
+          <span>WhatsApp</span>
         </a>
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }
