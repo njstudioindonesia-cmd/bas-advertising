@@ -22,18 +22,18 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
     .slice(0, 4);
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen pt-20 md:pt-36 pb-36 md:pb-24">
+    <div className="bg-white min-h-screen pt-24 md:pt-36 pb-36 md:pb-24">
       <div className="max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8">
         
         {/* 📱 MOBILE APP TOP BAR / BREADCRUMB */}
         <div className="flex items-center justify-between mb-4">
           <Link 
             href="/produk" 
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white px-3 py-1.5 rounded-full border border-gray-200/80 shadow-2xs hover:text-[#F97316] active:scale-95 transition-all"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-neutral-700 bg-white px-3 py-1.5 rounded-full border border-neutral-200/80 shadow-2xs hover:text-neutral-950 active:scale-95 transition-all"
           >
             <ArrowLeft size={14} /> Kembali
           </Link>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#F97316] bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200/60">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-600 bg-neutral-100 px-3 py-1 rounded-full border border-neutral-200/60">
             {product.category}
           </span>
         </div>
@@ -43,7 +43,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
           
           {/* Left: Product Images */}
           <div className="space-y-3">
-            <div className="relative aspect-square rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+            <div className="relative aspect-square rounded-3xl overflow-hidden bg-neutral-100 border border-neutral-200/70 shadow-sm">
               <Image 
                 src={product.imageUrl || product.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop"} 
                 alt={product.title}
@@ -54,8 +54,8 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
                 className="object-cover"
               />
               {product.isBestSeller && (
-                <div className="absolute top-3 left-3 bg-[#FF3E6C] text-white text-[9px] sm:text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm">
-                  🔥 Best Seller
+                <div className="absolute top-3 left-3 bg-neutral-900/90 backdrop-blur-md text-white text-[9px] sm:text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">
+                  Best Seller
                 </div>
               )}
             </div>
@@ -63,7 +63,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
             {product.images && product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
                 {product.images.map((img, idx) => (
-                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 hover:border-[#F97316] transition-colors border-white bg-white shadow-2xs">
+                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border hover:border-neutral-900 transition-colors border-neutral-200 bg-neutral-100 shadow-2xs">
                     <Image 
                       src={img} 
                       alt={`${product.title} view ${idx}`} 
@@ -78,11 +78,11 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
           </div>
 
           {/* Right: Product Info & Actions */}
-          <div className="bg-white rounded-3xl p-5 sm:p-8 border border-gray-100/90 shadow-2xs flex flex-col">
-            <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 border border-neutral-200/80 shadow-2xs flex flex-col">
+            <span className="text-[10px] font-medium tracking-widest text-neutral-400 uppercase mb-1">
               {product.category}
             </span>
-            <h1 className="text-xl sm:text-3xl font-extrabold text-[#0B1E36] mb-3 leading-tight">
+            <h1 className="text-xl sm:text-3xl font-extrabold text-neutral-900 mb-3 leading-tight">
               {product.title}
             </h1>
 
@@ -91,21 +91,21 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
               <div className="flex items-center gap-1 text-amber-500 font-bold bg-amber-50 px-2 py-0.5 rounded-full">
                 <Star size={13} fill="currentColor" /> {product.rating || "5.0"}
               </div>
-              <span className="text-gray-300">•</span>
-              <span className="text-gray-500 font-medium">Terjual {product.sold || "100+"}</span>
-              <span className="text-gray-300">•</span>
+              <span className="text-neutral-300">•</span>
+              <span className="text-neutral-500 font-medium">Terjual {product.sold || "100+"}</span>
+              <span className="text-neutral-300">•</span>
               <span className="text-emerald-600 font-semibold flex items-center gap-1">
                 <CheckCircle2 size={13} /> Stok Tersedia
               </span>
             </div>
 
             {/* Price Box */}
-            <div className="bg-gray-50/80 p-4 rounded-2xl mb-6 border border-gray-100 flex items-baseline gap-2.5">
-              <span className="text-2xl sm:text-3xl font-extrabold text-[#F97316]">
+            <div className="bg-neutral-50 p-4 rounded-2xl mb-6 border border-neutral-200/70 flex items-baseline gap-2.5">
+              <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
                 {product.price}
               </span>
               {product.normalPrice && (
-                <span className="text-sm sm:text-base text-gray-400 line-through">
+                <span className="text-sm sm:text-base text-neutral-400 line-through">
                   {product.normalPrice}
                 </span>
               )}
@@ -168,8 +168,8 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
 
         {/* Related Products */}
         {related.length > 0 && (
-          <div className="mt-8 border-t border-gray-200/80 pt-8">
-            <h2 className="text-lg sm:text-xl font-extrabold text-[#0B1E36] mb-4">
+          <div className="mt-8 border-t border-neutral-200/80 pt-8">
+            <h2 className="text-lg sm:text-xl font-bold text-neutral-900 mb-4">
               Produk Terkait di Kategori {product.category}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -177,9 +177,9 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
                 <Link 
                   key={rel.id} 
                   href={`/produk/${rel.id}`}
-                  className="bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-100 shadow-2xs hover:shadow-md transition-all group"
+                  className="bg-white rounded-2xl p-2.5 sm:p-3 border border-neutral-200/70 shadow-2xs hover:border-neutral-300 transition-all group"
                 >
-                  <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-gray-50">
+                  <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-neutral-100">
                     <Image 
                       src={rel.imageUrl || rel.img} 
                       alt={rel.title} 
@@ -188,10 +188,10 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
                       className="object-cover group-hover:scale-105 transition-transform" 
                     />
                   </div>
-                  <h3 className="text-xs sm:text-sm font-bold text-gray-800 line-clamp-1 group-hover:text-[#F97316]">
+                  <h3 className="text-xs sm:text-sm font-semibold text-neutral-800 line-clamp-1 group-hover:text-emerald-700">
                     {rel.title}
                   </h3>
-                  <div className="text-xs sm:text-sm font-extrabold text-[#F97316] mt-1">
+                  <div className="text-xs sm:text-sm font-bold text-neutral-900 mt-1">
                     {rel.price}
                   </div>
                 </Link>

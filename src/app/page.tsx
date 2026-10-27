@@ -110,8 +110,6 @@ export default function Home() {
 
   const bestSellers = productList.filter(p => p.isBestSeller);
   const recommendedList = bestSellers.length > 0 ? bestSellers : productList;
-  const flashSaleProducts = productList.slice(0, 6);
-
   // Filter feed produk di halaman Home
   const displayFeed = productList.filter((p) => {
     if (homeCategory === "Semua") return true;
@@ -122,389 +120,148 @@ export default function Home() {
     );
   });
 
-  // 8 Grid Categories Mobile
-  const mobileGridCategories = [
-    {
-      id: "cat-spanduk",
-      name: "Spanduk & Banner",
-      icon: Sparkles,
-      gradient: "from-amber-500 to-orange-500",
-      shadow: "shadow-orange-500/25",
-      badge: "P×L",
-      categoryName: "Spanduk & Banner",
-      href: "/produk?category=Spanduk%20%26%20Banner",
-    },
-    {
-      id: "cat-stiker",
-      name: "Stiker & Label",
-      icon: Layers,
-      gradient: "from-rose-500 to-pink-500",
-      shadow: "shadow-rose-500/25",
-      badge: "A3+",
-      categoryName: "Stiker & Label Kemasan",
-      href: "/produk?category=Stiker%20%26%20Label%20Kemasan",
-    },
-    {
-      id: "cat-kemasan",
-      name: "Kemasan & Box",
-      icon: Package,
-      gradient: "from-emerald-600 to-teal-500",
-      shadow: "shadow-emerald-500/25",
-      badge: "Kustom",
-      categoryName: "Packaging",
-      href: "/produk?category=Packaging",
-    },
-    {
-      id: "cat-merch",
-      name: "Kaos & Sablon",
-      icon: Shirt,
-      gradient: "from-purple-600 to-violet-600",
-      shadow: "shadow-purple-500/25",
-      badge: "DTF",
-      categoryName: "Merchandise & Sablon",
-      href: "/produk?category=Merchandise%20%26%20Sablon",
-    },
-    {
-      id: "cat-signage",
-      name: "Neon Box Akrilik",
-      icon: Store,
-      gradient: "from-blue-600 to-indigo-600",
-      shadow: "shadow-blue-500/25",
-      badge: "LED",
-      categoryName: "Signage & Akrilik",
-      href: "/produk?category=Signage%20%26%20Akrilik",
-    },
-    {
-      id: "cat-nota",
-      name: "Brosur & Nota",
-      icon: FileText,
-      gradient: "from-slate-700 to-slate-900",
-      shadow: "shadow-slate-500/25",
-      badge: "NCR",
-      categoryName: "Media Promosi & Kantor",
-      href: "/produk?category=Media%20Promosi%20%26%20Kantor",
-    },
-    {
-      id: "cat-plakat",
-      name: "Plakat & Akrilik",
-      icon: Award,
-      gradient: "from-amber-600 to-yellow-500",
-      shadow: "shadow-amber-500/25",
-      badge: "Laser",
-      categoryName: "Signage & Akrilik",
-      href: "/produk?category=Signage%20%26%20Akrilik",
-    },
-    {
-      id: "cat-all",
-      name: "Semua Produk",
-      icon: Package,
-      gradient: "from-slate-800 to-slate-950",
-      shadow: "shadow-slate-900/25",
-      badge: productList.length > 0 ? `${productList.length}` : null,
-      categoryName: null,
-      href: "/produk",
-    },
-  ];
-
   return (
-    <div className="bg-white min-h-screen pt-24 sm:pt-28 md:pt-32 pb-20 md:pb-24">
+    <div className="bg-white min-h-screen pt-28 sm:pt-30 md:pt-32 pb-20 md:pb-24">
       {/* ======================================================== */}
-      {/* 📱 MOBILE APP HOME EXPERIENCE                           */}
+      {/* 📱 MOBILE APP HOME EXPERIENCE (VISUAL-FIRST & MODERN)     */}
       {/* ======================================================== */}
-      <div className="md:hidden space-y-4 px-3.5 max-w-lg mx-auto">
-        {/* Mobile Promo Banners - Modern & Minimalist */}
-        <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pt-1 pb-1">
-          {loading ? (
-            <div className="min-w-[85%] h-36 rounded-2xl bg-neutral-200/70 animate-pulse" />
-          ) : banners.length > 0 ? (
-            banners
-              .filter((b) => b.isActive !== false)
-              .map((b, idx) => {
-                const imgUrl = b.imageUrl || b.image_url;
-                return (
-                  <article
-                    key={b.id || idx}
-                    className="min-w-[85%] snap-center rounded-2xl bg-white border border-neutral-200/70 p-4 shadow-2xs flex flex-col justify-between h-40 relative overflow-hidden"
-                  >
-                    <div className="flex items-start justify-between gap-3 relative z-10">
-                      <div className="min-w-0 flex-1">
-                        <span className="bg-neutral-100 text-neutral-600 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full inline-block mb-1.5">
+      <div className="md:hidden space-y-6 px-4 max-w-lg mx-auto">
+        {/* 1. IMMERSIVE VISUAL HERO BANNER SLIDER */}
+        <div className="relative">
+          <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-1">
+            {loading ? (
+              <div className="min-w-full aspect-[16/9] rounded-3xl bg-neutral-100 animate-pulse" />
+            ) : banners.length > 0 ? (
+              banners
+                .filter((b) => b.isActive !== false)
+                .map((b, idx) => {
+                  const imgUrl = b.imageUrl || b.image_url;
+                  return (
+                    <Link
+                      key={b.id || idx}
+                      href={b.ctaHref || b.cta_href || "/produk"}
+                      className="min-w-full snap-center relative aspect-[16/9] rounded-3xl overflow-hidden shadow-sm group active:scale-[0.99] transition-transform block"
+                    >
+                      {imgUrl ? (
+                        <Image
+                          src={imgUrl}
+                          alt={b.title}
+                          fill
+                          priority={idx === 0}
+                          sizes="(max-width: 640px) 100vw, 400px"
+                          unoptimized={Boolean(imgUrl.startsWith("data:"))}
+                          className="object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-neutral-900" />
+                      )}
+
+                      {/* Smooth cinematic gradient scrim */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-5">
+                        <span className="text-[10px] font-semibold tracking-widest uppercase text-emerald-400 mb-1">
                           Layanan Pilihan
                         </span>
-                        <h3 className="font-bold text-sm text-neutral-900 leading-snug line-clamp-2">
+                        <h2 className="text-white font-extrabold text-lg sm:text-xl leading-tight line-clamp-2">
                           {b.title}
-                        </h3>
+                        </h2>
                         {b.subtitle && (
-                          <p className="text-[11px] text-neutral-500 mt-1 line-clamp-1">
+                          <p className="text-white/80 text-xs mt-1 line-clamp-1 font-normal">
                             {b.subtitle}
                           </p>
                         )}
                       </div>
-                      {imgUrl && (
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-neutral-100 shrink-0 relative border border-neutral-100">
-                          <Image
-                            src={imgUrl}
-                            alt={b.title}
-                            fill
-                            sizes="64px"
-                            unoptimized={Boolean(imgUrl.startsWith("data:"))}
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative z-10 flex items-center justify-between pt-2 border-t border-neutral-100 mt-2">
-                      <Link
-                        href={b.ctaHref || b.cta_href || "/produk"}
-                        className="bg-neutral-900 hover:bg-neutral-800 text-white text-[11px] font-medium px-3 py-1.5 rounded-xl inline-flex items-center gap-1 active:scale-95 transition-transform"
-                      >
-                        {b.ctaLabel || b.cta_label || "Lihat Penawaran"} <ArrowRight size={12} />
-                      </Link>
-                      <span className="text-[10px] text-neutral-400 font-medium">Cetak.inc</span>
-                    </div>
-                  </article>
-                );
-              })
-          ) : null}
-        </div>
-
-        {/* 8 Mobile Category Grid - Clean & Minimalist */}
-        <div className="bg-white rounded-3xl p-3.5 sm:p-4 border border-neutral-200/70 shadow-2xs">
-          {loading ? (
-            <div className="grid grid-cols-4 gap-3 text-center">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                <div key={n} className="flex flex-col items-center animate-pulse">
-                  <div className="w-12 h-12 rounded-2xl bg-neutral-200/70 mb-1.5" />
-                  <div className="w-12 h-2.5 bg-neutral-200/70 rounded" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-4 gap-y-3.5 gap-x-2 text-center">
-              {mobileGridCategories.map((item) => {
-                const Icon = item.icon;
-                const handleClick = (e: React.MouseEvent) => {
-                  if (item.categoryName) {
-                    e.preventDefault();
-                    setHomeCategory(item.categoryName);
-                    const el = document.getElementById("home-product-feed");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }
-                };
-
-                const isExternal = item.href.startsWith("http");
-
-                return isExternal ? (
-                  <a
-                    key={item.id}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center group active:scale-90 transition-transform"
-                  >
-                    <div className="relative mb-1.5">
-                      <div className="w-12 h-12 rounded-2xl bg-neutral-100 group-hover:bg-neutral-900 text-neutral-700 group-hover:text-white flex items-center justify-center border border-neutral-200/60 shadow-2xs transition-colors">
-                        <Icon size={20} strokeWidth={2} />
-                      </div>
-                      {item.badge && (
-                        <span className="absolute -top-1 -right-1 text-[8px] font-semibold uppercase px-1.5 py-0.2 rounded-full shadow-2xs bg-neutral-900 text-white">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] font-medium text-neutral-700 group-hover:text-neutral-900 leading-tight tracking-tight line-clamp-2 h-6 flex items-center justify-center px-0.5">
-                      {item.name}
-                    </span>
-                  </a>
-                ) : (
-                  <Link 
-                    key={item.id} 
-                    href={item.href}
-                    onClick={handleClick}
-                    className="flex flex-col items-center group active:scale-90 transition-transform"
-                  >
-                    <div className="relative mb-1.5">
-                      <div className="w-12 h-12 rounded-2xl bg-neutral-100 group-hover:bg-neutral-900 text-neutral-700 group-hover:text-white flex items-center justify-center border border-neutral-200/60 shadow-2xs transition-colors">
-                        <Icon size={20} strokeWidth={2} />
-                      </div>
-                      {item.badge && (
-                        <span className="absolute -top-1 -right-1 text-[8px] font-semibold uppercase px-1.5 py-0.2 rounded-full shadow-2xs bg-neutral-900 text-white">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] font-medium text-neutral-700 group-hover:text-neutral-900 leading-tight tracking-tight line-clamp-2 h-6 flex items-center justify-center px-0.5">
-                      {item.name}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Mobile Value Chips Row */}
-        <div className="grid grid-cols-4 gap-1.5 text-center">
-          {[
-            { label: "Cepat 24 Jam", icon: Clock },
-            { label: "Garansi 100%", icon: ShieldCheck },
-            { label: "Kirim Padang", icon: Truck },
-            { label: "Bisa Satuan", icon: Sparkles }
-          ].map((pill, i) => {
-            const Icon = pill.icon;
-            return (
-              <div key={i} className="bg-white py-1.5 px-1 rounded-xl border border-neutral-200/70 flex items-center justify-center gap-1.5 text-[10px] font-medium text-neutral-600 shadow-2xs">
-                <Icon size={12} className="text-neutral-500 shrink-0" />
-                <span className="truncate">{pill.label}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Paling Laris Horizontal Rail */}
-        {flashSaleProducts.length > 0 && (
-          <div className="bg-white rounded-2xl p-3 sm:p-3.5 border border-neutral-200/70 shadow-2xs">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <h3 className="font-bold text-xs sm:text-sm text-neutral-900">
-                  Produk Terpopuler
-                </h3>
-              </div>
-              <Link href="/produk" className="text-[11px] font-medium text-neutral-500 hover:text-neutral-900 flex items-center gap-0.5">
-                Lihat Semua <ArrowRight size={11} />
-              </Link>
-            </div>
-
-            <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x pb-1">
-              {flashSaleProducts.map((prod) => (
-                <div 
-                  key={prod.id} 
-                  className="min-w-[136px] w-[136px] snap-start bg-neutral-50/70 rounded-xl p-2.5 border border-neutral-200/60 flex flex-col justify-between shrink-0 hover:border-neutral-300 transition-colors"
-                >
-                  <Link href={`/produk/${prod.id}`} className="block">
-                    <div className="relative aspect-square rounded-lg bg-neutral-100 overflow-hidden mb-2">
-                      <Image
-                        src={prod.imageUrl || prod.img || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop"}
-                        alt={prod.title || prod.name || "Produk"}
-                        fill
-                        sizes="136px"
-                        unoptimized={Boolean((prod.imageUrl || prod.img)?.startsWith("data:"))}
-                        className="object-cover"
-                      />
-                    </div>
-                    <h4 className="text-[11px] font-medium text-neutral-900 line-clamp-1 leading-tight mb-1">
-                      {prod.title || prod.name}
-                    </h4>
-                    <div className="font-bold text-xs text-neutral-900 tracking-tight">
-                      {prod.price || `Rp ${(prod.priceNumber || 0).toLocaleString("id-ID")}`}
-                    </div>
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSheetProduct(prod);
-                      setIsSheetOpen(true);
-                    }}
-                    className="mt-2 w-full py-1.5 rounded-lg text-[10px] font-semibold flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all active:scale-95"
-                  >
-                    <MessageCircle size={11} />
-                    <span>Pesan</span>
-                  </button>
-                </div>
-              ))}
-            </div>
+                    </Link>
+                  );
+                })
+            ) : null}
           </div>
-        )}
+        </div>
 
-        {/* Feed Katalog Produk Mobile */}
-        <div id="home-product-feed" className="scroll-mt-28">
-          {/* Mobile Feed Header */}
-          <div className="flex items-center justify-between mb-3 px-1">
-            <div>
-              <span className="text-[10px] font-semibold tracking-widest uppercase text-neutral-400 block">
-                Katalog Produk
-              </span>
-              <h3 className="font-bold text-sm text-neutral-900">
-                {homeCategory === "Semua" ? "Katalog Unggulan" : (homeCategory === "PACKAGING" ? "Packaging" : homeCategory)}
-              </h3>
-            </div>
-            <span className="text-xs font-medium text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full">
-              {displayFeed.length} Produk
-            </span>
-          </div>
-
-          {/* Swipeable Category Chips - Clean & Minimalist */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 -mx-3.5 px-3.5 mb-3.5">
-            <button
-              type="button"
-              onClick={() => setHomeCategory("Semua")}
-              className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
-                homeCategory === "Semua"
-                  ? "bg-neutral-900 text-white shadow-xs"
-                  : "bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900"
-              }`}
-            >
-              Semua <span className="opacity-60 text-[11px] ml-0.5">({productList.length})</span>
-            </button>
-
-            {categories.map((c: any) => {
-              const rawName = typeof c === "string" ? c : c.name;
-              const cName = rawName === "PACKAGING" ? "Packaging" : rawName === "SPANDUK" ? "Spanduk" : rawName === "STIKER" ? "Stiker" : rawName;
-              const count = productList.filter((p) => p.category === rawName || p.categoryId === c.id).length;
-              if (count === 0) return null;
-              const isSelected = homeCategory === rawName;
-
+        {/* 2. VISUAL CATEGORY STORIES (LIVELY & AIRY - NO TEXT CLUTTER) */}
+        <div>
+          <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar scroll-smooth px-1 py-1">
+            {[
+              { id: "all", name: "Semua", categoryName: "Semua", icon: Sparkles },
+              { id: "spanduk", name: "Spanduk", categoryName: "Spanduk & Banner", icon: Store },
+              { id: "stiker", name: "Stiker", categoryName: "Stiker & Label Kemasan", icon: Layers },
+              { id: "kemasan", name: "Packaging", categoryName: "Packaging", icon: Package },
+              { id: "merch", name: "Sablon", categoryName: "Merchandise & Sablon", icon: Shirt },
+              { id: "signage", name: "Neon Box", categoryName: "Signage & Akrilik", icon: Award },
+              { id: "nota", name: "Brosur", categoryName: "Media Promosi & Kantor", icon: FileText },
+            ].map((cat) => {
+              const Icon = cat.icon;
+              const isSelected = homeCategory === cat.categoryName || (cat.categoryName === "Semua" && homeCategory === "Semua");
               return (
                 <button
-                  key={c.id || rawName}
+                  key={cat.id}
                   type="button"
-                  onClick={() => setHomeCategory(rawName)}
-                  className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
-                    isSelected
-                      ? "bg-neutral-900 text-white shadow-xs"
-                      : "bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900"
-                  }`}
+                  onClick={() => {
+                    setHomeCategory(cat.categoryName);
+                    const el = document.getElementById("home-product-feed");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="flex flex-col items-center gap-1.5 shrink-0 group active:scale-90 transition-transform"
                 >
-                  {cName} <span className="opacity-60 text-[11px] ml-0.5">({count})</span>
+                  <div className={`w-13 h-13 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                    isSelected 
+                      ? "bg-neutral-900 text-white shadow-md shadow-neutral-900/20 scale-105" 
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200/80"
+                  }`}>
+                    <Icon size={20} strokeWidth={isSelected ? 2.2 : 1.75} />
+                  </div>
+                  <span className={`text-[11px] font-medium tracking-tight ${
+                    isSelected ? "text-neutral-950 font-bold" : "text-neutral-500"
+                  }`}>
+                    {cat.name}
+                  </span>
                 </button>
               );
             })}
           </div>
+        </div>
 
-          {/* 2-Column Grid Feed */}
+        {/* 3. VISUAL PRODUCT SHOWCASE FEED (PHOTO-FIRST & SPACIOUS) */}
+        <div id="home-product-feed" className="scroll-mt-28 pt-1">
+          {/* Minimalist Section Header */}
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h3 className="font-extrabold text-base text-neutral-900 tracking-tight">
+              {homeCategory === "Semua" ? "Katalog Unggulan" : homeCategory}
+            </h3>
+            <Link
+              href="/produk"
+              className="text-xs font-semibold text-neutral-500 hover:text-neutral-900 flex items-center gap-1"
+            >
+              Lihat Semua <ArrowRight size={13} />
+            </Link>
+          </div>
+
+          {/* 2-Column Product Grid */}
           {loading ? (
-            <div className="grid grid-cols-2 gap-2.5">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="bg-white rounded-2xl p-2.5 border border-gray-100 animate-pulse space-y-2">
-                  <div className="aspect-square bg-gray-200 rounded-xl" />
-                  <div className="h-3 bg-gray-200 rounded w-2/3" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <div key={n} className="bg-neutral-100 rounded-2xl aspect-[3/4] animate-pulse" />
               ))}
             </div>
           ) : displayFeed.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-2xs space-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#F97316] flex items-center justify-center mx-auto">
-                <Package size={24} />
+            <div className="bg-neutral-50 rounded-2xl p-8 text-center border border-neutral-200/60 my-4 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-neutral-200/80 text-neutral-600 flex items-center justify-center mx-auto">
+                <Package size={22} />
               </div>
-              <h4 className="font-extrabold text-sm text-[#1E1B4B]">Katalog Belum Memiliki Produk</h4>
-              <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
-                Produk sedang disusun oleh tim kami. Silakan hubungi CS kami via WhatsApp untuk konsultasi dan pemesanan.
+              <p className="text-xs text-neutral-500 font-medium max-w-xs mx-auto">
+                Katalog produk sedang diperbarui. Hubungi kami via WhatsApp untuk konsultasi cetak kustom.
               </p>
               <a
                 href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi pemesanan.")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 mt-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold active:scale-95 transition-transform"
               >
-                <MessageCircle size={14} /> Hubungi WhatsApp
+                <MessageCircle size={14} /> WhatsApp CS
               </a>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2.5">
-              {displayFeed.slice(0, 4).map((item) => (
+            <div className="grid grid-cols-2 gap-3">
+              {displayFeed.slice(0, 6).map((item) => (
                 <QuickProductCard
                   key={item.id}
                   product={item}
@@ -517,14 +274,14 @@ export default function Home() {
             </div>
           )}
 
-          <div className="pt-4 text-center">
+          {/* Clean View All Catalog Pill Button */}
+          <div className="pt-5 text-center">
             <Link
               href="/produk"
-              className="inline-flex items-center justify-center gap-1.5 w-full py-3 bg-neutral-900 text-white rounded-2xl text-xs font-medium shadow-xs active:scale-98 transition-transform"
+              className="inline-flex items-center justify-center gap-2 w-full py-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-2xl text-xs font-semibold shadow-xs active:scale-98 transition-all"
             >
-              {productList.length > 0 
-                ? `Lihat Seluruh ${productList.length} Produk Katalog` 
-                : "Kunjungi Seluruh Katalog"} <ArrowRight size={14} />
+              <span>Jelajahi Seluruh Katalog</span>
+              <ArrowRight size={14} />
             </Link>
           </div>
         </div>

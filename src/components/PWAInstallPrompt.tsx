@@ -104,10 +104,10 @@ export default function PWAInstallPrompt() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-18 md:bottom-6 left-2.5 right-2.5 sm:left-auto sm:right-6 sm:w-[380px] z-40 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 border border-orange-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.12)] flex items-center justify-between gap-2.5"
+            className="fixed bottom-18 md:bottom-6 left-2.5 right-2.5 sm:left-auto sm:right-6 sm:w-[380px] z-40 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 border border-neutral-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2.5"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-[#1E1B4B] p-1 shadow-2xs shrink-0 flex items-center justify-center overflow-hidden">
+              <div className="w-9 h-9 rounded-xl bg-neutral-900 p-1 shadow-2xs shrink-0 flex items-center justify-center overflow-hidden">
                 <Image
                   src="/icon-192.png"
                   alt="Cetak.inc App Icon"
@@ -118,15 +118,15 @@ export default function PWAInstallPrompt() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <h4 className="font-extrabold text-xs text-[#1E1B4B] leading-none truncate">
+                  <h4 className="font-bold text-xs text-neutral-900 leading-none truncate">
                     Install Cetak.inc
                   </h4>
-                  <span className="bg-orange-100 text-[#F97316] text-[8px] font-black uppercase px-1 py-0.2 rounded">
+                  <span className="bg-neutral-100 text-neutral-600 text-[8px] font-semibold uppercase px-1 py-0.2 rounded">
                     PWA
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-500 mt-0.5 truncate">
-                  Pesan kilat via homescreen HP
+                <p className="text-[10px] text-neutral-500 mt-0.5 truncate">
+                  Akses kilat dari homescreen
                 </p>
               </div>
             </div>
@@ -135,15 +135,15 @@ export default function PWAInstallPrompt() {
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="py-1.5 px-3 bg-[#F97316] hover:bg-orange-600 active:scale-95 text-white font-black text-[11px] rounded-xl shadow-2xs transition-all flex items-center gap-1"
+                className="py-1.5 px-3 bg-neutral-900 hover:bg-neutral-800 active:scale-95 text-white font-medium text-[11px] rounded-xl shadow-2xs transition-all flex items-center gap-1"
               >
-                <Download size={12} strokeWidth={2.5} />
+                <Download size={12} strokeWidth={2} />
                 <span>Install</span>
               </button>
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-700 flex items-center justify-center transition-colors"
+                className="w-6 h-6 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-400 hover:text-neutral-700 flex items-center justify-center transition-colors"
                 aria-label="Tutup"
               >
                 <X size={12} />
@@ -163,47 +163,47 @@ export default function PWAInstallPrompt() {
               exit={{ opacity: 0, y: 100 }}
               className="bg-white rounded-[2rem] p-6 max-w-sm w-full space-y-4 shadow-2xl border border-gray-100"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-orange-50 text-[#F97316] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center">
                     <Smartphone size={18} />
                   </div>
-                  <h3 className="font-extrabold text-sm text-[#1E1B4B]">Install di iPhone / iPad</h3>
+                  <h3 className="font-bold text-sm text-neutral-900">Install di iPhone / iPad</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowIOSModal(false)}
-                  className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center"
+                  className="w-7 h-7 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-500 flex items-center justify-center"
                 >
                   <X size={14} />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs text-gray-600">
-                <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-2xl border border-gray-100">
-                  <span className="w-6 h-6 rounded-full bg-orange-100 text-[#F97316] font-black text-xs flex items-center justify-center shrink-0">
+              <div className="space-y-3 text-xs text-neutral-600">
+                <div className="flex items-start gap-3 bg-neutral-50 p-3 rounded-2xl border border-neutral-100">
+                  <span className="w-6 h-6 rounded-full bg-neutral-900 text-white font-semibold text-xs flex items-center justify-center shrink-0">
                     1
                   </span>
                   <div>
-                    Ketuk tombol <strong>Bagikan (Share)</strong> <Share size={13} className="inline text-blue-500 ml-1" /> di bilah navigasi bawah Safari Anda.
+                    Ketuk tombol <strong>Bagikan (Share)</strong> <Share size={13} className="inline text-blue-500 ml-1" /> di bilah Safari bawah.
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-2xl border border-gray-100">
-                  <span className="w-6 h-6 rounded-full bg-orange-100 text-[#F97316] font-black text-xs flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-3 bg-neutral-50 p-3 rounded-2xl border border-neutral-100">
+                  <span className="w-6 h-6 rounded-full bg-neutral-900 text-white font-semibold text-xs flex items-center justify-center shrink-0">
                     2
                   </span>
                   <div>
-                    Gulir ke bawah dan ketuk opsi <strong>"Tambahkan ke Layar Utama" (Add to Home Screen)</strong> <PlusSquare size={13} className="inline text-gray-700 ml-1" />.
+                    Pilih opsi <strong>"Tambahkan ke Layar Utama"</strong> <PlusSquare size={13} className="inline text-neutral-700 ml-1" />.
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-2xl border border-gray-100">
-                  <span className="w-6 h-6 rounded-full bg-orange-100 text-[#F97316] font-black text-xs flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-3 bg-neutral-50 p-3 rounded-2xl border border-neutral-100">
+                  <span className="w-6 h-6 rounded-full bg-neutral-900 text-white font-semibold text-xs flex items-center justify-center shrink-0">
                     3
                   </span>
                   <div>
-                    Ketuk <strong>Tambah (Add)</strong> di pojok kanan atas. Ikon Cetak.inc akan langsung muncul di beranda HP Anda!
+                    Ketuk <strong>Tambah</strong> di pojok kanan atas. Ikon Cetak.inc akan muncul di beranda HP Anda!
                   </div>
                 </div>
               </div>
@@ -211,7 +211,7 @@ export default function PWAInstallPrompt() {
               <button
                 type="button"
                 onClick={() => setShowIOSModal(false)}
-                className="w-full py-3 bg-[#1E1B4B] text-white font-bold text-xs rounded-xl hover:bg-black transition-colors"
+                className="w-full py-3 bg-neutral-900 text-white font-semibold text-xs rounded-xl hover:bg-neutral-800 transition-colors"
               >
                 Saya Mengerti
               </button>

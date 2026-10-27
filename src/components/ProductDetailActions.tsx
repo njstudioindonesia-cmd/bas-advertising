@@ -68,13 +68,13 @@ export default function ProductDetailActions({ product }: { product: any }) {
         </div>
 
         <div>
-          <label className="text-[11px] font-bold text-gray-600 block mb-1">Catatan Pesanan:</label>
+          <label className="text-[11px] font-medium text-neutral-600 block mb-1">Catatan Pesanan:</label>
           <input
             type="text"
             placeholder="Misal: Ukuran custom, warna, finishing mata ayam..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full text-xs px-3 py-2 bg-white rounded-xl border border-gray-200 focus:outline-none focus:border-[#F97316] transition-all"
+            className="w-full text-xs px-3 py-2 bg-white rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900 transition-all"
           />
         </div>
       </div>
@@ -82,24 +82,24 @@ export default function ProductDetailActions({ product }: { product: any }) {
       {/* WhatsApp CTA Button */}
       <button
         onClick={handleBuyNow}
-        className="w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-98 transition-all"
+        className="w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm active:scale-98 transition-all"
       >
         <MessageCircle size={18} />
         <span>Pesan via WhatsApp Sekarang</span>
       </button>
 
       {/* Trust Badges */}
-      <div className="grid grid-cols-3 gap-2 pt-2 text-center text-[10px] text-gray-500 font-semibold">
-        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-gray-100">
-          <Clock size={16} className="text-[#F97316]" />
+      <div className="grid grid-cols-3 gap-2 pt-2 text-center text-[10px] text-neutral-500 font-medium">
+        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-neutral-200/70">
+          <Clock size={16} className="text-neutral-700" />
           <span>Cepat & Tepat</span>
         </div>
-        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-gray-100">
-          <ShieldCheck size={16} className="text-emerald-500" />
+        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-neutral-200/70">
+          <ShieldCheck size={16} className="text-emerald-600" />
           <span>Garansi Kualitas</span>
         </div>
-        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-gray-100">
-          <Truck size={16} className="text-blue-500" />
+        <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-neutral-200/70">
+          <Truck size={16} className="text-neutral-700" />
           <span>Kirim se-Padang</span>
         </div>
       </div>

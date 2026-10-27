@@ -53,41 +53,26 @@ export default function QuickProductCard({ product, onOpenDetail }: QuickProduct
       {/* 📄 DETAIL & TYPOGRAPHY CLEAN */}
       <div className="flex-1 flex flex-col justify-between min-w-0">
         <div>
-          <span className="text-[10px] sm:text-[11px] font-medium tracking-wider uppercase text-neutral-400 block mb-1 truncate">
-            {category}
-          </span>
-          <h3 className="font-semibold text-xs sm:text-[14px] text-neutral-900 leading-snug line-clamp-2 min-h-[2.5rem] group-hover:text-emerald-700 transition-colors">
+          <h3 className="font-semibold text-xs sm:text-[13px] text-neutral-900 leading-snug line-clamp-2 group-hover:text-emerald-700 transition-colors">
             {title}
           </h3>
         </div>
 
         {/* 🏷️ HARGA & ACTION BUTTON */}
-        <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between gap-2">
+        <div className="mt-2.5 pt-2 border-t border-neutral-100 flex items-center justify-between gap-1.5">
           <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-1.5 flex-wrap">
-              <span className="font-bold text-sm sm:text-base text-neutral-900 tracking-tight">
-                {product.price}
-              </span>
-              {product.normalPrice && (
-                <span className="text-[11px] text-neutral-400 line-through font-normal">
-                  {product.normalPrice}
-                </span>
-              )}
-            </div>
-            {product.unit && (
-              <span className="text-[10px] text-neutral-400 block -mt-0.5 truncate">
-                {product.unit}
-              </span>
-            )}
+            <span className="font-bold text-xs sm:text-sm text-neutral-900 tracking-tight block truncate">
+              {product.price}
+            </span>
           </div>
 
           <button
             type="button"
             onClick={handleOrderClick}
             aria-label={`Pesan ${title} via WhatsApp`}
-            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs inline-flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-95 transition-all shrink-0"
+            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[11px] inline-flex items-center gap-1 shadow-2xs active:scale-95 transition-all shrink-0"
           >
-            <MessageCircle size={13} className="fill-white/20" />
+            <MessageCircle size={12} className="fill-white/20" />
             <span>Pesan</span>
           </button>
         </div>

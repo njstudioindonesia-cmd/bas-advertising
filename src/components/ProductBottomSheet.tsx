@@ -140,13 +140,13 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
                 />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#F97316] block truncate">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-400 block truncate">
                   {product.category || "Cetak.inc"}
                 </span>
-                <h3 className="font-extrabold text-sm sm:text-base text-gray-900 leading-tight truncate">
+                <h3 className="font-bold text-sm sm:text-base text-neutral-900 leading-tight truncate">
                   {product.name || product.title}
                 </h3>
-                <span className="text-xs font-black text-emerald-600">
+                <span className="text-xs font-bold text-emerald-600">
                   {isMeterProduct
                     ? `Rp ${unitPrice.toLocaleString("id-ID")} (${luas} m²)`
                     : product.price}
@@ -155,7 +155,7 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center active:scale-90 transition-transform"
+              className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 hover:text-neutral-900 flex items-center justify-center active:scale-90 transition-transform"
             >
               <X size={16} />
             </button>
@@ -165,12 +165,12 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
           <div className="p-4 overflow-y-auto space-y-4 text-xs">
             {/* Meter Calculator jika produk spanduk/banner */}
             {isMeterProduct && (
-              <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200/60 space-y-2.5">
+              <div className="p-3.5 bg-neutral-50 rounded-2xl border border-neutral-200/80 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-amber-950 flex items-center gap-1.5">
-                    <Ruler size={13} className="text-[#F97316]" /> Ukuran Spanduk (P × L):
+                  <span className="font-semibold text-neutral-800 flex items-center gap-1.5">
+                    <Ruler size={13} className="text-neutral-600" /> Ukuran Spanduk (P × L):
                   </span>
-                  <span className="font-extrabold text-[#F97316] bg-white px-2 py-0.5 rounded-full border border-amber-200 shadow-2xs">
+                  <span className="font-bold text-neutral-900 bg-white px-2 py-0.5 rounded-full border border-neutral-200 shadow-2xs">
                     {panjang}m × {lebar}m = {luas} m²
                   </span>
                 </div>
@@ -187,10 +187,10 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
                       key={preset.label}
                       type="button"
                       onClick={() => handlePresetClick(preset.p, preset.l, preset.label)}
-                      className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition-all ${
+                      className={`px-2.5 py-1 rounded-lg font-medium text-[10px] transition-all ${
                         selectedPreset === preset.label
-                          ? "bg-[#F97316] text-white shadow-xs"
-                          : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                          ? "bg-neutral-900 text-white shadow-2xs"
+                          : "bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-100"
                       }`}
                     >
                       {preset.label}
@@ -201,7 +201,7 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
                 {/* Custom Inputs */}
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <div>
-                    <label className="text-[10px] font-bold text-gray-600 block mb-1">Panjang (Meter)</label>
+                    <label className="text-[10px] font-medium text-neutral-600 block mb-1">Panjang (Meter)</label>
                     <input
                       type="number"
                       min={0.5}
@@ -211,11 +211,11 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
                         setPanjang(Math.max(0.1, parseFloat(e.target.value) || 1));
                         setSelectedPreset("custom");
                       }}
-                      className="w-full px-3 py-1.5 bg-white rounded-xl border border-gray-200 font-bold text-gray-900 focus:outline-none focus:border-[#F97316]"
+                      className="w-full px-3 py-1.5 bg-white rounded-xl border border-neutral-200 font-semibold text-neutral-900 focus:outline-none focus:border-neutral-900 transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-600 block mb-1">Lebar (Meter)</label>
+                    <label className="text-[10px] font-medium text-neutral-600 block mb-1">Lebar (Meter)</label>
                     <input
                       type="number"
                       min={0.5}
@@ -225,7 +225,7 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
                         setLebar(Math.max(0.1, parseFloat(e.target.value) || 1));
                         setSelectedPreset("custom");
                       }}
-                      className="w-full px-3 py-1.5 bg-white rounded-xl border border-gray-200 font-bold text-gray-900 focus:outline-none focus:border-[#F97316]"
+                      className="w-full px-3 py-1.5 bg-white rounded-xl border border-neutral-200 font-semibold text-neutral-900 focus:outline-none focus:border-neutral-900 transition-colors"
                     />
                   </div>
                 </div>
@@ -234,7 +234,7 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
 
             {/* Pilihan Finishing */}
             <div>
-              <label className="font-bold text-gray-800 block mb-1.5">Finishing:</label>
+              <label className="font-semibold text-neutral-800 block mb-1.5">Finishing:</label>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   "Standar",
@@ -246,10 +246,10 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
                     key={fin}
                     type="button"
                     onClick={() => setSelectedFinishing(fin)}
-                    className={`p-2 rounded-xl text-left font-semibold text-[11px] border transition-all ${
+                    className={`p-2.5 rounded-xl text-left font-medium text-[11px] border transition-all ${
                       selectedFinishing === fin
-                        ? "border-[#F97316] bg-orange-50 text-[#F97316]"
-                        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                        ? "border-neutral-900 bg-neutral-900 text-white shadow-2xs"
+                        : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
                     }`}
                   >
                     {fin}
@@ -260,32 +260,32 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
 
             {/* Catatan Khusus */}
             <div>
-              <label className="font-bold text-gray-800 block mb-1">Catatan Tambahan (Opsional):</label>
+              <label className="font-semibold text-neutral-800 block mb-1">Catatan Tambahan (Opsional):</label>
               <textarea
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Misal: Tambahkan teks 'Promo Ramadhan', warna dominan merah, dll."
-                className="w-full p-2.5 bg-gray-50 rounded-xl border border-gray-200 focus:bg-white focus:outline-none focus:border-[#F97316] transition-all text-xs"
+                className="w-full p-2.5 bg-neutral-50 rounded-xl border border-neutral-200 focus:bg-white focus:outline-none focus:border-neutral-900 transition-all text-xs"
               />
             </div>
 
             {/* Jumlah Quantity */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100">
-              <span className="font-bold text-gray-800">Jumlah Pesanan:</span>
+            <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-2xl border border-neutral-200/80">
+              <span className="font-semibold text-neutral-800">Jumlah Pesanan:</span>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8 h-8 rounded-xl bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold active:scale-90 transition-transform shadow-2xs"
+                  className="w-8 h-8 rounded-xl bg-white border border-neutral-200 text-neutral-800 flex items-center justify-center font-bold active:scale-90 transition-transform shadow-2xs"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="font-black text-sm w-8 text-center text-gray-900">{quantity}</span>
+                <span className="font-bold text-sm w-8 text-center text-neutral-900">{quantity}</span>
                 <button
                   type="button"
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-8 h-8 rounded-xl bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold active:scale-90 transition-transform shadow-2xs"
+                  className="w-8 h-8 rounded-xl bg-white border border-neutral-200 text-neutral-800 flex items-center justify-center font-bold active:scale-90 transition-transform shadow-2xs"
                 >
                   <Plus size={14} />
                 </button>
@@ -294,17 +294,17 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
           </div>
 
           {/* Bottom Actions */}
-          <div className="p-4 border-t border-gray-100 bg-white shrink-0 flex items-center justify-between gap-3">
+          <div className="p-4 border-t border-neutral-100 bg-white shrink-0 flex items-center justify-between gap-3">
             <div>
-              <span className="text-[10px] text-gray-500 block leading-tight">Total Estimasi:</span>
-              <span className="text-base font-black text-emerald-600">
+              <span className="text-[10px] text-neutral-400 font-medium block leading-tight">Total Estimasi:</span>
+              <span className="text-base font-bold text-neutral-900">
                 {totalPrice > 0 ? `Rp ${totalPrice.toLocaleString("id-ID")}` : product.price}
               </span>
             </div>
 
             <button
               onClick={handleOrderWhatsApp}
-              className="flex-1 py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
+              className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
             >
               <MessageCircle size={18} />
               <span>Pesan via WhatsApp</span>

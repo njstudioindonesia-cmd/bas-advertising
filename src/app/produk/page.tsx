@@ -70,17 +70,17 @@ function CatalogContent() {
     <div className="w-full max-w-lg md:max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-36 pb-24 md:pb-32 overflow-x-hidden">
       
       {/* 📱 TOP APP BAR CLEAN & MINIMALIST */}
-      <div className="sticky top-[88px] sm:top-[92px] md:top-20 z-20 bg-[#F8F9FA]/95 backdrop-blur-md pt-2 pb-3 mb-4 border-b border-neutral-200/60 w-full max-w-full overflow-hidden">
+      <div className="sticky top-[88px] sm:top-[92px] md:top-20 z-20 bg-white/95 backdrop-blur-md pt-2 pb-3 mb-4 border-b border-neutral-200/60 w-full max-w-full overflow-hidden">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
-            <span className="text-[11px] font-semibold tracking-widest uppercase text-neutral-400 block">
-              Katalog Lengkap
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-neutral-400 block">
+              Katalog Cetak
             </span>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-neutral-900 tracking-tight">
+            <h1 className="text-lg sm:text-2xl font-bold text-neutral-900 tracking-tight">
               {activeCategory === "Semua" ? "Semua Produk" : (activeCategory === "PACKAGING" ? "Packaging" : activeCategory)}
             </h1>
           </div>
-          <span className="text-xs font-medium text-neutral-500 bg-neutral-100 px-3 py-1.5 rounded-full shrink-0">
+          <span className="text-xs font-medium text-neutral-500 bg-neutral-100 px-3 py-1 rounded-full shrink-0">
             {filteredProducts.length} Produk
           </span>
         </div>
@@ -95,7 +95,6 @@ function CatalogContent() {
             </div>
           ) : (
             categories.map((cat) => {
-              const count = cat === "Semua" ? productList.length : productList.filter(p => p.category === cat).length;
               const isSelected = activeCategory === cat;
               const displayName = cat === "PACKAGING" ? "Packaging" : cat === "SPANDUK" ? "Spanduk" : cat === "STIKER" ? "Stiker" : cat;
 
@@ -104,13 +103,13 @@ function CatalogContent() {
                   key={cat}
                   type="button"
                   onClick={() => setActiveCategory(cat)}
-                  className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
                     isSelected 
                       ? "bg-neutral-900 text-white shadow-xs" 
                       : "bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900"
                   }`}
                 >
-                  {displayName} <span className="opacity-60 text-[11px] ml-0.5">({count})</span>
+                  {displayName}
                 </button>
               );
             })
@@ -118,25 +117,21 @@ function CatalogContent() {
         </div>
       </div>
 
-      {/* 🛍️ PRODUCT GRID (ALA ASTRO: 2-KOLOM MOBILE, 4-KOLOM DESKTOP) */}
+      {/* 🛍️ PRODUCT GRID */}
       <section className="min-h-[50vh] w-full max-w-full">
         {loading ? (
           <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 w-full min-w-0">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-              <div key={n} className="bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-100 animate-pulse space-y-2">
-                <div className="aspect-square bg-gray-100 rounded-xl" />
-                <div className="h-3 bg-gray-100 rounded w-2/3" />
-                <div className="h-4 bg-gray-100 rounded w-1/2" />
-              </div>
+              <div key={n} className="bg-neutral-100 rounded-2xl aspect-[3/4] animate-pulse" />
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="bg-white rounded-2xl p-6 sm:p-10 text-center border border-gray-100 shadow-2xs max-w-md mx-auto my-6 space-y-3">
-            <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-[#F97316] mx-auto shadow-xs">
-              <Search size={24} />
+          <div className="bg-neutral-50 rounded-2xl p-8 text-center border border-neutral-200/60 max-w-md mx-auto my-6 space-y-3">
+            <div className="w-12 h-12 bg-neutral-200/80 rounded-2xl flex items-center justify-center text-neutral-600 mx-auto">
+              <Search size={22} />
             </div>
-            <h3 className="font-extrabold text-gray-900 text-sm sm:text-base">Katalog Belum Ada Produk</h3>
-            <p className="text-xs text-gray-500 leading-relaxed">
+            <h3 className="font-bold text-neutral-900 text-sm sm:text-base">Katalog Belum Ada Produk</h3>
+            <p className="text-xs text-neutral-500 leading-relaxed">
               {productList.length === 0
                 ? "Produk sedang dalam proses penataan oleh admin Cetak.inc. Silakan hubungi kami via WhatsApp untuk pemesanan kustom."
                 : "Tidak ada produk yang cocok dengan kata kunci atau filter kategori yang dipilih."}
@@ -144,7 +139,7 @@ function CatalogContent() {
             {productList.length > 0 ? (
               <button
                 onClick={() => { setActiveCategory("Semua"); setSearchQuery(""); }}
-                className="btn-primary text-xs font-bold px-4 py-2 rounded-xl"
+                className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium px-4 py-2 rounded-xl transition-all"
               >
                 Tampilkan Semua Produk
               </button>

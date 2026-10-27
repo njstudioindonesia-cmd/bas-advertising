@@ -57,7 +57,7 @@ export default function Footer() {
                 <h3 className="font-extrabold text-xl lg:text-2xl tracking-tight leading-none text-white mb-1">
                   Cetak<span className="text-[#00A3E0]">.</span>inc
                 </h3>
-                <span className="text-[10px] lg:text-xs font-semibold tracking-wider text-[#F97316] uppercase">
+                <span className="text-[10px] lg:text-xs font-medium tracking-wider text-neutral-400 uppercase">
                   Printing & Advertising Studio
                 </span>
               </div>
@@ -70,7 +70,7 @@ export default function Footer() {
                 href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi.")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-2 transition-all"
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-2 transition-all"
               >
                 <MessageCircle size={15} />
                 <span>Chat via WhatsApp</span>
@@ -85,17 +85,17 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-xs lg:text-sm font-medium text-gray-300">
               <li>
-                <Link href="/" className="hover:text-[#F97316] transition-colors">
+                <Link href="/" className="hover:text-white transition-colors">
                   Beranda
                 </Link>
               </li>
               <li>
-                <Link href="/produk" className="hover:text-[#F97316] transition-colors">
+                <Link href="/produk" className="hover:text-white transition-colors">
                   Katalog Lengkap
                 </Link>
               </li>
               <li>
-                <a href="#katalog" className="hover:text-[#F97316] transition-colors">
+                <a href="#katalog" className="hover:text-white transition-colors">
                   Kategori Pilihan
                 </a>
               </li>
@@ -109,15 +109,15 @@ export default function Footer() {
             </h4>
             <div className="space-y-3 text-gray-300 text-xs leading-relaxed">
               <p className="flex items-start gap-2.5">
-                <MapPin className="text-[#F97316] shrink-0 mt-0.5" size={15} />
+                <MapPin className="text-emerald-400 shrink-0 mt-0.5" size={15} />
                 <span>{settings["contact.address"] || "Jl. Percetakan Modern No.88, Kota Padang"}</span>
               </p>
               <p className="flex items-center gap-2.5">
-                <Clock className="text-[#F97316] shrink-0" size={15} />
+                <Clock className="text-emerald-400 shrink-0" size={15} />
                 <span>{settings["contact.hours"] || "Senin - Sabtu: 08:30 - 21:00 WIB"}</span>
               </p>
               <p className="flex items-center gap-2.5">
-                <Smartphone className="text-[#F97316] shrink-0" size={15} />
+                <Smartphone className="text-emerald-400 shrink-0" size={15} />
                 <span>+{cleanWa}</span>
               </p>
             </div>
