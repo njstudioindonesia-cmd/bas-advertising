@@ -7,7 +7,7 @@ import { Home, LayoutGrid, MessageCircle } from "lucide-react";
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const [waNumber, setWaNumber] = useState("6281234567890");
+  const [waNumber, setWaNumber] = useState("6282172725267");
 
   useEffect(() => {
     fetch("/api/settings")
@@ -24,7 +24,12 @@ export default function BottomNav() {
     return null;
   }
 
-  const cleanWa = waNumber.startsWith("0") ? "62" + waNumber.slice(1) : waNumber;
+  let cleanWa = waNumber;
+  if (cleanWa.startsWith("0")) {
+    cleanWa = "62" + cleanWa.slice(1);
+  } else if (!cleanWa.startsWith("62")) {
+    cleanWa = "62" + cleanWa;
+  }
 
   return (
     <nav

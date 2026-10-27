@@ -37,7 +37,7 @@ export default function Home() {
   const [sheetProduct, setSheetProduct] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [homeCategory, setHomeCategory] = useState<string>("Semua");
-  const [whatsappNumber, setWhatsappNumber] = useState("6281234567890");
+  const [whatsappNumber, setWhatsappNumber] = useState("6282172725267");
   const router = useRouter();
 
   useEffect(() => {
@@ -101,7 +101,12 @@ export default function Home() {
     }
   };
 
-  const cleanWa = whatsappNumber.startsWith("0") ? "62" + whatsappNumber.slice(1) : whatsappNumber;
+  let cleanWa = whatsappNumber;
+  if (cleanWa.startsWith("0")) {
+    cleanWa = "62" + cleanWa.slice(1);
+  } else if (!cleanWa.startsWith("62")) {
+    cleanWa = "62" + cleanWa;
+  }
 
   const bestSellers = productList.filter(p => p.isBestSeller);
   const recommendedList = bestSellers.length > 0 ? bestSellers : productList;
@@ -180,14 +185,14 @@ export default function Home() {
       href: "/produk?category=Media%20Promosi%20%26%20Kantor",
     },
     {
-      id: "cat-wa",
-      name: "Konsultasi WA",
-      icon: MessageCircle,
-      gradient: "from-emerald-500 to-green-600",
-      shadow: "shadow-green-500/25",
-      badge: "CS",
-      categoryName: null,
-      href: `https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi kebutuhan cetak.")}`,
+      id: "cat-plakat",
+      name: "Plakat & Akrilik",
+      icon: Award,
+      gradient: "from-amber-600 to-yellow-500",
+      shadow: "shadow-amber-500/25",
+      badge: "Laser",
+      categoryName: "Signage & Akrilik",
+      href: "/produk?category=Signage%20%26%20Akrilik",
     },
     {
       id: "cat-all",

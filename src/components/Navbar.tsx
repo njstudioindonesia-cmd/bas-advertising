@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, X, MapPin, MessageCircle } from "lucide-react";
+import { Search, X, MapPin } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -13,7 +13,6 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [settings, setSettings] = useState<Record<string, any>>({
-    "contact.whatsapp": "6281234567890",
     "location.chipLabel": "Kota Padang & Sekitarnya",
   });
 
@@ -43,17 +42,14 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Sembunyikan pada admin jika ada redirect
   if (pathname?.startsWith("/admin")) {
     return null;
   }
 
-  const cleanWaNumber = String(settings["contact.whatsapp"] || "6281234567890").replace(/[^0-9]/g, "");
-
   return (
     <header className="fixed top-0 z-50 w-full flex flex-col items-center">
       {/* ========================================================= */}
-      {/* 📱 MOBILE HEADER BAR */}
+      {/* 📱 MOBILE HEADER BAR                                      */}
       {/* ========================================================= */}
       <div className="md:hidden w-full bg-white/95 backdrop-blur-md border-b border-gray-100/90 shadow-2xs pt-safe transition-all">
         {/* Top App Header Row */}
@@ -80,20 +76,6 @@ export default function Navbar() {
               </span>
             </div>
           </Link>
-
-          {/* Quick Action: Direct WhatsApp */}
-          <div className="flex items-center gap-1.5 shrink-0 ml-2">
-            <a
-              href={`https://wa.me/${cleanWaNumber}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi order cetak.")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Chat WhatsApp"
-              className="px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
-            >
-              <MessageCircle size={14} />
-              <span>Chat WA</span>
-            </a>
-          </div>
         </div>
 
         {/* Mobile Search Bar Row */}
@@ -123,7 +105,7 @@ export default function Navbar() {
       </div>
 
       {/* ========================================================= */}
-      {/* 💻 DESKTOP NAVBAR */}
+      {/* 💻 DESKTOP NAVBAR                                         */}
       {/* ========================================================= */}
       <nav
         className={`hidden md:block w-full transition-all duration-300 bg-white border-b border-gray-100 relative z-20 ${
@@ -164,23 +146,16 @@ export default function Navbar() {
               </Link>
               <a
                 href="#katalog"
-                className="hover:text-[#F97316] transition-colors text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full"
+                className="hover:text-[#F97316] transition-colors text-xs text-gray-500 bg-gray-100 hover:bg-orange-50 hover:text-[#F97316] px-3.5 py-1.5 rounded-full transition-all"
               >
                 Kategori Pilihan
               </a>
             </div>
 
-            {/* Desktop Right Action: WhatsApp */}
-            <div className="flex items-center gap-4 shrink-0">
-              <a
-                href={`https://wa.me/${cleanWaNumber}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi order cetak.")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-full transition-colors text-sm shadow-sm inline-flex items-center gap-2 active:scale-95"
-              >
-                <MessageCircle size={17} />
-                <span>Pesan via WhatsApp</span>
-              </a>
+            {/* Desktop Right: Location & Store Status */}
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{settings["location.chipLabel"] || "Kota Padang & Sekitarnya"}</span>
             </div>
           </div>
         </div>

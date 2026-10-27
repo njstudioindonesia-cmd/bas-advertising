@@ -10,7 +10,7 @@ export default function Footer() {
   const pathname = usePathname();
   const [settings, setSettings] = useState<Record<string, any>>({
     "contact.address": "Jl. Percetakan Modern No.88, Kota Padang, Sumatera Barat",
-    "contact.whatsapp": "6281234567890",
+    "contact.whatsapp": "6282172725267",
     "contact.email": "hello@basadvertising.com",
     "contact.hours": "Senin - Sabtu: 08:30 - 21:00 WIB",
   });
@@ -30,7 +30,12 @@ export default function Footer() {
     return null;
   }
 
-  const cleanWa = String(settings["contact.whatsapp"] || "6281234567890").replace(/[^0-9]/g, "");
+  let cleanWa = String(settings["contact.whatsapp"] || "6282172725267").replace(/[^0-9]/g, "");
+  if (cleanWa.startsWith("0")) {
+    cleanWa = "62" + cleanWa.slice(1);
+  } else if (!cleanWa.startsWith("62")) {
+    cleanWa = "62" + cleanWa;
+  }
 
   return (
     <footer className="hidden md:block bg-[#0B1E36] text-white pt-10 pb-16 lg:pt-16 lg:pb-12 border-t border-slate-800">

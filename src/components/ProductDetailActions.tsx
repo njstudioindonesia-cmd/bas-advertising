@@ -6,7 +6,7 @@ import { MessageCircle, Plus, Minus, ShieldCheck, Truck, Clock } from "lucide-re
 export default function ProductDetailActions({ product }: { product: any }) {
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
-  const [whatsappNumber, setWhatsappNumber] = useState("6281234567890");
+  const [whatsappNumber, setWhatsappNumber] = useState("6282172725267");
 
   useEffect(() => {
     fetch("/api/settings")
@@ -21,7 +21,11 @@ export default function ProductDetailActions({ product }: { product: any }) {
 
   const handleBuyNow = () => {
     let cleanWa = whatsappNumber;
-    if (cleanWa.startsWith("0")) cleanWa = "62" + cleanWa.slice(1);
+    if (cleanWa.startsWith("0")) {
+      cleanWa = "62" + cleanWa.slice(1);
+    } else if (!cleanWa.startsWith("62")) {
+      cleanWa = "62" + cleanWa;
+    }
 
     let msg = `*HALO CETAK.INC, SAYA INGIN BELI PRODUK INI:*\n`;
     msg += `----------------------------------------\n`;

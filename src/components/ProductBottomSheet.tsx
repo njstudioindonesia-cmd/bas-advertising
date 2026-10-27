@@ -16,7 +16,7 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
   const [selectedBahan, setSelectedBahan] = useState("Standar");
   const [selectedFinishing, setSelectedFinishing] = useState("Standar");
   const [notes, setNotes] = useState("");
-  const [waNumber, setWaNumber] = useState("6281234567890");
+  const [waNumber, setWaNumber] = useState("6282172725267");
 
   // State Kalkulator Ukuran Kustom (Panjang x Lebar) untuk Spanduk & Banner
   const isMeterProduct = Boolean(
@@ -72,7 +72,11 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
 
   const handleOrderWhatsApp = () => {
     let cleanWa = waNumber;
-    if (cleanWa.startsWith("0")) cleanWa = "62" + cleanWa.slice(1);
+    if (cleanWa.startsWith("0")) {
+      cleanWa = "62" + cleanWa.slice(1);
+    } else if (!cleanWa.startsWith("62")) {
+      cleanWa = "62" + cleanWa;
+    }
 
     const title = product.name || product.title;
     let msg = `*HALO CETAK.INC, SAYA INGIN PESAN:*\n`;
