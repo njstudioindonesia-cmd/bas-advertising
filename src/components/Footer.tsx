@@ -9,7 +9,7 @@ import { Smartphone, MapPin, Mail, MessageCircle, Clock, ShieldCheck, Sparkles, 
 export default function Footer() {
   const pathname = usePathname();
   const [settings, setSettings] = useState<Record<string, any>>({
-    "contact.address": "Jl. Percetakan Modern No.88, Kota Padang, Sumatera Barat",
+    "contact.address": "Jl. Percetakan Modern No.88",
     "contact.whatsapp": "6282172725267",
     "contact.email": "hello@basadvertising.com",
     "contact.hours": "Senin - Sabtu: 08:30 - 21:00 WIB",
@@ -92,7 +92,7 @@ export default function Footer() {
             </Link>
             
             <p className="text-neutral-500 text-xs leading-relaxed max-w-md">
-              Solusi percetakan modern berkecepatan tinggi di Kota Padang. Melayani spanduk kilat, standing banner, kemasan UMKM, stiker label die-cut, neon box akrilik, dan merchandise premium.
+              Solusi percetakan modern berkecepatan tinggi dengan hasil presisi. Melayani spanduk kilat, standing banner, kemasan UMKM, stiker label die-cut, neon box akrilik, dan merchandise premium.
             </p>
 
             <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-medium text-neutral-600">
@@ -163,7 +163,7 @@ export default function Footer() {
 
         {/* Bottom Copyright & Legal */}
         <div className="border-t border-neutral-200/70 pt-5 flex flex-col sm:flex-row items-center justify-between text-[11px] text-neutral-400 gap-2 text-center sm:text-left">
-          <p>© {new Date().getFullYear()} Cetak.inc. All Rights Reserved. Kota Padang, Sumatera Barat.</p>
+          <p>© {new Date().getFullYear()} Cetak.inc. All Rights Reserved.</p>
           <p>Didesain untuk kecepatan dan kemudahan pemesanan langsung.</p>
         </div>
 

@@ -121,7 +121,7 @@ export default function Home() {
   });
 
   return (
-    <div className="bg-white min-h-screen pt-28 sm:pt-30 md:pt-32 pb-20 md:pb-24">
+    <div className="bg-white min-h-screen pt-16 sm:pt-20 md:pt-28 pb-20 md:pb-24">
       {/* ======================================================== */}
       {/* 📱 MOBILE APP HOME EXPERIENCE (VISUAL-FIRST & MODERN)     */}
       {/* ======================================================== */}
@@ -301,7 +301,7 @@ export default function Home() {
             {/* Eyebrow Badge */}
             <div className="inline-flex items-center gap-2 bg-neutral-100/90 border border-neutral-200/70 px-4 py-1.5 rounded-full text-neutral-700 text-xs font-medium mb-6 shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Percetakan & Advertising Studio • Kota Padang</span>
+              <span>Studio Percetakan & Advertising Modern</span>
             </div>
 
             {/* Massive Editorial Headline */}
@@ -393,8 +393,8 @@ export default function Home() {
             {[
               { icon: <Clock size={18} className="text-neutral-700" />, title: "Proses Cepat", desc: "Selesai tepat waktu & presisi." },
               { icon: <ShieldCheck size={18} className="text-neutral-700" />, title: "Pemesanan Instan", desc: "Langsung via WhatsApp tanpa ribet." },
-              { icon: <Truck size={18} className="text-neutral-700" />, title: "Antar Se-Padang", desc: "Layanan kirim cepat & aman." },
-              { icon: <Award size={18} className="text-neutral-700" />, title: "Kualitas Terjamin", desc: "Bahan bermutu & hasil tajam." }
+              { icon: <Truck size={18} className="text-neutral-700" />, title: "Pengiriman Cepat", desc: "Layanan kirim kilat & aman ke alamat Anda." },
+              { icon: <Award size={18} className="text-neutral-700" />, title: "Kualitas Terjamin", desc: "Bahan bermutu & hasil tajam presisi." }
             ].map((feature, idx) => (
               <div key={idx} className="flex items-start gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 mt-0.5 border border-neutral-200/60 text-neutral-800">

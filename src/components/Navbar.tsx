@@ -56,63 +56,46 @@ export default function Navbar() {
   return (
     <header className="fixed top-0 z-50 w-full flex flex-col items-center pointer-events-none">
       {/* ========================================================= */}
-      {/* 📱 MOBILE HEADER BAR - ULTRA-MODERN GLASS & CLEAN         */}
+      {/* 📱 MOBILE HEADER BAR - ULTRA-MODERN UNIFIED ROW           */}
       {/* ========================================================= */}
-      <div className="md:hidden w-full pointer-events-auto bg-white/90 backdrop-blur-xl border-b border-neutral-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] pt-safe transition-all">
-        {/* Top App Header Row */}
-        <div className="flex items-center justify-between px-3.5 py-2.5">
-          <Link href="/" className="flex items-center gap-2.5 group min-w-0">
-            <div className="relative w-8 h-8 rounded-xl bg-white border border-neutral-200/80 p-0.5 shadow-2xs shrink-0 overflow-hidden flex items-center justify-center group-active:scale-95 transition-transform">
+      <div className="md:hidden w-full pointer-events-auto bg-white/85 backdrop-blur-2xl border-b border-neutral-200/60 shadow-[0_1px_12px_rgba(0,0,0,0.02)] pt-safe transition-all">
+        <div className="flex items-center justify-between gap-3 px-4 h-14 max-w-lg mx-auto">
+          {/* Brand Logo & Name */}
+          <Link href="/" className="flex items-center gap-2 group shrink-0">
+            <div className="relative w-8 h-8 rounded-xl bg-white border border-neutral-200/80 p-0.5 shadow-2xs shrink-0 overflow-hidden flex items-center justify-center group-active:scale-90 transition-transform">
               <Image
                 src="/logo-icon.png"
                 alt="Cetak.inc"
-                width={32}
-                height={32}
+                width={26}
+                height={26}
                 className="object-contain"
                 priority
               />
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-extrabold text-[16px] tracking-tight text-neutral-950 leading-none truncate">
-                Cetak<span className="text-[#00A3E0]">.</span>inc
-              </span>
-              <span className="text-[10px] font-medium text-neutral-400 flex items-center gap-1.5 mt-0.5 truncate">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="truncate">{settings["location.chipLabel"] || "Kota Padang • Online"}</span>
-              </span>
-            </div>
+            <span className="font-extrabold text-[17px] tracking-tight text-neutral-950 leading-none">
+              Cetak<span className="text-[#00A3E0]">.</span>inc
+            </span>
           </Link>
-          <a
-            href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi & pesan cetak.")}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-[11px] inline-flex items-center gap-1.5 border border-emerald-200/70 shadow-2xs active:scale-95 transition-all"
-          >
-            <MessageCircle size={13} className="text-emerald-600" />
-            <span>Konsultasi</span>
-          </a>
-        </div>
 
-        {/* Mobile Search Bar Row */}
-        <div className="px-3.5 pb-2.5">
-          <form onSubmit={handleSearch} className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
-              <Search size={15} strokeWidth={2} />
+          {/* Integrated Modern Search Capsule */}
+          <form onSubmit={handleSearch} className="relative flex-1 max-w-[210px] sm:max-w-xs">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-400">
+              <Search size={14} strokeWidth={2.2} />
             </div>
             <input
               type="text"
-              placeholder="Cari spanduk, stiker, packaging, akrilik..."
+              placeholder="Cari produk..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-9 py-2 bg-neutral-100/80 focus:bg-white text-xs font-medium rounded-full border border-neutral-200/70 focus:border-neutral-900 outline-none transition-all placeholder:text-neutral-400 placeholder:font-normal shadow-2xs"
+              className="w-full pl-8 pr-7 py-1.5 bg-neutral-100 hover:bg-neutral-100/90 focus:bg-white text-xs font-normal rounded-full border border-neutral-200/70 focus:border-neutral-900 outline-none transition-all placeholder:text-neutral-400 shadow-2xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-700"
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-neutral-400 hover:text-neutral-700"
               >
-                <X size={14} />
+                <X size={13} />
               </button>
             )}
           </form>
@@ -171,14 +154,10 @@ export default function Navbar() {
             </a>
           </div>
 
-          {/* Right Action: Status & WhatsApp CTA */}
+          {/* Right Action: WhatsApp CTA */}
           <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-medium text-neutral-500">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Padang</span>
-            </div>
             <a
-              href="https://wa.me/6282172725267?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20pemesanan%20cetak"
+              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi pemesanan cetak.")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold px-4 py-2 rounded-full inline-flex items-center gap-1.5 shadow-2xs hover:shadow-xs transition-all active:scale-95 shrink-0"

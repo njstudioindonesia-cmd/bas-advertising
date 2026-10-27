@@ -67,10 +67,10 @@ function CatalogContent() {
   });
 
   return (
-    <div className="w-full max-w-lg md:max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-[92px] md:pt-32 pb-24 md:pb-32 overflow-x-hidden">
+    <div className="w-full max-w-lg md:max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-16 md:pt-28 pb-24 md:pb-32 overflow-x-hidden">
       
       {/* 📱 TOP APP BAR CLEAN & MINIMALIST */}
-      <div className="sticky top-[86px] md:top-20 z-20 bg-white/95 backdrop-blur-md pt-2 pb-3 mb-3 border-b border-neutral-200/60 w-full max-w-full overflow-hidden">
+      <div className="sticky top-14 md:top-20 z-20 bg-white/95 backdrop-blur-md pt-2 pb-3 mb-3 border-b border-neutral-200/60 w-full max-w-full overflow-hidden">
         <div className="flex items-center justify-between gap-3 mb-2.5">
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">

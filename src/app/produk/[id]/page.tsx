@@ -22,7 +22,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
     .slice(0, 4);
 
   return (
-    <div className="bg-white min-h-screen pt-24 md:pt-36 pb-36 md:pb-24">
+    <div className="bg-white min-h-screen pt-16 md:pt-28 pb-36 md:pb-24">
       <div className="max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8">
         
         {/* 📱 MOBILE APP TOP BAR / BREADCRUMB */}

@@ -100,7 +100,7 @@ export default function ProductDetailActions({ product }: { product: any }) {
         </div>
         <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-neutral-200/70">
           <Truck size={16} className="text-neutral-700" />
-          <span>Kirim se-Padang</span>
+          <span>Kirim Cepat</span>
         </div>
       </div>
     </div>
