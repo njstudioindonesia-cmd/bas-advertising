@@ -20,11 +20,24 @@ function CatalogContent() {
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [whatsappNumber, setWhatsappNumber] = useState("6282172725267");
   const [loading, setLoading] = useState(true);
 
   // Bottom sheet state
   const [sheetProduct, setSheetProduct] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  // Fetch settings for dynamic WhatsApp CS
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data && data.data["contact.whatsapp"]) {
+          setWhatsappNumber(String(data.data["contact.whatsapp"]).replace(/[^0-9]/g, ""));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Fetch categories & products from DB API
   useEffect(() => {
@@ -49,8 +62,36 @@ function CatalogContent() {
 
     const handleUpdate = () => loadCatalog();
     window.addEventListener("bas_products_updated", handleUpdate);
-    return () => window.removeEventListener("bas_products_updated", handleUpdate);
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "bas_catalog_version") loadCatalog();
+    };
+    window.addEventListener("storage", handleStorage);
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("bas_catalog_sync");
+      bc.onmessage = () => loadCatalog();
+    } catch {
+      // ignore
+    }
+
+    return () => {
+      window.removeEventListener("bas_products_updated", handleUpdate);
+      window.removeEventListener("storage", handleStorage);
+      try {
+        bc?.close();
+      } catch {
+        // ignore
+      }
+    };
   }, []);
+
+  let cleanWa = whatsappNumber;
+  if (cleanWa.startsWith("0")) {
+    cleanWa = "62" + cleanWa.slice(1);
+  } else if (!cleanWa.startsWith("62")) {
+    cleanWa = "62" + cleanWa;
+  }
 
   // Filter products by category & search
   const filteredProducts = productList.filter((item) => {
@@ -86,6 +127,29 @@ function CatalogContent() {
           <span className="text-xs font-semibold text-neutral-700 bg-neutral-100 px-3 py-1 rounded-full shrink-0 border border-neutral-200/60 shadow-2xs">
             {filteredProducts.length} Produk
           </span>
+        </div>
+
+        {/* 🔍 SEARCH CAPSULE INPUT */}
+        <div className="relative mb-2.5">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+            <Search size={14} />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari produk cetak (contoh: spanduk, stiker, box, jersey)..."
+            className="w-full pl-9 pr-8 py-2 bg-neutral-100 hover:bg-neutral-100/90 focus:bg-white text-xs rounded-2xl border border-neutral-200/70 focus:border-neutral-900 outline-none transition-all placeholder:text-neutral-400 shadow-2xs"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-700"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
 
         {/* 📱 HORIZONTAL TOUCH SWIPEABLE CATEGORY CHIPS */}
@@ -148,7 +212,7 @@ function CatalogContent() {
               </button>
             ) : (
               <a
-                href="https://wa.me/6282172725267?text=Halo%20Cetak.inc,%20saya%20ingin%20konsultasi%20pemesanan%20cetak"
+                href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya ingin konsultasi pemesanan produk cetak.")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs"

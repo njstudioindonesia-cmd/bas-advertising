@@ -21,6 +21,8 @@ export async function POST(request: Request) {
     (revalidateTag as any)("products");
     (revalidateTag as any)("categories");
     (revalidateTag as any)("banners");
+    (revalidateTag as any)("portfolio");
+    (revalidateTag as any)("settings");
 
     return NextResponse.json({
       success: true,
