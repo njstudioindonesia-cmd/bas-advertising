@@ -120,15 +120,46 @@ export default function Home() {
   const spotlightMobile = (homeCategory === "Semua" ? (bestSellers.length >= 4 ? bestSellers : productList) : filteredProducts).slice(0, 4);
   const spotlightDesktop = (homeCategory === "Semua" ? (bestSellers.length >= 8 ? bestSellers : productList) : filteredProducts).slice(0, 8);
 
-  const categoryStories = [
-    { id: "all", name: "Semua", categoryName: "Semua", icon: Sparkles },
-    { id: "spanduk", name: "Spanduk", categoryName: "Spanduk & Banner", icon: Store },
-    { id: "stiker", name: "Stiker", categoryName: "Stiker & Label Kemasan", icon: Layers },
-    { id: "kemasan", name: "Packaging", categoryName: "Packaging", icon: Package },
-    { id: "merch", name: "Sablon", categoryName: "Merchandise & Sablon", icon: Shirt },
-    { id: "signage", name: "Neon Box", categoryName: "Signage & Akrilik", icon: Award },
-    { id: "nota", name: "Brosur", categoryName: "Media Promosi & Kantor", icon: FileText },
-  ];
+  const getCategoryIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes("spanduk") || n.includes("banner")) return Store;
+    if (n.includes("stiker") || n.includes("label")) return Layers;
+    if (n.includes("kemasan") || n.includes("box") || n.includes("pack")) return Package;
+    if (n.includes("sablon") || n.includes("kaos") || n.includes("crew") || n.includes("merch")) return Shirt;
+    if (n.includes("signage") || n.includes("neon") || n.includes("akrilik") || n.includes("outlet")) return Award;
+    if (n.includes("brosur") || n.includes("cetak") || n.includes("nota") || n.includes("kantor") || n.includes("dokumen")) return FileText;
+    return Sparkles;
+  };
+
+  // Kategori Dinamis: Menggabungkan data dari Admin/Supabase dengan icon yang cerdas
+  const dynamicCategories = categories && categories.length > 0
+    ? [
+        { id: "all", name: "Semua", categoryName: "Semua", icon: Sparkles },
+        ...categories.map((c: any) => {
+          const rawName = typeof c === "string" ? c : c.name;
+          let shortName = rawName;
+          if (rawName.includes("&")) {
+            shortName = rawName.split("&")[0].trim();
+          } else if (rawName.includes("/")) {
+            shortName = rawName.split("/")[0].trim();
+          }
+          return {
+            id: c.id || rawName,
+            name: shortName,
+            categoryName: rawName,
+            icon: getCategoryIcon(rawName),
+          };
+        }),
+      ]
+    : [
+        { id: "all", name: "Semua", categoryName: "Semua", icon: Sparkles },
+        { id: "spanduk", name: "Spanduk", categoryName: "Spanduk & Banner", icon: Store },
+        { id: "stiker", name: "Stiker", categoryName: "Stiker & Label Kemasan", icon: Layers },
+        { id: "kemasan", name: "Packaging", categoryName: "Packaging", icon: Package },
+        { id: "merch", name: "Sablon", categoryName: "Merchandise & Sablon", icon: Shirt },
+        { id: "signage", name: "Neon Box", categoryName: "Signage & Akrilik", icon: Award },
+        { id: "nota", name: "Brosur", categoryName: "Media Promosi & Kantor", icon: FileText },
+      ];
 
   // Auto-slide Banner Mobile State & Swipe Handlers
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -264,10 +295,10 @@ export default function Home() {
           ) : null}
         </div>
 
-        {/* 2. VISUAL CATEGORY STORIES (CLEAN ICONS, ZERO CLUTTER) */}
+        {/* 2. VISUAL CATEGORY STORIES (DYNAMIC FROM ADMIN/DATABASE) */}
         <div>
           <div className="flex items-center gap-3 overflow-x-auto no-scrollbar scroll-smooth px-0.5 py-1">
-            {categoryStories.map((cat) => {
+            {dynamicCategories.map((cat) => {
               const Icon = cat.icon;
               const isSelected = homeCategory === cat.categoryName || (cat.categoryName === "Semua" && homeCategory === "Semua");
               return (
