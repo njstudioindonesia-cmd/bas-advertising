@@ -29,6 +29,7 @@ export default function Home() {
   const [productList, setProductList] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [banners, setBanners] = useState<any[]>([]);
+  const [portfolioList, setPortfolioList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sheetProduct, setSheetProduct] = useState<any | null>(null);
@@ -44,8 +45,9 @@ export default function Home() {
         fetch(`/api/products?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
         fetch(`/api/categories?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
         fetch(`/api/banners?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
+        fetch(`/api/portfolio?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: [] })),
         fetch(`/api/settings?t=${ts}`, { cache: "no-store" }).then(r => r.json()).catch(() => ({ data: {} })),
-      ]).then(([prodRes, catRes, banRes, setRes]) => {
+      ]).then(([prodRes, catRes, banRes, portRes, setRes]) => {
         if (prodRes?.success && Array.isArray(prodRes.data)) {
           setProductList(prodRes.data);
         }
@@ -54,6 +56,9 @@ export default function Home() {
         }
         if (banRes?.success && Array.isArray(banRes.data)) {
           setBanners(banRes.data);
+        }
+        if (portRes?.success && Array.isArray(portRes.data)) {
+          setPortfolioList(portRes.data);
         }
         if (setRes?.success && setRes.data && setRes.data["contact.whatsapp"]) {
           setWhatsappNumber(String(setRes.data["contact.whatsapp"]).replace(/[^0-9]/g, ""));
@@ -403,86 +408,71 @@ export default function Home() {
           </div>
 
           <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-1 px-0.5">
-            {/* Visual Card 1: Stiker & Kemasan */}
-            <a
-              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi Cetak Stiker & Box Kemasan UMKM.")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="snap-start shrink-0 w-[240px] relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xs group active:scale-[0.98] transition-transform block"
-            >
-              <Image
-                src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=800"
-                alt="Stiker & Kemasan Custom"
-                fill
-                sizes="240px"
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3.5">
-                <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">
-                  Label & Packaging
-                </span>
-                <h4 className="text-white text-xs font-bold leading-snug">
-                  Stiker Vinyl & Box UMKM
-                </h4>
-                <span className="text-white/80 text-[10px] mt-0.5 flex items-center gap-1 font-medium">
-                  Konsultasi Desain <ArrowRight size={10} />
-                </span>
-              </div>
-            </a>
+            {(portfolioList.length > 0
+              ? portfolioList
+              : [
+                  {
+                    id: "fb-1",
+                    title: "Stiker Vinyl & Box UMKM",
+                    category: "Label & Packaging",
+                    client: "UMKM Lokal",
+                    imageUrl: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=800",
+                  },
+                  {
+                    id: "fb-2",
+                    title: "Spanduk & Banner Kilat",
+                    category: "Outdoor & Promosi",
+                    client: "Event & Promo",
+                    imageUrl: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800",
+                  },
+                  {
+                    id: "fb-3",
+                    title: "Sablon DTF & Seragam",
+                    category: "Apparel & Merch",
+                    client: "Komunitas & Bisnis",
+                    imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800",
+                  },
+                ]
+            ).map((item) => {
+              const itemTitle = item.title || "Inspirasi Cetak";
+              const itemCat = item.category || "Inspirasi";
+              const img = item.imageUrl || item.image_url || "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=800";
+              const waText = encodeURIComponent(`Halo Cetak.inc, saya tertarik dengan inspirasi ${itemTitle} (${itemCat}). Bisa konsultasi pemesanan?`);
 
-            {/* Visual Card 2: Spanduk & Event */}
-            <a
-              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi Spanduk & Banner Event Kilat.")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="snap-start shrink-0 w-[240px] relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xs group active:scale-[0.98] transition-transform block"
-            >
-              <Image
-                src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800"
-                alt="Spanduk & Banner Kilat"
-                fill
-                sizes="240px"
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3.5">
-                <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">
-                  Outdoor & Promosi
-                </span>
-                <h4 className="text-white text-xs font-bold leading-snug">
-                  Spanduk & Banner Kilat
-                </h4>
-                <span className="text-white/80 text-[10px] mt-0.5 flex items-center gap-1 font-medium">
-                  Selesai 24 Jam <ArrowRight size={10} />
-                </span>
-              </div>
-            </a>
-
-            {/* Visual Card 3: Kaos & Merchandise */}
-            <a
-              href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Halo Cetak.inc, saya mau konsultasi Sablon Kaos / Seragam.")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="snap-start shrink-0 w-[240px] relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xs group active:scale-[0.98] transition-transform block"
-            >
-              <Image
-                src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800"
-                alt="Sablon Kaos & Merchandise"
-                fill
-                sizes="240px"
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3.5">
-                <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">
-                  Apparel & Merch
-                </span>
-                <h4 className="text-white text-xs font-bold leading-snug">
-                  Sablon DTF & Seragam
-                </h4>
-                <span className="text-white/80 text-[10px] mt-0.5 flex items-center gap-1 font-medium">
-                  Katun Combed Premium <ArrowRight size={10} />
-                </span>
-              </div>
-            </a>
+              return (
+                <a
+                  key={item.id}
+                  href={`https://wa.me/${cleanWa}?text=${waText}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="snap-start shrink-0 w-[240px] relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xs group active:scale-[0.98] transition-transform block"
+                >
+                  <Image
+                    src={img}
+                    alt={itemTitle}
+                    fill
+                    sizes="240px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3.5">
+                    <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">
+                      {itemCat}
+                    </span>
+                    <h4 className="text-white text-xs font-bold leading-snug line-clamp-1">
+                      {itemTitle}
+                    </h4>
+                    {item.client && (
+                      <span className="text-white/70 text-[10px] font-medium line-clamp-1">
+                        {item.client}
+                      </span>
+                    )}
+                    <span className="text-white/80 text-[10px] mt-0.5 flex items-center gap-1 font-medium">
+                      Konsultasi Desain <ArrowRight size={10} />
+                    </span>
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </div>
 
