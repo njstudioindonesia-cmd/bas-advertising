@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -130,6 +130,49 @@ export default function Home() {
     { id: "nota", name: "Brosur", categoryName: "Media Promosi & Kantor", icon: FileText },
   ];
 
+  // Auto-slide Banner Mobile State & Swipe Handlers
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [isBannerPaused, setIsBannerPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  const activeBanners = banners.filter((b) => b.isActive !== false);
+
+  // Auto-slide setiap 4 detik (pause saat disentuh/hover)
+  useEffect(() => {
+    if (activeBanners.length <= 1 || isBannerPaused) return;
+
+    const timer = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [activeBanners.length, isBannerPaused]);
+
+  const handleBannerTouchStart = (e: React.TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+    setIsBannerPaused(true);
+  };
+
+  const handleBannerTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleBannerTouchEnd = () => {
+    setIsBannerPaused(false);
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 45;
+    const isRightSwipe = distance < -45;
+
+    if (isLeftSwipe && activeBanners.length > 0) {
+      setCurrentBannerIndex((prev) => (prev + 1) % activeBanners.length);
+    } else if (isRightSwipe && activeBanners.length > 0) {
+      setCurrentBannerIndex((prev) => (prev - 1 + activeBanners.length) % activeBanners.length);
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen pt-16 sm:pt-20 md:pt-28 pb-28 md:pb-24">
       {/* ======================================================== */}
@@ -137,21 +180,31 @@ export default function Home() {
       {/* ======================================================== */}
       <div className="md:hidden space-y-5 px-4 max-w-lg mx-auto">
         
-        {/* 1. VISUAL HERO BANNER CAROUSEL */}
+        {/* 1. VISUAL HERO BANNER SLIDER (AUTO-SLIDE & SWIPEABLE) */}
         <div className="relative">
-          <div className="flex gap-3 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory pb-1">
-            {loading ? (
-              <div className="min-w-full aspect-[16/9] rounded-3xl bg-neutral-100 animate-pulse" />
-            ) : banners.length > 0 ? (
-              banners
-                .filter((b) => b.isActive !== false)
-                .map((b, idx) => {
+          {loading ? (
+            <div className="w-full aspect-[16/9] rounded-3xl bg-neutral-100 animate-pulse" />
+          ) : activeBanners.length > 0 ? (
+            <div 
+              className="relative w-full aspect-[16/9] rounded-3xl overflow-hidden shadow-xs select-none"
+              onTouchStart={handleBannerTouchStart}
+              onTouchMove={handleBannerTouchMove}
+              onTouchEnd={handleBannerTouchEnd}
+              onMouseEnter={() => setIsBannerPaused(true)}
+              onMouseLeave={() => setIsBannerPaused(false)}
+            >
+              {/* Carousel Track with Smooth Sliding Animation */}
+              <div 
+                className="flex w-full h-full transition-transform duration-600 ease-out"
+                style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
+              >
+                {activeBanners.map((b, idx) => {
                   const imgUrl = b.imageUrl || b.image_url;
                   return (
                     <Link
                       key={b.id || idx}
                       href={b.ctaHref || b.cta_href || "/produk"}
-                      className="min-w-full snap-center relative aspect-[16/9] rounded-3xl overflow-hidden shadow-xs group active:scale-[0.99] transition-transform block"
+                      className="w-full h-full shrink-0 relative block"
                     >
                       {imgUrl ? (
                         <Image
@@ -161,7 +214,7 @@ export default function Home() {
                           priority={idx === 0}
                           sizes="(max-width: 640px) 100vw, 400px"
                           unoptimized={Boolean(imgUrl.startsWith("data:"))}
-                          className="object-cover group-hover:scale-105 transition-transform duration-700"
+                          className="object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-neutral-100" />
@@ -183,9 +236,32 @@ export default function Home() {
                       </div>
                     </Link>
                   );
-                })
-            ) : null}
-          </div>
+                })}
+              </div>
+
+              {/* Modern Frosted Pagination Indicators */}
+              {activeBanners.length > 1 && (
+                <div className="absolute bottom-3 right-4 flex items-center gap-1.5 z-10 bg-black/35 backdrop-blur-md px-2.5 py-1 rounded-full">
+                  {activeBanners.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentBannerIndex(idx);
+                      }}
+                      aria-label={`Lihat banner ${idx + 1}`}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        currentBannerIndex === idx
+                          ? "w-4 bg-white"
+                          : "w-1.5 bg-white/45 hover:bg-white/80"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
 
         {/* 2. VISUAL CATEGORY STORIES (CLEAN ICONS, ZERO CLUTTER) */}
