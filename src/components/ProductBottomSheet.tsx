@@ -228,5 +228,4 @@ export default function ProductBottomSheet({ product, isOpen, onClose }: Product
       )}
     </AnimatePresence>
   );
-  );
 }
